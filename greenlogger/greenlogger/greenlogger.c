@@ -51,6 +51,11 @@
 // the string we send and receive on UART
 const char test_string[] = "Count \n";
 char num_string[20];
+char datetime_string[25];
+//char* dt_stp = datetime_string;
+//DateTime RTC_DT;
+
+extern RTC_dt;
 
 /**
  * \brief The main application
@@ -74,16 +79,23 @@ int main(void)
 	for (cnt = 0; cnt < strlen(test_string); cnt++) {
 		uart_putchar(test_string[cnt]);
 	}
+	rtc_setdefault();
     // output a counter
 	do {
 		itoa(cntout, num_string, 10);
 		for (cnt = 0; cnt < strlen(num_string); cnt++) {
 			uart_putchar(num_string[cnt]);
 		}
+		uart_putchar('\t');
+		datetime_getstring(datetime_string, &RTC_dt);
+		
+		for (cnt = 0; cnt < strlen(datetime_string); cnt++) {
+			uart_putchar(datetime_string[cnt]);
+		}		
 		uart_putchar('\n');
 		delay_ms(1000);
 		cntout++;
-		
+		rtc_add1sec();
 	} while (cntout < 65500);
 	// Check if we have received the string we sent
 	cnt = 0;

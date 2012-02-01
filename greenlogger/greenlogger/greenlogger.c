@@ -72,6 +72,7 @@ int main(void)
 	uint8_t cnt;
 	uint16_t cntout = 0;
 	cli();
+	setupDiagnostics();
 	uart_init();
 	sei();
 

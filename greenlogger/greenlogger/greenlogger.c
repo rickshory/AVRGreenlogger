@@ -46,6 +46,7 @@
 
 #include <avr/io.h>
 #include "greenlogger.h"
+#include "SDcard/ff.h"
 
 
 // the string we send and receive on UART

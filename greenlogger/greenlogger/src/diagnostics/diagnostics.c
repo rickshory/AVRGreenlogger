@@ -14,7 +14,6 @@
 #include "diagnostics.h"
 
 static volatile uint8_t Timer1, Timer2;		// 100Hz decrement timers
-static volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 
 void setupDiagnostics (void)
 {
@@ -110,6 +109,7 @@ void delay_ms(uint16_t x)
 //!
 */
 
+/*
 void disk_timerproc (void)
 {
 	uint8_t n, s;
@@ -120,24 +120,25 @@ void disk_timerproc (void)
 			ToggleCountdown = TOGGLE_INTERVAL;
 		}			
 	
-	n = Timer1;				/* 100Hz decrement timer */
+	n = Timer1;				// 100Hz decrement timer
 	if (n) Timer1 = --n;
 	n = Timer2;
 	if (n) Timer2 = --n;
 
-/*
-	s = Stat;
 
-	if (SOCKWP)				// Write protected
-		s |= STA_PROTECT;
-	else					// Write enabled
-		s &= ~STA_PROTECT;
+//	s = Stat;
 
-	if (SOCKINS)			// Card inserted
-		s &= ~STA_NODISK;
-	else					// Socket empty
-		s |= (STA_NODISK | STA_NOINIT);
+//	if (SOCKWP)				// Write protected
+//		s |= STA_PROTECT;
+//	else					// Write enabled
+//		s &= ~STA_PROTECT;
 
-	Stat = s;				// Update MMC status
-*/
+//	if (SOCKINS)			// Card inserted
+//		s &= ~STA_NODISK;
+//	else					// Socket empty
+//		s |= (STA_NODISK | STA_NOINIT);
+
+//	Stat = s;				// Update MMC status
+
 }
+*/

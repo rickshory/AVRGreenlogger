@@ -10,7 +10,7 @@
 #define DIAGNOSTICS_H_
 
 #define CT_10MS 1250
-#define TOGGLE_INTERVAL 100
+//#define TOGGLE_INTERVAL 100
 
 //Define functions
 //======================

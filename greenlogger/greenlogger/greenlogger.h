@@ -11,6 +11,8 @@
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"
 
+#define commandBufferLen 30
+
 typedef struct	{ // always assumes century is 20; year 2000 to 2099
 	volatile uint8_t year; // 0 to 99
 	volatile uint8_t month; // 1 to 12
@@ -21,6 +23,7 @@ typedef struct	{ // always assumes century is 20; year 2000 to 2099
 	volatile uint8_t second; // 0 to 59
 } DateTime ;
 
-
+void outputStringToUART (char* St);
+void checkForCommands (void);
 
 #endif /* GREENLOGGER_H_ */

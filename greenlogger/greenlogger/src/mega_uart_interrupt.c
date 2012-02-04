@@ -63,7 +63,7 @@
  */
 
  // _ASSERT_ENABLE_ is used for enabling assert, typical for debug purposes
-#define _ASSERT_ENABLE_
+// #define _ASSERT_ENABLE_
 #include <string.h>
 #include "compiler.h"
 #include "mega_uart_interrupt.h"

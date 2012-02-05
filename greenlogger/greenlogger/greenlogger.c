@@ -47,7 +47,11 @@
 #include <avr/io.h>
 #include "greenlogger.h"
 #include "SDcard/ff.h"
+#include "SDcard/diskio.h"
 
+int len, err = 0;
+char str[128]; // generic space for strings to be output
+char strJSON[128]; // string for JSON data
 
 // the string we send and receive on UART
 const char test_string[] = "Count \n";
@@ -77,6 +81,8 @@ int main(void)
 	cli();
 	setupDiagnostics();
 	uart_init();
+	commandBuffer[0] = '\0';
+	commandBufferPtr = commandBuffer; // "empty" the command buffer
 	sei();
 
 	// Send the test string
@@ -184,33 +190,72 @@ void checkForCommands (void) {
 		if (!uart_char_waiting()) 
 			return;
 		
-/*
-        __asm__ volatile("disi #0x3FFF"); // disable interrupts before first pointer test
-        //  if Rx ISR called while buffer pointers in the works, will cause glitches
-        if (USART1_inputbuffer_head == USART1_inputbuffer_tail) { // no (more) chars in buffer
-            __asm__ volatile("disi #0x0000"); // re-enable interrupts before exit
-            return;   
-        }
-*/
 		c = uart_getchar();
-/*
-        c = *USART1_inputbuffer_tail++; // get char & start generating new tail by incrementing
-        if (USART1_inputbuffer_tail >= &USART1_inputbuffer[0] + USART1_Buffer_Length) // if end of buffer
-            USART1_inputbuffer_tail = &USART1_inputbuffer[0]; // rollover to start
-        __asm__ volatile("disi #0x0000"); // done updating pointers, can re-enable interrupts
-*/
         if (c == 0x0d) // if carriage-return
             c = 0x0a; // substitute linefeed
         if (c == 0x0a) { // if linefeed, attempt to parse the command
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
-//                case 0x0a: {
-//                    break; // ignore multiple linefeeds
-//                }
 
                 case 'C': case 'c':
 					{ // sd card diagnostics
 						outputStringToUART("\r\n SD card diagnostics\r\n");
+					//	len = sprintf(str, "\n\r PINB: 0x%x\n\r", (PINB));
+						// send_cmd(CMD0, 0)
+//					len = sprintf(str, "\n\r CMD0: 0x%x\n\r", (send_cmd(CMD0, 0)));
+						
+						len = sprintf(str, "\n\r disk_initialize: 0x%x\n\r", (disk_initialize(0)));
+						outputStringToUART(str);
+{
+	FATFS FileSystemObject;
+
+if(f_mount(0, &FileSystemObject)!=FR_OK) {
+	//  flag error
+	len = sprintf(str, "\n\r f_mount failed: 0x%x\n\r", 0);
+	outputStringToUART(str);
+}
+
+DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT
+	) {
+//	flag error.
+	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
+	outputStringToUART(str);
+}
+
+/* Sometimes you may want to format the disk.
+if(f_mkfs(0,0,0)!=FR_OK) {
+//error
+}
+*/
+
+if (f_mkdir("0000")) {
+	len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
+	outputStringToUART(str);	
+}
+
+FIL logFile;
+//works
+if(f_open(&logFile, "0000/GpsLog.txt", FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
+	len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
+	outputStringToUART(str);
+//flag error
+}
+
+unsigned int bytesWritten;
+f_write(&logFile, "New log opened!\n", 16, &bytesWritten);
+	len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
+	outputStringToUART(str);
+//Flush the write buffer with f_sync(&logFile);
+
+//Close and unmount.
+f_close(&logFile);
+f_mount(0,0);
+}
+
 						break;						
 					}
 

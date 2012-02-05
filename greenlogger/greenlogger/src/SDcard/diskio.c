@@ -10,77 +10,6 @@
 #include "diskio.h"
 
 
-/* Definitions for MMC/SDC command */
-#define CMD0	(0x40+0)	/* GO_IDLE_STATE */
-#define CMD1	(0x40+1)	/* SEND_OP_COND (MMC) */
-#define	ACMD41	(0xC0+41)	/* SEND_OP_COND (SDC) */
-#define CMD8	(0x40+8)	/* SEND_IF_COND */
-#define CMD9	(0x40+9)	/* SEND_CSD */
-#define CMD10	(0x40+10)	/* SEND_CID */
-#define CMD12	(0x40+12)	/* STOP_TRANSMISSION */
-#define ACMD13	(0xC0+13)	/* SD_STATUS (SDC) */
-#define CMD16	(0x40+16)	/* SET_BLOCKLEN */
-#define CMD17	(0x40+17)	/* READ_SINGLE_BLOCK */
-#define CMD18	(0x40+18)	/* READ_MULTIPLE_BLOCK */
-#define CMD23	(0x40+23)	/* SET_BLOCK_COUNT (MMC) */
-#define	ACMD23	(0xC0+23)	/* SET_WR_BLK_ERASE_COUNT (SDC) */
-#define CMD24	(0x40+24)	/* WRITE_BLOCK */
-#define CMD25	(0x40+25)	/* WRITE_MULTIPLE_BLOCK */
-#define CMD55	(0x40+55)	/* APP_CMD */
-#define CMD58	(0x40+58)	/* READ_OCR */
-
-/*SPI configuration*/
-#define SPI_PORT PORTB
-#define DD_MOSI   DDB5 
-#define DD_SCK   DDB7 
-#define DDR_SPI   DDRB 
-#define DD_SS   4 
-#define DD_MISO DDB6 
-
-/* Defines for SD card SPI access */ 
-#define SD_CS_BIT   4
-#define SD_CS_PORT   PORTB
-#define SD_CS_DD DDRB
-#define SD_PWR_BIT   3
-#define SD_PWR_PORT   PORTB
-#define SD_PWR_DD DDRB
-
-// #define SELECT()      SD_CS_PORT &= ~(1<<SD_CS_BIT)      // MMC CS = L
-// #define DESELECT()   SD_CS_PORT |=  (1<<SD_CS_BIT)      // MMC CS = H
-
-/* Port Controls  (Platform dependent) */
-#define SPI_PORT |= (1<<DD_MISO); 
-#define CS_LOW()	SD_CS_PORT &= ~(1<<SD_CS_BIT)			/* MMC CS = L */
-#define	CS_HIGH()	SD_CS_PORT |=  (1<<SD_CS_BIT)			/* MMC CS = H */
-
-// original below, from "C:\Users\rshory\Documents\Current work\DataLogger\SD card\ff9sample\avr\mmc.c"
-// #define SOCKWP		(PINB & 0x20)		/* Write protected. yes:true, no:false, default:false */
-// #define SOCKINS		(!(PINB & 0x10))	/* Card detected.   yes:true, no:false, default:true */
-
-#define	FCLK_SLOW()	SPCR = 0x52		/* Set slow clock (100k-400k) */
-#define	FCLK_FAST()	SPCR = 0x50		/* Set fast clock (depends on the CSD) */
-
-// Port Controls  (Platform dependent) 
-
-#define SELECT()	SD_CS_PORT &= ~(1<<SD_CS_BIT)		// MMC CS = L
-#define	DESELECT()	SD_CS_PORT |=  (1<<SD_CS_BIT)		// MMC CS = H
-
-#define SOCKPORT	PINB			// Socket contact port
-#define SOCKWP		1			// Write protect switch (PB1)
-#define SOCKINS		2			// Card detect switch (PB2)
-// following were from original example file
-// "C:\Users\rshory\Documents\Current work\DataLogger\SD card\ff007sample\avr\mmc.c"
-/*
-#define SELECT()	PORTB &= ~1		// MMC CS = L
-#define	DESELECT()	PORTB |= 1		// MMC CS = H
-
-#define SOCKPORT	PINB			// Socket contact port
-#define SOCKWP		0x20			// Write protect switch (PB5)
-#define SOCKINS		0x10			// Card detect switch (PB4)
-
-#define	FCLK_SLOW()					// Set slow clock (100k-400k)
-#define	FCLK_FAST()					// Set fast clock (depends on the CSD)
-*/
 
 /*--------------------------------------------------------------------------
 
@@ -342,7 +271,7 @@ BOOL xmit_datablock (
 /* Send a command packet to MMC                                          */
 /*-----------------------------------------------------------------------*/
 
-static
+//static
 BYTE send_cmd (
 	BYTE cmd,		/* Command byte */
 	DWORD arg		/* Argument */
@@ -695,24 +624,25 @@ void disk_timerproc (void)
 	if (n) Timer1 = --n;
 	n = Timer2;
 	if (n) Timer2 = --n;
-
+/*
 	n = pv;
-	pv = SOCKPORT & (SOCKWP | SOCKINS);	/* Sample socket switch */
+	pv = SOCKPORT & (SOCKWP | SOCKINS);	// Sample socket switch
 
-	if (n == pv) {					/* Have contacts stabled? */
+	if (n == pv) {					// Have contacts stabilized?
 		s = Stat;
 
-		if (pv & SOCKWP)			/* WP is H (write protected) */
+		if (pv & SOCKWP)			// WP is H (write protected)
 			s |= STA_PROTECT;
-		else						/* WP is L (write enabled) */
+		else						// WP is L (write enabled)
 			s &= ~STA_PROTECT;
 
-		if (pv & SOCKINS)			/* INS = H (Socket empty) */
+		if (pv & SOCKINS)			// INS = H (Socket empty)
 			s |= (STA_NODISK | STA_NOINIT);
-		else						/* INS = L (Card inserted) */
+		else						// INS = L (Card inserted)
 			s &= ~STA_NODISK;
 
 		Stat = s;
 	}
+*/
 }
 

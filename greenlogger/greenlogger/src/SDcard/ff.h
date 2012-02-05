@@ -72,7 +72,7 @@
 /* To enable f_forward function, set _USE_FORWARD to 1 and set _FS_TINY to 1. */
 
 
-#define _CODE_PAGE	932
+#define _CODE_PAGE	1
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
 /
 /   932  - Japanese Shift-JIS (DBCS, OEM, Windows)
@@ -120,7 +120,7 @@
 #define _FS_RPATH	0
 /* When _FS_RPATH is set to 1, relative path feature is enabled and f_chdir,
 /  f_chdrive function are available.
-/  Note that output of the f_readdir fnction is affected by this option. */
+/  Note that output of the f_readdir function is affected by this option. */
 
 
 #define _FS_REENTRANT	0
@@ -143,7 +143,7 @@
 
 #define	_MULTI_PARTITION	0
 /* When _MULTI_PARTITION is set to 0, each volume is bound to the same physical
-/ drive number and can mount only first primaly partition. When it is set to 1,
+/ drive number and can mount only first primary partition. When it is set to 1,
 / each volume is tied to the partitions listed in Drives[]. */
 
 
@@ -559,7 +559,7 @@ FRESULT f_truncate (FIL*);							/* Truncate file */
 FRESULT f_sync (FIL*);								/* Flush cached data of a writing file */
 FRESULT f_unlink (const XCHAR*);						/* Delete an existing file or directory */
 FRESULT	f_mkdir (const XCHAR*);						/* Create a new directory */
-FRESULT f_chmod (const XCHAR*, BYTE, BYTE);			/* Change attriburte of the file/dir */
+FRESULT f_chmod (const XCHAR*, BYTE, BYTE);			/* Change attribute of the file/dir */
 FRESULT f_utime (const XCHAR*, const FILINFO*);		/* Change timestamp of the file/dir */
 FRESULT f_rename (const XCHAR*, const XCHAR*);		/* Rename/Move a file or directory */
 FRESULT f_forward (FIL*, UINT(*)(const BYTE*,UINT), UINT, UINT*);	/* Forward data to the stream */

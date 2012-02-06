@@ -3,7 +3,7 @@
 /-----------------------------------------------------------------------------/
 / FatFs module is an open source software to implement FAT file system to
 / small embedded systems. This is a free software and is opened for education,
-/ research and commercial use under license policy of following trems.
+/ research and commercial use under license policy of following terms.
 /
 /  Copyright (C) 2009, ChaN, all right reserved.
 /

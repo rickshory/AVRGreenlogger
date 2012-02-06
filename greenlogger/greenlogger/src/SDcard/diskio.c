@@ -271,7 +271,7 @@ BOOL xmit_datablock (
 /* Send a command packet to MMC                                          */
 /*-----------------------------------------------------------------------*/
 
-//static
+static
 BYTE send_cmd (
 	BYTE cmd,		/* Command byte */
 	DWORD arg		/* Argument */

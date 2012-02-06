@@ -208,6 +208,7 @@ void checkForCommands (void) {
 						outputStringToUART(str);
 {
 	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
 
 if(f_mount(0, &FileSystemObject)!=FR_OK) {
 	//  flag error
@@ -244,6 +245,8 @@ if(f_open(&logFile, "0000/GpsLog.txt", FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_
 	outputStringToUART(str);
 //flag error
 }
+	// Move to end of the file to append data
+//	res = f_lseek(&logFile, (&logFile->fsize));
 
 unsigned int bytesWritten;
 f_write(&logFile, "New log opened!\n", 16, &bytesWritten);

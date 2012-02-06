@@ -245,8 +245,12 @@ if(f_open(&logFile, "0000/GpsLog.txt", FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_
 	outputStringToUART(str);
 //flag error
 }
+	len = sprintf(str, "\n\r f_size : 0x%x\n\r", f_size(&logFile));
+	outputStringToUART(str);
+
+
 	// Move to end of the file to append data
-//	res = f_lseek(&logFile, (&logFile->fsize));
+	res = f_lseek(&logFile, f_size(&logFile));
 
 unsigned int bytesWritten;
 f_write(&logFile, "New log opened!\n", 16, &bytesWritten);

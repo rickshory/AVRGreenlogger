@@ -39,13 +39,17 @@
 #define SD_PWR_PORT   PORTB
 #define SD_PWR_DD DDRB
 
+// enable internal pull-up resistor on MISO, instead of a physical one on the board
+#define SD_MISO_PU_PORT PORTB
+#define SD_MISO_PU_BIT 6
+
 // #define SELECT()      SD_CS_PORT &= ~(1<<SD_CS_BIT)      // MMC CS = L
 // #define DESELECT()   SD_CS_PORT |=  (1<<SD_CS_BIT)      // MMC CS = H
 
 /* Port Controls  (Platform dependent) */
-#define SPI_PORT |= (1<<DD_MISO); 
-#define CS_LOW()	SD_CS_PORT &= ~(1<<SD_CS_BIT)			/* MMC CS = L */
-#define	CS_HIGH()	SD_CS_PORT |=  (1<<SD_CS_BIT)			/* MMC CS = H */
+//#define SPI_PORT |= (1<<DD_MISO); 
+#define CS_LOW()	SD_CS_PORT &= ~(1<<SD_CS_BIT)			// MMC CS = L
+#define	CS_HIGH()	SD_CS_PORT |=  (1<<SD_CS_BIT)			// MMC CS = H
 
 // original below, from "C:\Users\rshory\Documents\Current work\DataLogger\SD card\ff9sample\avr\mmc.c"
 // #define SOCKWP		(PINB & 0x20)		/* Write protected. yes:true, no:false, default:false */

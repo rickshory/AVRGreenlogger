@@ -152,7 +152,10 @@ void power_on (void)
 	for (Timer1 = 3; Timer1; );	// Wait for 30ms
    SD_CS_DD|=(1<<SD_CS_BIT);          // Turns on CS pin as output 
    DDR_SPI = (1<<DD_MOSI)|(1<<DD_SCK)|(1<<DD_SS); 
-   SPCR = (1<<SPE)|(1<<MSTR); /* Initialize SPI port (Mode 0) */ 
+   SPCR = (1<<SPE)|(1<<MSTR); // Initialize SPI port (Mode 0)
+   // enable MISO internal pull-up resistor
+   DDR_SPI &= ~(1<<SD_MISO_PU_BIT); // force MISO to be in input
+   SD_MISO_PU_PORT |= (1<<SD_MISO_PU_BIT); // output high to the port, enables pull-up on the input
 } 
 
 /*

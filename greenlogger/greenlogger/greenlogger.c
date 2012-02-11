@@ -266,6 +266,34 @@ f_mount(0,0);
 						break;						
 					}
 
+                case 'P': case 'p': 
+				{ // force SD card power off
+                    outputStringToUART("\r\n turning SD card power off\r\n");
+					turnSDCardPowerOff();
+					outputStringToUART("\r\n SD card power turned off\r\n");
+                    break;
+                }
+
+                case '^':
+				{ // force B3 high
+                    outputStringToUART("\r\n forcing B3 high\r\n");
+					DDRB |= 0b00001000;
+					PORTB |= 0b00001000;
+					outputStringToUART("\r\n B3 forced high \r\n");
+                    break;
+                }
+
+                case 'v':
+				{ // force B3 low
+                    outputStringToUART("\r\n forcing B3 low\r\n");
+					DDRB |= 0b00001000;
+					PORTB &= 0b11110111;
+					outputStringToUART("\r\n B3 forced low \r\n");
+                    break;
+                }
+
+
+
 /*
                 case 'T': case 't':
 					{ // set time

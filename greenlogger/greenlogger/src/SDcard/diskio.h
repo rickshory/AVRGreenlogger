@@ -25,6 +25,9 @@
 
 /*SPI configuration*/
 #define SPI_PORT PORTB
+#define SPI_MOSI_BIT 5
+#define SPI_MISO_BIT 6
+#define SPI_SCK_BIT 7
 #define DD_MOSI   DDB5 
 #define DD_SCK   DDB7 
 #define DDR_SPI   DDRB 
@@ -100,6 +103,8 @@ typedef enum {
 	RES_PARERR		/* 4: Invalid Parameter */
 } DRESULT;
 
+// wrapper function
+void turnSDCardPowerOff(void);
 
 /*---------------------------------------*/
 /* Prototypes for disk control functions */

@@ -80,7 +80,7 @@ static
 BYTE rcvr_spi (void)
 {
 	SPDR = 0xFF;
-	loop_until_bit_is_set(SPSR, SPIF);
+	loop_until_bit_is_set(SPSR, SPIF); // syntax: loop_until_bit_is_set(sfr, bit)
 	return SPDR;
 }
 
@@ -179,20 +179,25 @@ void power_off (void)
 
 static 
 void power_off (void) 
-{ 
-   SELECT();            // Wait for card ready
-//   CS_LOW();            // Wait for card ready
-   wait_ready(); 
-   release_spi();
-//   deselect();
-//   SD_CS_DD |= (1<<SD_CS_BIT);          // Turns on CS pin as output 
-	for (Timer1 = 2; Timer1; );	// Wait for 20ms
-	SD_CS_DD |= (1<<SD_CS_BIT);          // Turns on CS pin as output
-	DESELECT(); // this may be redundant, but explicitly deselect the SD card
-	SPCR &= ~(1<<SPE); // disable SPI
-	
-//	PRR0 |= (1<<PRSPI); // turn off power to SPI module, stop its clock
-	
+{
+	if (!(PRR0 & (1<<PRSPI))) // is SPI power on (Pwr Save bit clear)?
+	{
+		if (SPCR & (1<<SPE)) // is SPI enabled?
+		{ // shutdown sequence
+			SELECT(); // Wait for card ready
+			//   CS_LOW();            // Wait for card ready
+			wait_ready();
+			release_spi();
+			//   deselect();
+			//   SD_CS_DD |= (1<<SD_CS_BIT);          // Turns on CS pin as output
+			// for (Timer1 = 2; Timer1; );	// Wait for 20ms
+			// SD_CS_DD |= (1<<SD_CS_BIT);          // Turns on CS pin as output
+			// DESELECT(); // this may be redundant, but explicitly deselect the SD card
+			SPCR &= ~(1<<SPE); // disable SPI
+			
+		}
+		PRR0 |= (1<<PRSPI); // turn off power to SPI module, stop its clock
+	}		
 	for (Timer1 = 2; Timer1; );	// Wait for 20ms
     DDR_SPI &= ~((1<<DD_MOSI)|(1<<DD_SCK)); // change SPI output lines MOSI and SCK into inputs
 	// pins might source current momentarily
@@ -213,7 +218,7 @@ void power_off (void)
 
 void turnSDCardPowerOff(void)
 {
-// wrapper function
+// public wrapper function
 	power_off();
 }
 

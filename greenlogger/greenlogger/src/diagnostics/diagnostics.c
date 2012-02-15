@@ -24,8 +24,10 @@ void setupDiagnostics (void)
 void ioinit (void)
 {
     //1 = output, 0 = input
-    DDRA = 0b11111111; //All outputs
-	PORTA = 0xFF; // will be toggled by timer3 interrupts
+//    DDRA = 0b11111111; //All outputs
+//	PORTA = 0xFF; // will be toggled by timer3 interrupts
+    DDRA = 0b00000001; // A0 output
+	PORTA = 0x01; // will be toggled by timer3 interrupts
 }
 
 /*! Sets up Timer3 for periodic interrupt of 10ms
@@ -84,5 +86,5 @@ ISR(TIMER3_COMPA_vect)
 {
 //	TCNT3 = 0; // not needed if CTC enabled
 //	OCR3A = CT_100MS; // not needed, retains value
-	disk_timerproc();
+	heartBeat();
 }

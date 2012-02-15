@@ -27,6 +27,7 @@ extern void rtc_init(void);
 //extern char* rtc_getstring(char* dtstr, DateTime dt);
 extern void datetime_getstring(char* dtstr, struct DateTime *dtp);
 extern void rtc_add1sec(void);
+extern void rtc_setdefault(void);
 
 
 #endif /* RTC_H_ */

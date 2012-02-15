@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------*/
 /* MMCv3/SDv1/SDv2 (in SPI mode) control module  (C)ChaN, 2007           */
 /*-----------------------------------------------------------------------*/
-/* Only rcvr_spi(), xmit_spi(), disk_timerproc() and some macros         */
+/* Only rcvr_spi(), xmit_spi(), heartBeat() and some macros         */
 /* are platform dependent.                                               */
 /*-----------------------------------------------------------------------*/
 
@@ -17,17 +17,14 @@
 
 ---------------------------------------------------------------------------*/
 
-static volatile 
-uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
-
 static volatile
-DSTATUS Stat = STA_NOINIT;	/* Disk status */
+DSTATUS Stat = STA_NOINIT;	// Disk status
 
-static volatile
-BYTE Timer1, Timer2;	/* 100Hz decrement timer */
+extern volatile
+BYTE Timer1, Timer2;	// 100Hz decrement timer
 
 static
-BYTE CardType;			/* Card type flags */
+BYTE CardType;			// Card type flags
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
@@ -645,45 +642,5 @@ DRESULT disk_ioctl (
 #endif /* _USE_IOCTL != 0 */
 
 
-/*-----------------------------------------------------------------------*/
-/* Device Timer Interrupt Procedure  (Platform dependent)                */
-/*-----------------------------------------------------------------------*/
-/* This function must be called in period of 10ms                        */
 
-void disk_timerproc (void)
-{
-	static BYTE pv;
-	BYTE n, s;
-	
-	if (--ToggleCountdown <= 0) 
-		{
-			PORTA ^= 0xFF;
-			ToggleCountdown = TOGGLE_INTERVAL;
-		}
-
-	n = Timer1;						/* 100Hz decrement timer */
-	if (n) Timer1 = --n;
-	n = Timer2;
-	if (n) Timer2 = --n;
-/*
-	n = pv;
-	pv = SOCKPORT & (SOCKWP | SOCKINS);	// Sample socket switch
-
-	if (n == pv) {					// Have contacts stabilized?
-		s = Stat;
-
-		if (pv & SOCKWP)			// WP is H (write protected)
-			s |= STA_PROTECT;
-		else						// WP is L (write enabled)
-			s &= ~STA_PROTECT;
-
-		if (pv & SOCKINS)			// INS = H (Socket empty)
-			s |= (STA_NODISK | STA_NOINIT);
-		else						// INS = L (Card inserted)
-			s &= ~STA_NODISK;
-
-		Stat = s;
-	}
-*/
-}
 

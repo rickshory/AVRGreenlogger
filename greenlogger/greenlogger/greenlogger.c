@@ -37,7 +37,7 @@
  * DAMAGE.
  */
 /**
-/*
+ *
  * greenlogger.c
  *
  * Created: 12/21/2011 10:04:15 AM
@@ -45,9 +45,21 @@
  */ 
 
 #include <avr/io.h>
+#include <stdio.h>
+#include <string.h>
 #include "greenlogger.h"
+#include "config/RTC.h"
 #include "SDcard/ff.h"
 #include "SDcard/diskio.h"
+#include "diagnostics/diagnostics.h"
+
+volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
+
+volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sleep
+
+volatile
+BYTE Timer1, Timer2;	/* 100Hz decrement timer */
+
 
 int len, err = 0;
 char str[128]; // generic space for strings to be output
@@ -62,22 +74,26 @@ char datetime_string[25];
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
-extern RTC_dt;
+volatile char stateFlags1 = 0;
+
+
+extern struct DateTime RTC_dt;
 
 /**
  * \brief The main application
  *
- * This application will initialize the UART, send a character and then receive
- * it and check if it is the same character as was sent.
+ * This application logs visible and infrared irradiance levels to an SD card
+ * 
  *
- * \note The RX and TX pins should be externally connected in order to pass the
- * test.
+ * \note 
+ * 
  */
 int main(void)
 {
-	uint8_t data;
+//	uint8_t data;
 	uint8_t cnt;
 	uint16_t cntout = 0;
+//	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
 	cli();
 	setupDiagnostics();
 	uart_init();
@@ -91,13 +107,20 @@ int main(void)
 	}
 	rtc_setdefault();
     // output a counter
-	do {
+	while (1) {
+		if (stateFlags1 & (1<<isRoused)) {
+			outputStringToUART("\r\n  roused\r\n");
+		} else { // allow to be roused again
+			enableAccelInterrupt();
+		}			
 		itoa(cntout, num_string, 10);
 /*
 		for (cnt = 0; cnt < strlen(num_string); cnt++) {
 			uart_putchar(num_string[cnt]);
 		}
 */
+
+		
 		outputStringToUART(num_string);
 //		uart_putchar('\t');
 		outputStringToUART("\t");
@@ -112,9 +135,11 @@ int main(void)
 //		uart_putchar('\n');
 		delay_ms(1000);
 		cntout++;
+		if (cntout == 65500) 
+			cntout = 0;
 		rtc_add1sec();
 		checkForCommands();
-	} while (cntout < 65500);
+	}
 /*
 	// Check if we have received the string we sent
 	cnt = 0;
@@ -432,4 +457,56 @@ f_mount(0,0);
          } // done parsing character
     } // while (1)
 } // end of checkForCommands
+
+/**
+ * \brief internal system heartbeat
+ *
+ * This function is called every 10ms by the Timer3 interrupt
+ *
+ * \note 
+ */
+
+void heartBeat (void)
+{
+//	static BYTE pv;
+//	BYTE n, s;
+	BYTE n;
+	
+	if (--ToggleCountdown <= 0) 
+	{
+//		PORTA ^= 0xFF;
+		PORTA ^= 0x01;
+		ToggleCountdown = TOGGLE_INTERVAL;
+	}
+	
+	if (--rouseCountdown <= 0)
+	{
+		stateFlags1 &= ~(1<<isRoused);
+	}
+
+	n = Timer1;						/* 100Hz decrement timer */
+	if (n) Timer1 = --n;
+	n = Timer2;
+	if (n) Timer2 = --n;
+/*
+	n = pv;
+	pv = SOCKPORT & (SOCKWP | SOCKINS);	// Sample socket switch
+
+	if (n == pv) {					// Have contacts stabilized?
+		s = Stat;
+
+		if (pv & SOCKWP)			// WP is H (write protected)
+			s |= STA_PROTECT;
+		else						// WP is L (write enabled)
+			s &= ~STA_PROTECT;
+
+		if (pv & SOCKINS)			// INS = H (Socket empty)
+			s |= (STA_NODISK | STA_NOINIT);
+		else						// INS = L (Card inserted)
+			s &= ~STA_NODISK;
+
+		Stat = s;
+	}
+*/
+}
 

@@ -49,9 +49,13 @@
 #include <string.h>
 #include "greenlogger.h"
 #include "config/RTC.h"
+#include <inttypes.h>
 #include "SDcard/ff.h"
 #include "SDcard/diskio.h"
 #include "diagnostics/diagnostics.h"
+#include <util/twi.h>
+#include "I2C/I2C.h"
+#include "Accelerometer/ADXL345.h"
 
 volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 
@@ -74,7 +78,7 @@ char datetime_string[25];
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
-volatile char stateFlags1 = 0;
+volatile uint8_t stateFlags1 = 0;
 
 
 extern struct DateTime RTC_dt;
@@ -100,6 +104,9 @@ int main(void)
 	commandBuffer[0] = '\0';
 	commandBufferPtr = commandBuffer; // "empty" the command buffer
 	sei();
+    outputStringToUART("\r\n  enter I2C_Init\r\n");
+	I2C_Init(); // enable I2C 
+	outputStringToUART("\r\n  I2C_Init completed\r\n");
 
 	// Send the test string
 	for (cnt = 0; cnt < strlen(test_string); cnt++) {
@@ -145,7 +152,7 @@ int main(void)
 	cnt = 0;
 	do {
 		// Wait for next character
-		while (!uart_char_waiting());
+		while (!uart_char_waiting_in());
 		data = uart_getchar();
 		// Compare to what we sent
 //		Assert (data == test_string[cnt++]);
@@ -170,34 +177,9 @@ void outputStringToUART (char* St) {
 	uint8_t cnt;
 	for (cnt = 0; cnt < strlen(St); cnt++) {
 		uart_putchar(St[cnt]);
-	}		
-	
-/*
-    char *tmp;
-    if (!stateFlags.isRoused) // if system is asleep, or about to go to sleep
-        return; // don't bother with any output till wakened
-    if (_U1MD) { // UART module 1 was disabled to save power during sleep
-        _U1MD = 0; // remove disable from UART module 1
-        initUSART();
-        __asm__ ("nop"); // allow time for wakeup
-        __asm__ ("nop");
-    }
-    _U1TXIE = 1; // enable Tx interrupt so all bytes in buffer will be sent
-    for (; *St != '\0'; St++) { // make sure there is room in USART1_outputbuffer
-        __asm__ volatile("disi #0x3FFF"); // disable interrupts while we check & update the buffer
-        tmp = (char*)(USART1_outputbuffer_head + 1);
-        if (tmp >= (&USART1_outputbuffer[0] + USART1_Buffer_Length))
-            tmp = (char*)(&USART1_outputbuffer[0]); // rollover to beginning if necessary
-        // head=tail is the test for a full buffer
-        if (tmp != USART1_outputbuffer_tail) { // there is room in USART1_outputbuffer
-            *USART1_outputbuffer_head = *St;
-            USART1_outputbuffer_head = (char*)tmp;
-        }
-        __asm__ volatile("disi #0x0000"); // enable interrupts
-        _U1TXIE = 1; // enable Tx interrupt; interrupt will then occur as soon as Transmit 
-        //  buffer has moved contents into Transmit Shift Register
-    }
-*/
+	}
+	while (uart_char_queued_out())
+		;
 } // end of outputStringToUART
 
 /**
@@ -212,7 +194,7 @@ void outputStringToUART (char* St) {
 void checkForCommands (void) {
     char c;
     while (1) {
-		if (!uart_char_waiting()) 
+		if (!uart_char_waiting_in()) 
 			return;
 		
 		c = uart_getchar();
@@ -270,7 +252,8 @@ if(f_open(&logFile, "0000/GpsLog.txt", FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_
 	outputStringToUART(str);
 //flag error
 }
-	len = sprintf(str, "\n\r f_size : 0x%x\n\r", f_size(&logFile));
+//	len = sprintf(str, "\n\r f_size : 0x%x\n\r", f_size(&logFile));
+	len = sprintf(str, "\n\r f_size : 0x%x\n\r", (uint16_t)f_size(&logFile));
 	outputStringToUART(str);
 
 
@@ -316,7 +299,11 @@ f_mount(0,0);
 					outputStringToUART("\r\n B3 forced low \r\n");
                     break;
                 }
-
+				case 'A': case 'a':
+				{
+					findADXL345();
+					break;
+				}
 
 
 /*

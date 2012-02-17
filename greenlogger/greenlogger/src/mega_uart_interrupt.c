@@ -37,19 +37,11 @@
  */
 /**
  * \mainpage
- * \section board STK600 development board
- * \section intro Introduction
+  * \section intro Introduction
  * This example demonstrates how to use the megaAVR UART with interrupts.
  *
  * \section files Files:
- * - mega_uart_interrupt_example.c: megaAVR STK600 UART interrupt example
- *
- * \section exampledescription Brief description of the example application
- * This application will initialize the UART, send a string and then receive
- * it and check if it is the same string as we sent.
- *
- * \note The RX and TX pins should be externally connected in order to pass the
- * test.
+ * - mega_uart_interrupt_example.c: megaAVR UART interrupt example
  *
  * \section compinfo Compilation Info
  * This software was written for the <A href="http://gcc.gnu.org/">GNU GCC</A>
@@ -197,9 +189,20 @@ inline uint8_t uart_getchar(void)
  * \retval true if data is waiting
  * \retval false if no data is waiting
  */
-inline bool uart_char_waiting(void)
+inline bool uart_char_waiting_in(void)
 {
 	return !ring_buffer_is_empty(&ring_buffer_in);
+}
+
+/**
+ * \brief Function to check if we have a char waiting in the UART send buffer
+ *
+ * \retval true if outgoing data is queued
+ * \retval false if no outgoing data is queued
+ */
+inline bool uart_char_queued_out(void)
+{
+	return !ring_buffer_is_empty(&ring_buffer_out);
 }
 
 //

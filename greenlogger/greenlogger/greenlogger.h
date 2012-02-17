@@ -51,5 +51,6 @@ typedef struct	{ // always assumes century is 20; year 2000 to 2099
 
 void outputStringToUART (char* St);
 void checkForCommands (void);
+void enableAccelInterrupt (void);
 
 #endif /* GREENLOGGER_H_ */

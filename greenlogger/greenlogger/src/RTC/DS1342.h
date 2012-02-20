@@ -1,0 +1,35 @@
+/*
+ * DS1342.h
+ *
+ * Created: 2/19/2012 10:07:30 PM
+ *  Author: rshory
+ */ 
+
+
+#ifndef DS1342_H_
+#define DS1342_H_
+
+#define DS1342_ADDR_WRITE 0xd0
+#define DS1342_ADDR_READ 0xd1
+
+#define DS1342_TIME_SECONDS  0x00
+#define DS1342_TIME_MINUTES  0x01
+#define DS1342_TIME_HOURS  0x02
+#define DS1342_TIME_DAY  0x03
+#define DS1342_TIME_DATE  0x04
+#define DS1342_TIME_MONTH_CENTURY  0x05
+#define DS1342_TIME_YEAR  0x06
+#define DS1342_ALARM1_SECONDS  0x07
+#define DS1342_ALARM1_MINUTES  0x08
+#define DS1342_ALARM1_HOURS  0x09
+#define DS1342_ALARM1_DAY_DATE  0x0a
+#define DS1342_ALARM2_MINUTES  0x0b
+#define DS1342_ALARM2_HOURS  0x0c
+#define DS1342_ALARM2_DAY_DATE  0x0d
+#define DS1342_CONTROL 0x0e
+#define DS1342_CONTROL_STATUS 0x0f
+
+
+
+
+#endif /* DS1342_H_ */

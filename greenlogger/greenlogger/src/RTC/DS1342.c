@@ -16,7 +16,7 @@ extern int len;
 extern char str[128];
 
 bool rtc_setTime (struct DateTime *t) {
-	uint8_t r;
+	uint8_t r, ct;
 	//Manipulating the Address Counter for Reads:
 	// A dummy write cycle can be used to force the 
 	// address counter to a particular value.
@@ -38,7 +38,8 @@ bool rtc_setTime (struct DateTime *t) {
 		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
 		    outputStringToUART(str);
 			if (r == TW_MT_SLA_ACK) {
-			    r = I2C_Write(DS1342_CONTROL_STATUS); // for testing, look at this register
+//			    r = I2C_Write(DS1342_CONTROL_STATUS); // for testing, look at this register
+			    r = I2C_Write(DS1342_TIME_SECONDS); // for testing, look at this register
 			    len = sprintf(str, "\n\r I2C_Write(DS1342_CONTROL_STATUS): 0x%x\n\r", r);
 			    outputStringToUART(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
@@ -50,6 +51,18 @@ bool rtc_setTime (struct DateTime *t) {
 					    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_READ): 0x%x\n\r", r);
 					    outputStringToUART(str);
 						if (r == TW_MR_SLA_ACK) {
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
+							outputStringToUART(str);
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
+							outputStringToUART(str);
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
+							outputStringToUART(str);
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
+							outputStringToUART(str);
 							r = I2C_Read(0); // do NACK, since this is the last byte
 							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
 							outputStringToUART(str);

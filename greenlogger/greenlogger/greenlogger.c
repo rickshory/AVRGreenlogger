@@ -306,6 +306,12 @@ f_mount(0,0);
 				}
 
 
+                case 'T': case 't':
+					{ // experimenting with time functions
+						if (rtc_setTime(RTC_dt))
+							;
+					}						
+
 /*
                 case 'T': case 't':
 					{ // set time

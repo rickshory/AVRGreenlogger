@@ -5,6 +5,7 @@
  *  Author: rshory
  */ 
 
+bool rtc_setTime (DateTime);
 
 #ifndef DS1342_H_
 #define DS1342_H_
@@ -28,8 +29,5 @@
 #define DS1342_ALARM2_DAY_DATE  0x0d
 #define DS1342_CONTROL 0x0e
 #define DS1342_CONTROL_STATUS 0x0f
-
-
-
 
 #endif /* DS1342_H_ */

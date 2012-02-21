@@ -56,6 +56,7 @@
 #include <util/twi.h>
 #include "I2C/I2C.h"
 #include "Accelerometer/ADXL345.h"
+#include "LtSensor/TSL2561.h"
 
 volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 
@@ -80,8 +81,9 @@ char *commandBufferPtr;
 
 volatile uint8_t stateFlags1 = 0;
 
-
 extern struct DateTime RTC_dt;
+extern struct irrData irrReadings[4];
+
 
 /**
  * \brief The main application
@@ -300,16 +302,24 @@ f_mount(0,0);
                     break;
                 }
 				case 'A': case 'a':
-				{
-					findADXL345();
-					break;
-				}
+					{
+						findADXL345();
+						break;
+					}
+
+                case 'I': case 'i':
+					{ // experimenting with irradiance functions
+						if (getIrrReading(&irrReadings[0]))
+							;
+						break;
+					}						
 
 
                 case 'T': case 't':
 					{ // experimenting with time functions
 						if (rtc_setTime(RTC_dt))
 							;
+						break;
 					}						
 
 /*

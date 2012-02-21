@@ -20,14 +20,14 @@ bool rtc_setTime (struct DateTime *t) {
 	//Manipulating the Address Counter for Reads:
 	// A dummy write cycle can be used to force the 
 	// address counter to a particular value.
-
-// do START
-// write DS1342_ADDR_WRITE
-// write the memory address where we intend to read (dummy read, set's pointer)
-// do repeated START
-// write DS1342_ADDR_READ
-// read byte(s) with ACK or NACK as applicable
-// do STOP
+	//	steps:
+	// do START
+	// write DS1342_ADDR_WRITE
+	// write the memory address where we intend to read (dummy read, sets pointer)
+	// do repeated START
+	// write DS1342_ADDR_READ
+	// read byte(s) with ACK or NACK as applicable
+	// do STOP
 
 	outputStringToUART("\n\r entered time routine \n\r");
 	r = I2C_Start();

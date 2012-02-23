@@ -34,9 +34,34 @@
 #define	TSL2561_DATA1LOW	0x0e	// Low byte of ADC channel 1
 #define	TSL2561_DATA1HIGH	0x0f	// High byte of ADC channel 1
 
+// controls within registers
+#define	TSL2561_CMD_BIT 0b10000000 // this alone specifies none of the following, i.e. it's a byte command
+#define	TSL2561_CLI_BIT 0b01000000 // write 1 to clear any interrupt
+#define	TSL2561_WRD_BIT 0b00100000 // WORD protocol
+#define	TSL2561_BLK_BIT 0b00010000 // BLOCK protocol
+// bits 3:0 specify the register (listed above) to apply this command to
+
+#define	TSL2561_PWR_ON 0x03 // write this to the CONTROL register to power up the device
+#define	TSL2561_PWR_OFF 0x00 // write this to the CONTROL register to power down the device
+
+// bits of the TIMING register
+#define	TSL2561_GAIN_BIT 0b0001000 // 0 = low gain (1×); 1 = high gain (16×)
+//INTEG FIELD VALUE	SCALE	NOMINAL INTEGRATION TIME
+//	00				0.034		13.7 ms
+//	01				0.252		101 ms
+//	10				1			402 ms
+//	11				??			N/A
+#define	TSL2561_INTEG_BIT_LO 0b0000001 //
+#define	TSL2561_INTEG_BIT_HI 0b0000010 //
+
+
+
 // options
-#define TSL2561_CHANNEL_BROADBAND	0xac	// broadband channel
-#define TSL2561_CHANNEL_INFRARED	0xae	// infrared channel
+//#define TSL2561_CHANNEL_BROADBAND	0xac	// broadband channel
+//#define TSL2561_CHANNEL_INFRARED	0xae	// infrared channel
+#define TSL2561_CHANNEL_BROADBAND	0x0c	// broadband channel
+#define TSL2561_CHANNEL_INFRARED	0x0e	// infrared channel
+
 
 enum TSL2561_Opt_UpDn
 {
@@ -44,8 +69,22 @@ enum TSL2561_Opt_UpDn
  TSL2561_UpLooking // ADDR SEL pin is tied high = up-pointing sensor WRITE 0x92, READ 0x93
 };
 
-// union to allow reading in Lo and Hi bytes of irradiance, and reading out whole word
+// union allows writing in Lo and Hi bytes of irradiance, and reading out whole word
+typedef struct {
+    union {
+        struct {
+            uint8_t irrLoByte, irrHiByte; // this is the correct endian-ness
+        };
+        struct  {
+            uint16_t irrWholeWord;
+        };
+    };
+    uint16_t irrMultiplier;
+} irrData;
+
+irrData irrReadings[4];
 //typedef 
+/*
 struct irrData {
     union irrValue {
         struct irrBytes {
@@ -57,10 +96,15 @@ struct irrData {
     };
     uint16_t irrMultiplier;
 };
-
-
+*/
+/*
+struct irrData {
+	uint8_t irrLoByte, irrHiByte;
+	uint16_t irrMultiplier;
+};
+*/
 // functions
-bool getIrrReading (struct irrData *rd);
+bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd);
 
 
 #endif /* TSL2561_H_ */

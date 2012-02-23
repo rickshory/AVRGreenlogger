@@ -82,7 +82,8 @@ char *commandBufferPtr;
 volatile uint8_t stateFlags1 = 0;
 
 extern struct DateTime RTC_dt;
-extern struct irrData irrReadings[4];
+//struct 
+extern irrData irrReadings[4];
 
 
 /**
@@ -309,7 +310,7 @@ f_mount(0,0);
 
                 case 'I': case 'i':
 					{ // experimenting with irradiance functions
-						if (getIrrReading(&irrReadings[0]))
+						if (getIrrReading(TSL2561_UpLooking, TSL2561_CHANNEL_BROADBAND, &irrReadings[0]))
 							;
 						break;
 					}						

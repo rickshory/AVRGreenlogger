@@ -22,7 +22,8 @@ extern char str[128];
 uint16_t irrReadingNumber, cellVoltage;
 
 bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
-	uint8_t  irrSensorNumber, irrSensorReadAddr, irrSensorWriteAddr, irrChannelNumber, irrChannel;
+	uint8_t irrSensorReadAddr, irrSensorWriteAddr, irrChannel;
+	//   irrSensorNumber, irrChannelNumber
 	uint8_t r, d, ct, intTmp;
 	uint16_t unsignedIntTmp;
 	// set defaults

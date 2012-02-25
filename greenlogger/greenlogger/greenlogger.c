@@ -57,13 +57,14 @@
 #include "I2C/I2C.h"
 #include "Accelerometer/ADXL345.h"
 #include "LtSensor/TSL2561.h"
+#include "TemperatureSensor/TCN75A.h"
 
 volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 
 volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sleep
 
 volatile
-BYTE Timer1, Timer2;	/* 100Hz decrement timer */
+uint8_t Timer1, Timer2;	/* 100Hz decrement timer */
 
 
 int len, err = 0;
@@ -307,6 +308,21 @@ f_mount(0,0);
 						findADXL345();
 						break;
 					}
+
+                case 'F': case 'f':
+					{ // experimenting with temperature functions
+						if (!initOneShotTemperatureReading()) {
+							// temperature conversion time, typically 30ms
+							for (Timer2 = 4; Timer2; );	// Wait for 40ms to be sure
+							if (!getTemperatureReading(&temperatureReading)) {
+								len = sprintf(str, "\n\r Temperature: %d degrees C\n\r", (temperatureReading.tmprHiByte));
+								outputStringToUART(str);
+
+							}
+						}
+
+						break;
+					}						
 
                 case 'I': case 'i':
 					{ // experimenting with irradiance functions

@@ -83,26 +83,7 @@ typedef struct {
 } irrData;
 
 irrData irrReadings[4];
-//typedef 
-/*
-struct irrData {
-    union irrValue {
-        struct irrBytes {
-            uint8_t irrLoByte, irrHiByte;
-        };
-        struct irrWord {
-            uint16_t irrWholeWord;
-        };
-    };
-    uint16_t irrMultiplier;
-};
-*/
-/*
-struct irrData {
-	uint8_t irrLoByte, irrHiByte;
-	uint16_t irrMultiplier;
-};
-*/
+
 // functions
 bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd);
 

@@ -58,6 +58,7 @@
 #include "Accelerometer/ADXL345.h"
 #include "LtSensor/TSL2561.h"
 #include "TemperatureSensor/TCN75A.h"
+#include "BattMonitor/ADconvert.h"
 
 volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 
@@ -85,6 +86,8 @@ volatile uint8_t stateFlags1 = 0;
 extern struct DateTime RTC_dt;
 //struct 
 extern irrData irrReadings[4];
+
+extern adcData cellVoltageReading;
 
 
 /**
@@ -331,6 +334,16 @@ f_mount(0,0);
 						break;
 					}						
 
+                case 'B': case 'b':
+					{ // experimenting with reading the battery voltage using the Analog to Digital converter
+						len = sprintf(str, "\n\r Hi byte: %d \n\r", readCellVoltage(&cellVoltageReading));
+						outputStringToUART(str);
+						len = sprintf(str, "\n\r 16bit value: %d \n\r", cellVoltageReading.adcWholeWord);
+						outputStringToUART(str);
+						
+
+						break;
+					}						
 
                 case 'T': case 't':
 					{ // experimenting with time functions

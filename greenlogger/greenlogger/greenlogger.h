@@ -27,6 +27,13 @@ enum machStates
 };
 */
 
+enum stateRTC
+{
+	rtcTimeNotSet = 0, // RTC time has not been set in any way, running from power-up default
+	rtcTimeSetToDefault, // RTC date/time has been set to the default, winter solstice 2011
+	rtcHasGPSTime // RTC has a valid date/time acquired from the GPS; 
+};
+
 enum stateFlags1Bits
 {
  timeHasBeenSet = 0, // false when coming out of reset, true after RTCC has been set
@@ -38,7 +45,7 @@ enum stateFlags1Bits
  isLeveling, // diagnostics show accelerometer output rather than light sensors, used for leveling the system
  accelerometerIsThere // set if system finds ADXL345 on I2C bus
 };
-
+/*
 typedef struct	{ // always assumes century is 20; year 2000 to 2099
 	volatile uint8_t year; // 0 to 99
 	volatile uint8_t month; // 1 to 12
@@ -48,6 +55,7 @@ typedef struct	{ // always assumes century is 20; year 2000 to 2099
 	volatile uint8_t minute; // 0 to 59
 	volatile uint8_t second; // 0 to 59
 } DateTime ;
+*/
 
 void outputStringToUART (char* St);
 void checkForCommands (void);

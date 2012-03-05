@@ -48,13 +48,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "greenlogger.h"
-#include "config/RTC.h"
 #include <inttypes.h>
 #include "SDcard/ff.h"
 #include "SDcard/diskio.h"
 #include "diagnostics/diagnostics.h"
 #include <util/twi.h>
 #include "I2C/I2C.h"
+#include "RTC/DS1342.h"
 #include "Accelerometer/ADXL345.h"
 #include "LtSensor/TSL2561.h"
 #include "TemperatureSensor/TCN75A.h"
@@ -77,14 +77,15 @@ const char test_string[] = "Count \n";
 char num_string[20];
 char datetime_string[25];
 //char* dt_stp = datetime_string;
-//DateTime RTC_DT;
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
+
+volatile uint32_t timeWhenRTCLastSetFromGPS = 0;
 volatile uint8_t stateFlags1 = 0;
 
-extern struct DateTime RTC_dt;
-//struct 
+volatile dateTime RTC_dt;
+
 extern irrData irrReadings[4];
 
 extern adcData cellVoltageReading;
@@ -347,7 +348,7 @@ f_mount(0,0);
 
                 case 'T': case 't':
 					{ // experimenting with time functions
-						if (rtc_setTime(RTC_dt))
+						if (rtc_setTime(&RTC_dt))
 							;
 						break;
 					}						

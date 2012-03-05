@@ -508,7 +508,8 @@ void heartBeat (void)
 	if (--ToggleCountdown <= 0) 
 	{
 //		PORTA ^= 0xFF;
-		PORTA ^= 0x01;
+//		PORTA ^= 0x01;
+		PORTA ^= 0b00000100; // toggle bit 2, pilot light blinkey
 		ToggleCountdown = TOGGLE_INTERVAL;
 	}
 	

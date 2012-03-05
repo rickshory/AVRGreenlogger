@@ -26,8 +26,10 @@ void ioinit (void)
     //1 = output, 0 = input
 //    DDRA = 0b11111111; //All outputs
 //	PORTA = 0xFF; // will be toggled by timer3 interrupts
-    DDRA = 0b00000001; // A0 output
-	PORTA = 0x01; // will be toggled by timer3 interrupts
+//    DDRA = 0b00000001; // A0 output
+//	PORTA = 0x01; // will be toggled by timer3 interrupts
+    DDRA = 0b00000100; // A2 output
+	PORTA = 0b00000100; // timer3 interrupts will toggle this pilot light blinkey
 }
 
 /*! Sets up Timer3 for periodic interrupt of 10ms

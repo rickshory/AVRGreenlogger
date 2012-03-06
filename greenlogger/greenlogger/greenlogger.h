@@ -31,6 +31,7 @@ enum stateRTC
 {
 	rtcTimeNotSet = 0, // RTC time has not been set in any way, running from power-up default
 	rtcTimeSetToDefault, // RTC date/time has been set to the default, winter solstice 2011
+	rtcTimeManuallySet, // RTC date/time was manually set by command line; change noted in log
 	rtcHasGPSTime // RTC has a valid date/time acquired from the GPS; 
 };
 

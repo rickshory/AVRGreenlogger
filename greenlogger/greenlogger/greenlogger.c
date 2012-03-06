@@ -84,7 +84,7 @@ char *commandBufferPtr;
 volatile uint32_t timeWhenRTCLastSetFromGPS = 0;
 volatile uint8_t stateFlags1 = 0;
 
-volatile dateTime RTC_dt;
+volatile dateTime dt_RTC, dt_tmp, dt_WhenSetFromGPS;
 
 extern irrData irrReadings[4];
 
@@ -139,7 +139,7 @@ int main(void)
 		outputStringToUART(num_string);
 //		uart_putchar('\t');
 		outputStringToUART("\t");
-		datetime_getstring(datetime_string, &RTC_dt);
+		datetime_getstring(datetime_string, &dt_RTC);
 /*		
 		for (cnt = 0; cnt < strlen(datetime_string); cnt++) {
 			uart_putchar(datetime_string[cnt]);
@@ -348,8 +348,16 @@ f_mount(0,0);
 
                 case 'T': case 't':
 					{ // experimenting with time functions
-						if (rtc_setTime(&RTC_dt))
-							;
+						if (!rtc_readTime(&dt_tmp)) {
+//							dt_tmp.second = 22;
+//							len = sprintf(str, "\n\r Seconds: %d \n\r", dt_tmp.second);
+//							outputStringToUART(str);
+//							dt_tmp.year = 55;
+							datetime_getstring(str, &dt_tmp);
+							outputStringToUART(str);
+						} else {
+							outputStringToUART("Error reading time");
+						}
 						break;
 					}						
 

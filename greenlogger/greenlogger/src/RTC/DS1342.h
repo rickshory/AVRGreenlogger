@@ -27,19 +27,9 @@
 #define DS1342_ALARM2_DAY_DATE  0x0d
 #define DS1342_CONTROL 0x0e
 #define DS1342_CONTROL_STATUS 0x0f
-/*
-typedef struct { // always assumes century is 20; year 2000 to 2099
-	volatile uint8_t year; // 0 to 99
-	volatile uint8_t month; // 1 to 12
-	volatile uint8_t day; // 1 to 31
-	volatile int8_t houroffset; // timezone difference from Universal Time (GMT) -12 to +12
-	volatile uint8_t hour; // 0 to 23
-	volatile uint8_t minute; // 0 to 59
-	volatile uint8_t second; // 0 to 59
-} dateTime ;
-*/
 
-typedef struct { // always assumes century is 20; year 2000 to 2099
+
+typedef volatile struct { // always assumes century is 20; year 2000 to 2099
 	uint8_t year; // 0 to 99
 	uint8_t month; // 1 to 12
 	uint8_t day; // 1 to 31
@@ -58,7 +48,7 @@ void rtc_add1sec(void);
 void rtc_setdefault(void);
 
 bool rtc_setTime (dateTime *t);
-bool rtc_readTime (dateTime *t);
+uint8_t rtc_readTime (dateTime *t);
 
 
 #endif /* DS1342_H_ */

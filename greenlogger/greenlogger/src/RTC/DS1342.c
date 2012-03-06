@@ -11,7 +11,7 @@
 #include "../greenlogger.h"
 #include <util/twi.h>
 
-extern volatile dateTime RTC_dt;
+extern volatile dateTime dt_RTC;
 
 extern volatile uint8_t stateFlags1;
 extern int len;
@@ -31,10 +31,10 @@ bool rtc_setTime (dateTime *t) {
 	// read byte(s) with ACK or NACK as applicable
 	// do STOP
 
-	outputStringToUART("\n\r entered time routine \n\r");
+//	outputStringToUART("\n\r entered time routine \n\r");
 	r = I2C_Start();
-    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-    outputStringToUART(str);
+//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//    outputStringToUART(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
 		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
@@ -80,7 +80,7 @@ bool rtc_setTime (dateTime *t) {
 }
 
 
-bool rtc_readTime (dateTime *t) {
+uint8_t rtc_readTime (dateTime *t) {
 	uint8_t r, ct;
 	//Manipulating the Address Counter for Reads:
 	// A dummy write cycle can be used to force the 
@@ -94,52 +94,86 @@ bool rtc_readTime (dateTime *t) {
 	// read byte(s) with ACK or NACK as applicable
 	// do STOP
 
-	outputStringToUART("\n\r entered readTime routine \n\r");
+//	outputStringToUART("\n\r entered readTime routine \n\r");
 	r = I2C_Start();
-    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-    outputStringToUART(str);
+//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//    outputStringToUART(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
-		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-		    outputStringToUART(str);
+//		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
+//		    outputStringToUART(str);
 			if (r == TW_MT_SLA_ACK) {
 //			    r = I2C_Write(DS1342_CONTROL_STATUS); // for testing, look at this register
 			    r = I2C_Write(DS1342_TIME_SECONDS); // for testing, look at this register
-			    len = sprintf(str, "\n\r I2C_Write(DS1342_CONTROL_STATUS): 0x%x\n\r", r);
-			    outputStringToUART(str);
+//			    len = sprintf(str, "\n\r I2C_Write(DS1342_CONTROL_STATUS): 0x%x\n\r", r);
+//			    outputStringToUART(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					r = I2C_Start(); // restart
-				    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-				    outputStringToUART(str);
+//				    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//				    outputStringToUART(str);
 					if (r == TW_REP_START) {
 					    r = I2C_Write(DS1342_ADDR_READ); // address the device, say we are going to read
-					    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_READ): 0x%x\n\r", r);
-					    outputStringToUART(str);
+//					    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_READ): 0x%x\n\r", r);
+//					    outputStringToUART(str);
 						if (r == TW_MR_SLA_ACK) {
+							// seconds
 							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
+							t->second = (10 * ((r & 0xf0)>>4) + (r & 0x0f));
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x sec\n\r", r);
+//							outputStringToUART(str);
+							// minutes
 							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
+							t->minute  = (10 * ((r & 0xf0)>>4) + (r & 0x0f));
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x min\n\r", r);
+//							outputStringToUART(str);
+							// hour
 							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
+							if (r & 0b01000000) { // 12-hour format
+								t->hour  = (10 * ((r & 0x10)>>4) + (r & 0x0f));
+								if (r & 0b00100000) // PM
+									t->hour += 12;
+							} else { // 24-hour format
+								t->hour  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
+							}
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x hr\n\r", r);
+//							outputStringToUART(str);
+							// day of week
 							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x wk day\n\r", r);
+//							outputStringToUART(str);
+							// day of month
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							t->day  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x day of month\n\r", r);
+//							outputStringToUART(str);
+							// month (bit7 = century)
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							t->month = (10 * ((r & 0x10)>>4) + (r & 0x0f));
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x month\n\r", r);
+//							outputStringToUART(str);
+							// year, 00 to 99
 							r = I2C_Read(0); // do NACK, since this is the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
+							t->year = (10 * ((r & 0xf0)>>4) + (r & 0x0f));
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x year\n\r", r);
+//							outputStringToUART(str);
 						}							
-					}							
-				}	
+					}
+//					outputStringToUART("\n\r exit from repeat start\n\r");
+				} else { // could not write data to device
+					I2C_Stop();
+					return 3;
+				}
+//				outputStringToUART("\n\r exit from address device\n\r");
+			} else { // could not address device
+				I2C_Stop();
+				return 2;
 			}
-		}		
-    I2C_Stop();
-    outputStringToUART("\n\r I2C_Stop completed \n\r");
-
-	return 1;
+			I2C_Stop();
+//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+		} else { // could not START
+			return 1;
+		}			
+	return 0;
 }
 
 /**
@@ -151,13 +185,13 @@ bool rtc_readTime (dateTime *t) {
  */
 void rtc_setdefault(void)
 {
-	RTC_dt.year = 11;
-	RTC_dt.month = 12;
-	RTC_dt.day = 22;
-	RTC_dt.houroffset = 0;
-	RTC_dt.hour = 5;
-	RTC_dt.minute = 30;
-	RTC_dt.second = 0;
+	dt_RTC.year = 11;
+	dt_RTC.month = 12;
+	dt_RTC.day = 22;
+	dt_RTC.houroffset = 0;
+	dt_RTC.hour = 5;
+	dt_RTC.minute = 30;
+	dt_RTC.second = 0;
 }
 
 /**
@@ -169,51 +203,51 @@ void rtc_setdefault(void)
  */
 void rtc_add1sec(void)
 {
-    (RTC_dt.second)++;
-	if (RTC_dt.second >= 60) {
-		(RTC_dt.minute)++;
-		RTC_dt.second -= 60;
-		if (RTC_dt.minute >= 60) {
-			(RTC_dt.hour)++;
-			RTC_dt.minute -= 60;
-			if (RTC_dt.hour >= 24) {
-				(RTC_dt.day)++;
-				RTC_dt.hour -= 24;
-				if (RTC_dt.day >= 28) {
-					switch (RTC_dt.month) {
+    (dt_RTC.second)++;
+	if (dt_RTC.second >= 60) {
+		(dt_RTC.minute)++;
+		dt_RTC.second -= 60;
+		if (dt_RTC.minute >= 60) {
+			(dt_RTC.hour)++;
+			dt_RTC.minute -= 60;
+			if (dt_RTC.hour >= 24) {
+				(dt_RTC.day)++;
+				dt_RTC.hour -= 24;
+				if (dt_RTC.day >= 28) {
+					switch (dt_RTC.month) {
 					case 1: case 3: case 5: case 7: case 8: case 10: case 12:
-						if (RTC_dt.day > 31) {
-							(RTC_dt.month)++;
-							RTC_dt.day = 1;
+						if (dt_RTC.day > 31) {
+							(dt_RTC.month)++;
+							dt_RTC.day = 1;
 							break;
 						}
 					case 4: case 6: case 9: case 11:
-						if (RTC_dt.day > 30) {
-							(RTC_dt.month)++;
-							RTC_dt.day = 1;
+						if (dt_RTC.day > 30) {
+							(dt_RTC.month)++;
+							dt_RTC.day = 1;
 							break;
 						}							
 					case 2:	
-						if ((RTC_dt.year % 4) || (RTC_dt.day > 29)) {
-							(RTC_dt.month)++;
-							RTC_dt.day = 1;
+						if ((dt_RTC.year % 4) || (dt_RTC.day > 29)) {
+							(dt_RTC.month)++;
+							dt_RTC.day = 1;
 							break;
 						}
 					}
-					if (RTC_dt.month > 12) {
-						(RTC_dt.year)++;
-						RTC_dt.month = 1;
+					if (dt_RTC.month > 12) {
+						(dt_RTC.year)++;
+						dt_RTC.month = 1;
 					}
 				}
 			}				
 		}
 	}
-/*	RTC_dt.year = 11;
-	RTC_dt.month = 12;
-	RTC_dt.day = 22;
-	RTC_dt.houroffset = 0;
-	RTC_dt.hour = 5;
-	RTC_dt.minute = 30;
+/*	dt_RTC.year = 11;
+	dt_RTC.month = 12;
+	dt_RTC.day = 22;
+	dt_RTC.houroffset = 0;
+	dt_RTC.hour = 5;
+	dt_RTC.minute = 30;
 */	
 }
 
@@ -224,6 +258,7 @@ void rtc_add1sec(void)
  * This function converts a data/time struct to
  *  a string and returns a pointer to that string
  *  
+ * Fields contain scalars rather than binary coded decimal, so as to more easily do math
  */
 void datetime_getstring(char* dtstr, dateTime *dtp)
 {

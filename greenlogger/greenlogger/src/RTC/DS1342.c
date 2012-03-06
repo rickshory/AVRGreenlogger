@@ -17,8 +17,9 @@ extern volatile uint8_t stateFlags1;
 extern int len;
 extern char str[128];
 
+/*
 bool rtc_setTime (dateTime *t) {
-	uint8_t r, ct;
+	uint8_t r;
 	//Manipulating the Address Counter for Reads:
 	// A dummy write cycle can be used to force the 
 	// address counter to a particular value.
@@ -78,10 +79,17 @@ bool rtc_setTime (dateTime *t) {
 
 	return 1;
 }
+*/
 
-
+/**
+ * \brief Read date/time from RTC
+ *
+ * This function reads the data/time from the external RTC chip via I2C (TWI) bus
+ *  pass it a pointer to a 'dateTime' struct
+ *  returns with fields filled in that struct
+ */
 uint8_t rtc_readTime (dateTime *t) {
-	uint8_t r, ct;
+	uint8_t r;
 	//Manipulating the Address Counter for Reads:
 	// A dummy write cycle can be used to force the 
 	// address counter to a particular value.
@@ -105,7 +113,7 @@ uint8_t rtc_readTime (dateTime *t) {
 			if (r == TW_MT_SLA_ACK) {
 //			    r = I2C_Write(DS1342_CONTROL_STATUS); // for testing, look at this register
 			    r = I2C_Write(DS1342_TIME_SECONDS); // for testing, look at this register
-//			    len = sprintf(str, "\n\r I2C_Write(DS1342_CONTROL_STATUS): 0x%x\n\r", r);
+//			    len = sprintf(str, "\n\r I2C_Write(DS1342_TIME_SECONDS): 0x%x\n\r", r);
 //			    outputStringToUART(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					r = I2C_Start(); // restart
@@ -161,20 +169,95 @@ uint8_t rtc_readTime (dateTime *t) {
 //					outputStringToUART("\n\r exit from repeat start\n\r");
 				} else { // could not write data to device
 					I2C_Stop();
-					return 3;
+					return errNoI2CDataAck;
 				}
 //				outputStringToUART("\n\r exit from address device\n\r");
 			} else { // could not address device
 				I2C_Stop();
-				return 2;
+				return errNoI2CAddressAck;
 			}
 			I2C_Stop();
 //		    outputStringToUART("\n\r I2C_Stop completed \n\r");
 		} else { // could not START
-			return 1;
+			return errNoI2CStart;
 		}			
-	return 0;
+	return I2C_OK;
 }
+
+/**
+ * \brief Set RTC date/time
+ *
+ * This function sets the data/time in the external RTC chip via I2C (TWI) bus
+ *  pass it a pointer to a 'dateTime' struct
+ *  sets the date/time values from the fields in that struct
+ */
+uint8_t rtc_setTime (dateTime *t) {
+	uint8_t r, d, wholeUnits;
+	//Steps to set the date/time:
+	// do START
+	// write DS1342_ADDR_WRITE
+	// write the memory address (usually DS1342_TIME_SECONDS), where to start writing
+	// write the data to that address; address increments to next (e.g. MINUTES)
+	// continue writing values to set entire time and date
+	// do STOP
+
+	outputStringToUART("\n\r entered setTime routine \n\r");
+	r = I2C_Start();
+    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+    outputStringToUART(str);
+		if (r == TW_START) {
+		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
+		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
+		    outputStringToUART(str);
+			if (r == TW_MT_SLA_ACK) {
+			    r = I2C_Write(DS1342_TIME_SECONDS); // point to this register
+			    len = sprintf(str, "\n\r I2C_Write(DS1342_TIME_SECONDS): 0x%x\n\r", r);
+			    outputStringToUART(str);
+				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
+					// convert Seconds to binary coded decimal
+					wholeUnits = (uint8_t)(t->second/10);
+					d = (wholeUnits<<4) | ((t->second) - (10 * (wholeUnits)));
+					r = I2C_Write(d); // write seconds to RTC
+					// convert Minutes to BCD
+					wholeUnits = (uint8_t)(t->minute/10);
+					d = (wholeUnits<<4) | ((t->minute) - (10 * (wholeUnits)));
+					r = I2C_Write(d); // write minutes to RTC
+					// convert Hours to BCD
+					// bit 6 clear = 24-hour format
+					wholeUnits = (uint8_t)(t->hour/10);
+					d = (wholeUnits<<4) | ((t->hour) - (10 * (wholeUnits)));
+					r = I2C_Write(d); // write hours to RTC
+					// we don't use Day of Week
+					r = I2C_Write(0); // write dummy value of zero to advance addr pointer
+					// convert Day of Month
+					wholeUnits = (uint8_t)(t->day/10);
+					d = (wholeUnits<<4) | ((t->day) - (10 * (wholeUnits)));
+					r = I2C_Write(d); // write day to RTC
+					// convert Month number
+					wholeUnits = (uint8_t)(t->month/10);
+					d = (wholeUnits<<4) | ((t->month) - (10 * (wholeUnits)));
+					r = I2C_Write(d); // write month to RTC
+					// convert Year
+					wholeUnits = (uint8_t)(t->year/10);
+					d = (wholeUnits<<4) | ((t->year) - (10 * (wholeUnits)));
+					r = I2C_Write(d); // write year to RTC
+				} else { // could not write data to device
+					I2C_Stop();
+					return errNoI2CDataAck;
+				}
+//				outputStringToUART("\n\r exit from address device\n\r");
+			} else { // could not address device
+				I2C_Stop();
+				return errNoI2CAddressAck;
+			}
+			I2C_Stop();
+//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+		} else { // could not START
+			return errNoI2CStart;
+		}			
+	return I2C_OK;
+}
+
 
 /**
  * \brief Set default RTC date/time

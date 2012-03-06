@@ -47,7 +47,7 @@ void datetime_getstring(char* dtstr, dateTime *dtp);
 void rtc_add1sec(void);
 void rtc_setdefault(void);
 
-bool rtc_setTime (dateTime *t);
+uint8_t rtc_setTime (dateTime *t);
 uint8_t rtc_readTime (dateTime *t);
 
 

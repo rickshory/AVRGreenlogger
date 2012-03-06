@@ -27,12 +27,24 @@ enum machStates
 };
 */
 
+// if an I2C attempt fails, is virtually always does so on one of these early attempts
+//  if these pass, the rest of the transmission is very reliable
+
+enum errI2C
+{
+	I2C_OK = 0,
+	errNoI2CStart, // could not initiate Start state on I2C bus
+	errNoI2CAddressAck, // no acknowledgment by a device at the tested address
+	errNoI2CDataAck // no acknowledgment of a data write
+}; 
+
 enum stateRTC
 {
 	rtcTimeNotSet = 0, // RTC time has not been set in any way, running from power-up default
 	rtcTimeSetToDefault, // RTC date/time has been set to the default, winter solstice 2011
 	rtcTimeManuallySet, // RTC date/time was manually set by command line; change noted in log
-	rtcHasGPSTime // RTC has a valid date/time acquired from the GPS; 
+	rtcHasGPSTime // RTC has a valid date/time acquired from the GPS; the global "dt_LatestGPS"
+	// stores when this was last done, to allow tracking its "freshness"
 };
 
 enum stateFlags1Bits

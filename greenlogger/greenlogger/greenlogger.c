@@ -84,7 +84,7 @@ char *commandBufferPtr;
 volatile uint32_t timeWhenRTCLastSetFromGPS = 0;
 volatile uint8_t stateFlags1 = 0;
 
-volatile dateTime dt_RTC, dt_tmp, dt_WhenSetFromGPS;
+volatile dateTime dt_RTC, dt_tmp, dt_LatestGPS;
 
 extern irrData irrReadings[4];
 
@@ -348,6 +348,11 @@ f_mount(0,0);
 
                 case 'T': case 't':
 					{ // experimenting with time functions
+						outputStringToUART("\n\r about to set time \n\r");
+						if (!rtc_setTime(&dt_RTC)) {
+							outputStringToUART("\n\r time set \n\r");
+						}
+						outputStringToUART("\n\r about to read time \n\r");
 						if (!rtc_readTime(&dt_tmp)) {
 //							dt_tmp.second = 22;
 //							len = sprintf(str, "\n\r Seconds: %d \n\r", dt_tmp.second);

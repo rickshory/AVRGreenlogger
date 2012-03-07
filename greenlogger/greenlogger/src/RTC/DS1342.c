@@ -17,69 +17,6 @@ extern volatile uint8_t stateFlags1;
 extern int len;
 extern char str[128];
 
-/*
-bool rtc_setTime (dateTime *t) {
-	uint8_t r;
-	//Manipulating the Address Counter for Reads:
-	// A dummy write cycle can be used to force the 
-	// address counter to a particular value.
-	//	steps:
-	// do START
-	// write DS1342_ADDR_WRITE
-	// write the memory address where we intend to read (dummy read, sets pointer)
-	// do repeated START
-	// write DS1342_ADDR_READ
-	// read byte(s) with ACK or NACK as applicable
-	// do STOP
-
-//	outputStringToUART("\n\r entered time routine \n\r");
-	r = I2C_Start();
-//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//    outputStringToUART(str);
-		if (r == TW_START) {
-		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
-		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-		    outputStringToUART(str);
-			if (r == TW_MT_SLA_ACK) {
-//			    r = I2C_Write(DS1342_CONTROL_STATUS); // for testing, look at this register
-			    r = I2C_Write(DS1342_TIME_SECONDS); // for testing, look at this register
-			    len = sprintf(str, "\n\r I2C_Write(DS1342_CONTROL_STATUS): 0x%x\n\r", r);
-			    outputStringToUART(str);
-				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
-					r = I2C_Start(); // restart
-				    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-				    outputStringToUART(str);
-					if (r == TW_REP_START) {
-					    r = I2C_Write(DS1342_ADDR_READ); // address the device, say we are going to read
-					    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_READ): 0x%x\n\r", r);
-					    outputStringToUART(str);
-						if (r == TW_MR_SLA_ACK) {
-							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
-							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
-							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
-							r = I2C_Read(1); // do ACK, since this is not the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
-							r = I2C_Read(0); // do NACK, since this is the last byte
-							len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-							outputStringToUART(str);
-						}							
-					}							
-				}	
-			}
-		}		
-    I2C_Stop();
-    outputStringToUART("\n\r I2C_Stop completed \n\r");
-
-	return 1;
-}
-*/
 
 /**
  * \brief Read date/time from RTC
@@ -262,7 +199,8 @@ uint8_t rtc_setTime (dateTime *t) {
 /**
  * \brief Set default RTC date/time
  *
- * This function sets the default data/time of the RTC
+ * This function sets the default 
+ *  data/time of the global dateTime struct dt_RTC
  *  to winter solstice 2011
  *  2011-12-22 05:30:00 UTC
  */
@@ -334,6 +272,75 @@ void rtc_add1sec(void)
 */	
 }
 
+/**
+ * \brief sets date/time forward by 10 sec
+ *
+ * This function takes a pointer to a dateTime struct,
+ *  and advances the time by the short interval, currently
+ *  10 seconds. It advances to even 10-second boundaries
+ *  (10, 20, 30, ...) so it may actually advance by
+ *  less than ten seconds total.
+ */
+void datetime_advanceIntervalShort(dateTime *t) {
+	t->second = (t->second/10) * 10; // adjust to even tens-of-seconds
+	t->second += 10; // advance by 10 seconds
+	datetime_normalize(t);
+}
+
+
+/**
+ * \brief sets date/time forward by 1 hr
+ *
+ * This function takes a pointer to a dateTime struct,
+ *  and advances the time by the long interval, currently
+ *  1 hour. It advances to even hour boundaries boundaries
+ *  (1:00, 2:00, 3:00, ...) so it may actually advance by
+ *  less than an hour total.
+ */
+void datetime_advanceIntervalLong(dateTime *t) {
+	t->second = 0;
+	t->minute = 0;
+	t->hour++;
+	datetime_normalize(t);
+}
+
+/**
+ * \brief assures dateTime is valid
+ *
+ * This function takes a pointer to a dateTime struct,
+ *  and assures the fields are in normal format 
+ *  (seconds 0 to 59, hours 0 to 23, etc.). 
+ *  It serves as the general purpose adjuster
+ *  after adding an arbitrary value to seconds,
+ *  minutes, or hours.
+ */
+void datetime_normalize(dateTime *t) {
+	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	while (t->second > 59) {
+		t->second -= 60;
+		t->minute++;
+	}
+	while (t->minute > 59) {
+		t->minute -= 60;
+		t->hour++;
+	}
+	while (t->hour > 23) {
+		t->hour -= 24;
+		t->day++;
+	}
+	if ((t->year % 4) == 0)
+		m[1] = 29;
+//	else
+//		m[1] = 28;
+	while (t->day > m[(t->month)-1]) {
+		t->day -= m[(t->month)-1];
+		t->month++;
+		if (t->month > 12) {
+			t->month = 1;
+			t->year++;
+		}
+	}
+}
 
 /**
  * \brief gets a date/time as a string

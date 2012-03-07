@@ -52,6 +52,8 @@ void rtc_setdefault(void);
 
 uint8_t rtc_setTime (dateTime *t);
 uint8_t rtc_readTime (dateTime *t);
+uint8_t rtc_setAlarm1 (dateTime *t);
+uint8_t rtc_readAlarm1 (dateTime *t);
 
 
 #endif /* DS1342_H_ */

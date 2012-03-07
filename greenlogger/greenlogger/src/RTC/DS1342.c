@@ -119,7 +119,7 @@ uint8_t rtc_readTime (dateTime *t) {
 			return errNoI2CStart;
 		}			
 	return I2C_OK;
-}
+} // end of rtc_readTime
 
 /**
  * \brief Set RTC date/time
@@ -193,7 +193,176 @@ uint8_t rtc_setTime (dateTime *t) {
 			return errNoI2CStart;
 		}			
 	return I2C_OK;
-}
+} // end of rtc_setTime
+
+/**
+ * \brief Read date/time of Alarm1 from RTC
+ *
+ * This function reads the data/time that is currently set
+ *  for Alarm1 from the external RTC chip via I2C (TWI) bus
+ *  pass it a pointer to a 'dateTime' struct
+ *  returns with fields filled in that struct
+ *  Alarm1 only has values of Second, Minute, Hour, and Day-of-Week or Day-of-Month.
+ *  (We use Day-of-Month.)
+ *  The RTC chip has no provision for alarm Month and Year, so
+ *  these values in the passed struct are returned unchanged.
+ */
+uint8_t rtc_readAlarm1 (dateTime *t) {
+	uint8_t r;
+	//Manipulating the Address Counter for Reads:
+	// A dummy write cycle can be used to force the 
+	// address counter to a particular value.
+	//	steps:
+	// do START
+	// write DS1342_ADDR_WRITE
+	// write the memory address where we intend to read (dummy read, sets pointer)
+	// do repeated START
+	// write DS1342_ADDR_READ
+	// read byte(s) with ACK or NACK as applicable
+	// do STOP
+
+//	outputStringToUART("\n\r entered readTime routine \n\r");
+	r = I2C_Start();
+//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//    outputStringToUART(str);
+		if (r == TW_START) {
+		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
+//		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
+//		    outputStringToUART(str);
+			if (r == TW_MT_SLA_ACK) {
+			    r = I2C_Write(DS1342_ALARM1_SECONDS); // look at this register
+//			    len = sprintf(str, "\n\r I2C_Write(DS1342_ALARM1_SECONDS): 0x%x\n\r", r);
+//			    outputStringToUART(str);
+				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
+					r = I2C_Start(); // restart
+//				    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//				    outputStringToUART(str);
+					if (r == TW_REP_START) {
+					    r = I2C_Write(DS1342_ADDR_READ); // address the device, say we are going to read
+//					    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_READ): 0x%x\n\r", r);
+//					    outputStringToUART(str);
+						if (r == TW_MR_SLA_ACK) {
+							// seconds
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							t->second = (10 * ((r & 0x70)>>4) + (r & 0x0f)); // ignore bit 7, alarm mask enable
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x sec\n\r", r);
+//							outputStringToUART(str);
+							// minutes
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							t->minute  = (10 * ((r & 0x70)>>4) + (r & 0x0f));
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x min\n\r", r);
+//							outputStringToUART(str);
+							// hour
+							r = I2C_Read(1); // do ACK, since this is not the last byte
+							if (r & 0b01000000) { // 12-hour format
+								t->hour  = (10 * ((r & 0x10)>>4) + (r & 0x0f));
+								if (r & 0b00100000) // PM
+									t->hour += 12;
+							} else { // 24-hour format
+								t->hour  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
+							}
+//							len = sprintf(str, "\n\r I2C_Read(0): 0x%x hr\n\r", r);
+//							outputStringToUART(str);
+							// day of week; unused but read to advance pointer
+							r = I2C_Read(0); // do NACK, since this is the last byte
+							if (!(r &0b01000000)) { // bit 6 low = this byte holds day of month
+								t->day  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
+//								len = sprintf(str, "\n\r I2C_Read(0): 0x%x day of month\n\r", r);
+//								outputStringToUART(str);
+							}
+						}							
+					}
+//					outputStringToUART("\n\r exit from repeat start\n\r");
+				} else { // could not write data to device
+					I2C_Stop();
+					return errNoI2CDataAck;
+				}
+//				outputStringToUART("\n\r exit from address device\n\r");
+			} else { // could not address device
+				I2C_Stop();
+				return errNoI2CAddressAck;
+			}
+			I2C_Stop();
+//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+		} else { // could not START
+			return errNoI2CStart;
+		}			
+	return I2C_OK;
+} // end of rtc_readAlarm1
+
+/**
+ * \brief Set RTC Alarm1
+ *
+ * This function sets and enables the data/time for the next
+ *  alarm (1) in the external RTC chip via I2C (TWI) bus.
+ *  Pass it a pointer to a 'dateTime' struct.
+ *  Sets the date/time alarm mask values from the fields in that struct.
+ *  Alarm1 only takes values of Second, Minute, Hour, and Day-of-Week or Day-of-Month.
+ *  (We use Day-of-Month.)
+ *  The RTC chip has no provision for alarm Month and Year, so these values in the passed struct are ignored.
+ */
+uint8_t rtc_setAlarm1 (dateTime *t) {
+	uint8_t r, d, wholeUnits;
+	//Steps to set the date/time alarm:
+	// do START
+	// write DS1342_ADDR_WRITE
+	// write the memory address (here DS1342_ALARM1_SECONDS), where to start writing
+	// write the data to that address; address increments to next (e.g. MINUTES)
+	// continue writing to set the series of desired values
+	// do STOP
+
+	outputStringToUART("\n\r entered setTime routine \n\r");
+	r = I2C_Start();
+    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+    outputStringToUART(str);
+		if (r == TW_START) {
+		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
+		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
+		    outputStringToUART(str);
+			if (r == TW_MT_SLA_ACK) {
+			    r = I2C_Write(DS1342_ALARM1_SECONDS); // point to this register
+			    len = sprintf(str, "\n\r I2C_Write(DS1342_ALARM1_SECONDS): 0x%x\n\r", r);
+			    outputStringToUART(str);
+				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
+					// convert Seconds to binary coded decimal
+					wholeUnits = (uint8_t)(t->second/10);
+					d = (wholeUnits<<4) | ((t->second) - (10 * (wholeUnits)));
+					d &= 0b01111111; // clear mask bit = alarm only when Sec, Min, Hr, Day match
+					r = I2C_Write(d); // write seconds to RTC chip
+					// convert Minutes to BCD
+					wholeUnits = (uint8_t)(t->minute/10);
+					d = (wholeUnits<<4) | ((t->minute) - (10 * (wholeUnits)));
+					d &= 0b01111111; // clear mask bit = alarm only when Sec, Min, Hr, Day match
+					r = I2C_Write(d); // write minutes to RTC chip
+					// convert Hours to BCD
+					// bit 6 clear = 24-hour format
+					wholeUnits = (uint8_t)(t->hour/10);
+					d = (wholeUnits<<4) | ((t->hour) - (10 * (wholeUnits)));
+					d &= 0b01111111; // clear mask bit = alarm only when Sec, Min, Hr, Day match
+					r = I2C_Write(d); // write hours to RTC chip
+					// convert Day of Month
+					wholeUnits = (uint8_t)(t->day/10);
+					d = (wholeUnits<<4) | ((t->day) - (10 * (wholeUnits)));
+					d &= 0b00111111; // clear mask bit (7) = alarm only when Sec, Min, Hr, Day match
+					// bit 6 clear = match on day-of-month
+					r = I2C_Write(d); // write day to RTC chip
+				} else { // could not write data to device
+					I2C_Stop();
+					return errNoI2CDataAck;
+				}
+//				outputStringToUART("\n\r exit from address device\n\r");
+			} else { // could not address device
+				I2C_Stop();
+				return errNoI2CAddressAck;
+			}
+			I2C_Stop();
+//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+		} else { // could not START
+			return errNoI2CStart;
+		}			
+	return I2C_OK;
+} // end of rtc_setAlarm1
+
 
 
 /**

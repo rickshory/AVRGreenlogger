@@ -43,6 +43,7 @@ typedef volatile struct { // always assumes century is 20; year 2000 to 2099
 
 void rtc_init(void);
 //extern char* rtc_getstring(char* dtstr, DateTime dt);
+void datetime_addSeconds(dateTime *t, uint8_t s);
 void datetime_advanceIntervalShort(dateTime *t);
 void datetime_advanceIntervalLong(dateTime *t);
 void datetime_normalize(dateTime *t);
@@ -54,6 +55,6 @@ uint8_t rtc_setTime (dateTime *t);
 uint8_t rtc_readTime (dateTime *t);
 uint8_t rtc_setAlarm1 (dateTime *t);
 uint8_t rtc_readAlarm1 (dateTime *t);
-
+uint8_t rtc_enableAlarm1 (void);
 
 #endif /* DS1342_H_ */

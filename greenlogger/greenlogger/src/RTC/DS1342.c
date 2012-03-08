@@ -138,18 +138,18 @@ uint8_t rtc_setTime (dateTime *t) {
 	// continue writing values to set entire time and date
 	// do STOP
 
-	outputStringToUART("\n\r entered setTime routine \n\r");
+//	outputStringToUART("\n\r entered setTime routine \n\r");
 	r = I2C_Start();
-    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-    outputStringToUART(str);
+//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//    outputStringToUART(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
-		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-		    outputStringToUART(str);
+//		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
+//		    outputStringToUART(str);
 			if (r == TW_MT_SLA_ACK) {
 			    r = I2C_Write(DS1342_TIME_SECONDS); // point to this register
-			    len = sprintf(str, "\n\r I2C_Write(DS1342_TIME_SECONDS): 0x%x\n\r", r);
-			    outputStringToUART(str);
+//			    len = sprintf(str, "\n\r I2C_Write(DS1342_TIME_SECONDS): 0x%x\n\r", r);
+//			    outputStringToUART(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					// convert Seconds to binary coded decimal
 					wholeUnits = (uint8_t)(t->second/10);
@@ -293,7 +293,7 @@ uint8_t rtc_readAlarm1 (dateTime *t) {
 /**
  * \brief Set RTC Alarm1
  *
- * This function sets and enables the data/time for the next
+ * This function sets the data/time for the next
  *  alarm (1) in the external RTC chip via I2C (TWI) bus.
  *  Pass it a pointer to a 'dateTime' struct.
  *  Sets the date/time alarm mask values from the fields in that struct.
@@ -311,18 +311,18 @@ uint8_t rtc_setAlarm1 (dateTime *t) {
 	// continue writing to set the series of desired values
 	// do STOP
 
-	outputStringToUART("\n\r entered setTime routine \n\r");
+//	outputStringToUART("\n\r entered setAlarm1 routine \n\r");
 	r = I2C_Start();
-    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-    outputStringToUART(str);
+//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//    outputStringToUART(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
-		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-		    outputStringToUART(str);
+//		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
+//		    outputStringToUART(str);
 			if (r == TW_MT_SLA_ACK) {
 			    r = I2C_Write(DS1342_ALARM1_SECONDS); // point to this register
-			    len = sprintf(str, "\n\r I2C_Write(DS1342_ALARM1_SECONDS): 0x%x\n\r", r);
-			    outputStringToUART(str);
+//			    len = sprintf(str, "\n\r I2C_Write(DS1342_ALARM1_SECONDS): 0x%x\n\r", r);
+//			    outputStringToUART(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					// convert Seconds to binary coded decimal
 					wholeUnits = (uint8_t)(t->second/10);
@@ -363,6 +363,100 @@ uint8_t rtc_setAlarm1 (dateTime *t) {
 	return I2C_OK;
 } // end of rtc_setAlarm1
 
+/**
+ * \brief Enable RTC Alarm1
+ *
+ * Via I2C (TWI) bus, this function sets up the external RTC chip so that
+ *  a match on Alarm1 drives the INTB pin (7).
+ */
+uint8_t rtc_enableAlarm1 (void) {
+	uint8_t r, d, wholeUnits;
+	//Steps to enable Alarm1 to drive INTB:
+	// do START
+	// write DS1342_ADDR_WRITE
+	// write the memory address (DS1342_CONTROL), where to set/clear bits
+	// write the data to that address
+	// address automatically increments to next (DS1342_CONTROL_STATUS)
+	// write the data to that address
+	// do STOP
+	//
+	// salient bits
+	//	A2IE = 0, Alarm 2 Interrupt disabled
+	//	A1IE = 1, Alarm 1 Interrupt enabled
+	//	INTCN = 1, interrupt (rather than sq wave) output on INTB pin
+	//	ECLK = 1; route both interrupts to INTB pin, but Alarm2 is disabled
+
+//	outputStringToUART("\n\r entered enableAlarm1 routine \n\r");
+	r = I2C_Start();
+//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
+//    outputStringToUART(str);
+		if (r == TW_START) {
+		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
+//		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
+//		    outputStringToUART(str);
+			if (r == TW_MT_SLA_ACK) {
+			    r = I2C_Write(DS1342_CONTROL); // point to this register
+//			    len = sprintf(str, "\n\r I2C_Write(DS1342_CONTROL): 0x%x\n\r", r);
+//			    outputStringToUART(str);
+				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
+#ifdef RTC_CHIP_IS_DS1337
+					// DS1337_CONTROL, 0x0e
+					// Bit 7: Enable Oscillator (EOSC) = 0, enabled
+					// Bit 6: No Function
+					// Bit 5: No Function
+					// Bits 4 and 3: Rate Select (RS[2:1]) = 00, 1Hz, don't care, not using square wave output
+					// Bit 2: Interrupt Control (INTCN) = 1, Alarm 1 interrupt output on INTA
+					// Bit 1: Alarm 2 Interrupt Enable (A2IE) = 0, disabled
+					// Bit 0: Alarm 1 Interrupt Enable (A1IE) = 1, enabled
+					r = I2C_Write(0b00000101); // write DS1337_CONTROL					
+#endif
+#ifdef RTC_CHIP_IS_DS1342
+					// DS1342_CONTROL, 0x0e
+					// Bit 7: Enable Oscillator (EOSC) = 0, enabled
+					// Bit 6: No Function
+					// Bit 5: Enable Glitch Filter (EGFIL) = 0, disabled, saves power
+					// Bits 4 and 3: Rate Select (RS[2:1]) = 00, 1Hz, don't care, not using square wave output
+					// Bit 2: Interrupt Control (INTCN) = 1, interrupt (rather than sq wave) on INTB
+					// Bit 1: Alarm 2 Interrupt Enable (A2IE) = 0, disabled
+					// Bit 0: Alarm 1 Interrupt Enable (A1IE) = 1, enabled
+					r = I2C_Write(0b00000101); // write DS1342_CONTROL
+#endif
+					
+#ifdef RTC_CHIP_IS_DS1337
+					// DS1337_CONTROL_STATUS, 0x0f
+					// Bit 7: Oscillator Stop Flag (OSF) = 0, clear, don't care
+					// Bits 6 to 2: No Function
+					// Bit 1: Alarm 2 Flag (A2F) = 0, clear, A2IE is disabled
+					// Bit 0: Alarm 1 Flag (A1F) = 0, clear, A1IE is enabled, Alarm 1 will set
+					r = I2C_Write(0b00000000); // write DS1337_CONTROL_STATUS
+#endif					
+#ifdef RTC_CHIP_IS_DS1342
+					// DS1342_CONTROL_STATUS, 0x0f
+					// Bit 7: Oscillator Stop Flag (OSF) = 0, clear, don't care
+					// Bit 6: Disable Oscillator Stop Flag (DOSF) = 1, disable OSF, save power
+					// Bit 5: Loss of Signal (LOS) = 0, clear, don't care
+					// Bits 4 and 3: Select Clock Source (CLKSEL[2:1]) = 00, 1Hz don't care, not using external clock input
+					// Bit 2: Enable External Clock Input (ECLK) = 1, route Alarm1 to INTB, input on INTA tied low & ignored
+					// Bit 1: Alarm 2 Flag (A2F) = 0, clear, A2IE is disabled
+					// Bit 0: Alarm 1 Flag (A1F) = 0, clear, A1IE is enabled, Alarm 1 will set
+					r = I2C_Write(0b01000100); // write DS1342_CONTROL_STATUS
+#endif
+				} else { // could not write data to device
+					I2C_Stop();
+					return errNoI2CDataAck;
+				}
+//				outputStringToUART("\n\r exit from address device\n\r");
+			} else { // could not address device
+				I2C_Stop();
+				return errNoI2CAddressAck;
+			}
+			I2C_Stop();
+//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+		} else { // could not START
+			return errNoI2CStart;
+		}			
+	return I2C_OK;
+} // end of rtc_enableAlarm1
 
 
 /**
@@ -440,6 +534,18 @@ void rtc_add1sec(void)
 	dt_RTC.minute = 30;
 */	
 }
+
+/**
+ * \brief sets date/time forward by the number of seconds
+ *
+ * This function takes a pointer to a dateTime struct,
+ *  and advances the time by the number of seconds
+ */
+void datetime_addSeconds(dateTime *t, uint8_t s) {
+	t->second += s; // add number of seconds
+	datetime_normalize(t);
+}
+
 
 /**
  * \brief sets date/time forward by 10 sec

@@ -81,10 +81,10 @@ char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
 
-volatile uint32_t timeWhenRTCLastSetFromGPS = 0;
 volatile uint8_t stateFlags1 = 0;
+volatile uint8_t rtcStatus = rtcTimeNotSet;
 
-volatile dateTime dt_RTC, dt_tmp, dt_LatestGPS;
+volatile dateTime dt_RTC, dt_NextAlarm, dt_tmp, dt_LatestGPS;
 
 extern irrData irrReadings[4];
 
@@ -116,17 +116,40 @@ int main(void)
 	I2C_Init(); // enable I2C 
 	outputStringToUART("\r\n  I2C_Init completed\r\n");
 
-	// Send the test string
-	for (cnt = 0; cnt < strlen(test_string); cnt++) {
-		uart_putchar(test_string[cnt]);
-	}
+//	// Send the test string
+//	for (cnt = 0; cnt < strlen(test_string); cnt++) {
+//		uart_putchar(test_string[cnt]);
+//	}
 	rtc_setdefault();
+	if (!rtc_setTime(&dt_RTC)) {
+		if (!rtc_readTime(&dt_NextAlarm)) {
+			datetime_advanceIntervalShort(&dt_NextAlarm);
+			if (!rtc_setAlarm1(&dt_NextAlarm)) {
+				outputStringToUART("\n\r Alarm1 set \n\r\n\r");
+				datetime_getstring(str, &dt_NextAlarm);
+				outputStringToUART(str);
+				outputStringToUART("\n\r\n\r");
+			}
+			if (!rtc_enableAlarm1()) {
+				outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
+			}
+		}
+		rtcStatus = rtcTimeSetToDefault;
+		outputStringToUART("\n\r time set to default ");
+		datetime_getstring(str, &dt_RTC);
+		outputStringToUART(str);
+		outputStringToUART("\n\r\n\r");
+		
+	} else {
+		outputStringToUART("\n\r could not set Real Time Clock \n\r");
+	}
     // output a counter
 	while (1) {
 		if (stateFlags1 & (1<<isRoused)) {
 			outputStringToUART("\r\n  roused\r\n");
 		} else { // allow to be roused again
 			enableAccelInterrupt();
+			enableRTCInterrupt();
 		}			
 		itoa(cntout, num_string, 10);
 /*

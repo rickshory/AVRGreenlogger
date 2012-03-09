@@ -465,15 +465,16 @@ uint8_t rtc_enableAlarm1 (void) {
  * This function sets the default 
  *  data/time of the global dateTime struct dt_RTC
  *  to winter solstice 2011
+ *  2011-12-21 21:30:00 PST, offset 8 hours west from
  *  2011-12-22 05:30:00 UTC
  */
 void rtc_setdefault(void)
 {
 	dt_RTC.year = 11;
 	dt_RTC.month = 12;
-	dt_RTC.day = 22;
-	dt_RTC.houroffset = 0;
-	dt_RTC.hour = 5;
+	dt_RTC.day = 21;
+	dt_RTC.houroffset = -8;
+	dt_RTC.hour = 21;
 	dt_RTC.minute = 30;
 	dt_RTC.second = 0;
 }
@@ -534,6 +535,23 @@ void rtc_add1sec(void)
 	dt_RTC.minute = 30;
 */	
 }
+
+/**
+ * \brief Copies one dateTime struct to another
+ *
+ * This function takes pointers to 2 dateTime structs,
+ *  and copies the first to the second
+ */
+void datetime_copy(dateTime *from, dateTime *to) {
+	to->year = from->year;
+	to->month = from->month;
+	to->day = from->day;
+	to->houroffset = from->houroffset;
+	to->hour = from->hour;
+	to->minute = from->minute;
+	to->second = from->second;
+}
+
 
 /**
  * \brief sets date/time forward by the number of seconds
@@ -627,6 +645,7 @@ void datetime_normalize(dateTime *t) {
  */
 void datetime_getstring(char* dtstr, dateTime *dtp)
 {
+	uint8_t iTmp;
 	strcpy(dtstr, "2000-00-00 00:00:00 +00");
 	dtstr[2] = '0'+ ((dtp->year) / 10);
 	dtstr[3] = '0'+	((dtp->year) % 10);
@@ -640,9 +659,15 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
 	dtstr[15] = '0'+ ((dtp->minute) % 10);
 	dtstr[17] = '0'+ ((dtp->second) / 10);
 	dtstr[18] = '0'+ ((dtp->second) % 10);
-	dtstr[20] = (((dtp->houroffset) < 0) ? '-' : '+');
-	dtstr[21] = '0'+ ((dtp->houroffset) / 10);
-	dtstr[22] = '0'+ ((dtp->houroffset) % 10);
+	if ((dtp->houroffset) < 0) {
+		iTmp  = -1 * (dtp->houroffset);
+		dtstr[20] = '-';
+	} else {
+		iTmp  = (dtp->houroffset);
+		dtstr[20] = '+';
+	}
+	dtstr[21] = '0'+ (iTmp / 10);
+	dtstr[22] = '0'+ (iTmp % 10);
 }
 
 /**

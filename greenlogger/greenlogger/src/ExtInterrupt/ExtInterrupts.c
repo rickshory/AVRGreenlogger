@@ -10,10 +10,11 @@
 #include "../greenlogger.h"
 #include "../RTC/DS1342.h"
 
+extern volatile uint8_t machineState;
 extern volatile uint16_t rouseCountdown;
 extern volatile char stateFlags1;
 
-extern volatile dateTime dt_NextAlarm;
+extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
 void stayRoused(int8_t sec)
 {
@@ -101,6 +102,9 @@ void disableRTCInterrupt(void)
 ISR(PCINT0_vect)
 {
 	disableRTCInterrupt();
+	machineState = GettingTimestamp;
+/*
+	datetime_copy(&dt_NextAlarm, &dt_CurAlarm);
 	datetime_advanceIntervalShort(&dt_NextAlarm);
 	if (!rtc_setAlarm1(&dt_NextAlarm)) {
 		;
@@ -113,5 +117,7 @@ ISR(PCINT0_vect)
 		;
 //		outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
 	}
+	enableRTCInterrupt();
 	stayRoused(3);
+*/
 }

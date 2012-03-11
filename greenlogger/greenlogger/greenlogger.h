@@ -39,7 +39,8 @@ enum errI2C
 	I2C_OK = 0,
 	errNoI2CStart, // could not initiate Start state on I2C bus
 	errNoI2CAddressAck, // no acknowledgment by a device at the tested address
-	errNoI2CDataAck // no acknowledgment of a data write
+	errNoI2CDataAck, // no acknowledgment of a data write
+	errBadParameters // invalid parameters passed
 }; 
 
 enum stateRTC

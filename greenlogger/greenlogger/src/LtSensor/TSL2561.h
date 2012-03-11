@@ -50,10 +50,22 @@
 //	00				0.034		13.7 ms
 //	01				0.252		101 ms
 //	10				1			402 ms
-//	11				??			N/A
+//	11				invalid			N/A	used only with Manual integration
 #define	TSL2561_INTEG_BIT_LO 0b0000001 //
 #define	TSL2561_INTEG_BIT_HI 0b0000010 //
 
+// the above, repackaged below as complete bit patterns
+#define	TSL2561_GAIN_HI_INTEG_LONG 0b00010010 // 16x high gain, 402ms integration time. Multiplier 1
+#define TSL2561_GAIN_HI_INTEG_LONG_MULTIPLIER 1
+// probably will not use this next one
+#define	TSL2561_GAIN_HI_INTEG_MED 0b00010001 // 16x high gain, 101ms integration time. Multiplier 1 * (322/81) = 3.975308642, use 4 (0.62% error)
+#define	TSL2561_GAIN_HI_INTEG_MED_MULTIPLIER 4
+#define	TSL2561_GAIN_LO_INTEG_LONG 0b00000010 // 1x low gain, 402ms integration time. Multiplier 16 * 1 = 16
+#define	TSL2561_GAIN_LO_INTEG_LONG_MULTIPLIER 16
+#define	TSL2561_GAIN_LO_INTEG_MED 0b00000001 // 1x low gain, 101ms integration time. Multiplier 16 * (322/81) = 63.60493827, use 64 (0.62% error)
+#define	TSL2561_GAIN_LO_INTEG_MED_MULTIPLIER 64
+#define	TSL2561_GAIN_LO_INTEG_SHORT 0b00000000 // 1x low gain, 13.7ms integration time. Multiplier 16 * (322/11) = 468.3636364, use 468 (0.08% error)
+#define	TSL2561_GAIN_LO_INTEG_SHORT_MULTIPLIER 468
 
 
 // options

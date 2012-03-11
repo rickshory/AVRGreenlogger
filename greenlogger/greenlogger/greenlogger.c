@@ -736,8 +736,16 @@ f_mount(0,0);
 
                 case 'I': case 'i':
 					{ // experimenting with irradiance functions
-						if (getIrrReading(TSL2561_UpLooking, TSL2561_CHANNEL_BROADBAND, &irrReadings[0]))
-							;
+						uint8_t result;
+						result = getIrrReading(TSL2561_UpLooking, TSL2561_CHANNEL_BROADBAND, &irrReadings[0]);
+						if (!result) {
+							len = sprintf(str, "\n\r Val: %lu; Mult: %lu; Irr: %lu \n\r", 
+							     (unsigned long)irrReadings[0].irrWholeWord, (unsigned long)irrReadings[0].irrMultiplier, 
+								 (unsigned long)((unsigned long)irrReadings[0].irrWholeWord * (unsigned long)irrReadings[0].irrMultiplier));
+						} else {
+							len = sprintf(str, "\n\r Could not get irradiance, err code: %d", result);
+						}						
+						outputStringToUART(str);
 						break;
 					}						
 

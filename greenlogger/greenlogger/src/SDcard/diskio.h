@@ -2,6 +2,25 @@
 /  Low level disk interface module include file  R0.07   (C)ChaN, 2009
 /-----------------------------------------------------------------------*/
 
+// defines for diskio.c (added by Rick Shory)
+
+enum fileWriteResults
+{
+ sdOK = 0, // return value if it happened with no issues
+ sdNoCard, // SD card not present or not detected
+ sdMountFail, // could not mount file system object
+ sdInitFail, // could not initialize file system
+ sdMkDirFail, // could not create the requested directory
+ sdChDirFail, // could not change to the requested directory
+ sdFileOpenFail, // could not open the requested file
+ sdFileWriteFail, // could not write to the file
+ sdFileWritePartial, // did not write all bytes to file
+ sdFileSeekFail, // could not seek as requested
+ sdCloseFail, // could not close file
+ sdPowerTooLowForSDCard, // cell voltage is below threshold to safely write card
+ sdIgnoreCard // flag is set to ignore SD card
+};
+
 #ifndef _DISKIO
 
 /* Definitions for MMC/SDC command */
@@ -109,6 +128,7 @@ void turnSDCardPowerOff(void);
 /*---------------------------------------*/
 /* Prototypes for disk control functions */
 
+BYTE writeCharsToSDCard (char* St, BYTE n);
 BOOL assign_drives (int argc, char *argv[]);
 DSTATUS disk_initialize (BYTE);
 DSTATUS disk_status (BYTE);

@@ -1,16 +1,20 @@
-/*-----------------------------------------------------------------------*/
-/* MMCv3/SDv1/SDv2 (in SPI mode) control module  (C)ChaN, 2007           */
-/*-----------------------------------------------------------------------*/
-/* Only rcvr_spi(), xmit_spi(), heartBeat() and some macros         */
-/* are platform dependent.                                               */
-/*-----------------------------------------------------------------------*/
-
+//
+// MMCv3/SDv1/SDv2 (in SPI mode) control module  (C)ChaN, 2007
+//
+// platform and app dependent:
+//  rcvr_spi()
+//  xmit_spi()
+//  heartBeat()
+//  get_fattime()
+//   some macros 
 
 #include <avr/io.h>
+#include <inttypes.h>
+#include "ff.h"
 #include "diskio.h"
+#include "RTC/DS1342.h"
 
-
-
+// 
 /*--------------------------------------------------------------------------
 
    Module Private Functions
@@ -20,11 +24,209 @@
 static volatile
 DSTATUS Stat = STA_NOINIT;	// Disk status
 
+extern volatile dateTime dt_CurAlarm;
+
 extern volatile
 BYTE Timer1, Timer2;	// 100Hz decrement timer
 
 static
 BYTE CardType;			// Card type flags
+
+
+/**
+ * \brief Writes N characters to the SD card
+ *
+ *  This function writes N characters from the passed char
+ * pointer to the file specified by the year, month, and
+ * day of the Real Time Clock.
+ *  The containing folder is named 'yy-mm' where 'yy' is
+ * the last two digits of the year (for example '12' in
+ * the year '2012') and 'mm' is the month (for example '07'
+ * for July).
+ *  The file is named 'dd.TXT', where 'dd' is the day of 
+ * the month, for example '09' for the ninth.
+ *  This function automatically creates the folders and files
+ * as needed, and appends to files that already exist
+ *
+ * \note 
+ * 
+ */
+
+BYTE writeCharsToSDCard (char* St, BYTE n) {
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	char stDir[6], stFile[20];
+	BYTE sLen;
+
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+		//  flag error
+//		len = sprintf(str, "\n\r f_mount failed: 0x%x\n\r", 0);
+//		outputStringToUART(str);
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+		return sdInitFail;
+//	flag error.
+//	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
+//	outputStringToUART(str);
+	}
+	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
+	res = f_mkdir(stDir);
+	if (!((res == FR_OK) || (res == FR_EXIST))) {
+		return sdMkDirFail;
+//		len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
+//		outputStringToUART(str);	
+	}
+	
+	FIL logFile;
+	//
+	//works
+	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
+	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
+		return sdFileOpenFail;
+//		len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
+//		outputStringToUART(str);
+	//flag error
+}
+
+	// Move to end of the file to append data
+	if (f_lseek(&logFile, f_size(&logFile)) != FR_OK)
+		return sdFileSeekFail;
+
+	unsigned int bytesWritten;
+	if (f_write(&logFile, St, n, &bytesWritten) != FR_OK)
+		return sdFileWriteFail;
+	if (bytesWritten < n)
+		return sdFileWritePartial;
+	
+//		len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
+//		outputStringToUART(str);
+	//Flush the write buffer with f_sync(&logFile);
+
+	//Close and unmount.
+	f_close(&logFile);
+	f_mount(0,0);
+	return sdOK;
+}
+
+/*
+ sdOK = 0, // return value if it happened with no issues
+ sdNoCard, // SD card not present or not detected
+ sdMountFail, // could not mount file system object
+ sdInitFail, // could not initialize file system
+ sdMkDirFail, // could not create the requested directory
+ sdChDirFail, // could not change to the requested directory
+ sdFileOpenFail, // could not open the requested file
+ sdFileWriteFail, // could not write to the file
+ sdFileSeekFail, // could not seek as requested
+ sdCloseFail, // could not close file
+ sdPowerTooLowForSDCard, // cell voltage is below threshold to safely write card
+ sdIgnoreCard // flag is set to ignore SD card
+*/
+/*
+//
+// write N characters from the passed char
+//  pointer to the file specified by the
+//  real time clock
+//
+int writeCharsToSDCard (char* St, int N) {
+    FSFILE * pointer;
+    if (!flags1.useSDcard)
+        return IgnoreCard; // flag is set to ignore SD card
+    if (getCellVoltage() < CELL_VOLTAGE_THRESHOLD_WRITE_SD_CARD)
+        return PowerTooLowForSDCard;
+    assureSDCardIsOn();
+    if (!MDD_MediaDetect())
+        return NoCard; // SD card not present or not detected
+    // Initialize the library
+    if (!FSInit())
+        return NoInit; // could not initialize file system;
+    // Create a directory if it doesn't already exist
+    if (FSmkdir (dirNameBuffer))
+        return NoMkDir; // could not create the requested directory
+    // Change to the directory
+    if (FSchdir (dirNameBuffer + 1))
+        return NoChDir; // could not change to the requested directory
+    // Create a file
+    pointer = FSfopen (fileNameBuffer, "a");
+    if (pointer == NULL)
+        return NoFileOpen; // could not open the requested file
+    // Write objects from pointer into the file
+    if (FSfwrite (St, 1, N, pointer) != N)
+        return NoFileWrite; // could not write to the file
+    if (FSfseek(pointer, 0, SEEK_END))
+        return NoFileSeek; // could not seek as requested
+    // Close the file
+    if (FSfclose (pointer))
+        return NoClose; // could not close file 
+    return NoProblem;
+} // end of writeCharsToFile
+
+
+//
+// send diagnostic message about file
+//  write error out the USART
+//
+void tellFileWriteError (int err)
+{
+ switch (err) {
+  case IgnoreCard: {
+   outputStringToUSART("\r\n SD card ignored (\"O\" toggles)\r\n");
+   break;
+  }
+  case PowerTooLowForSDCard: {
+   outputStringToUSART("\r\n power too low, SD write skipped\r\n");
+   break;
+  }
+  case NoCard: {
+   outputStringToUSART("\r\n SD card not present or not detected\r\n");
+
+
+   break;
+  }
+  case NoInit: {
+   outputStringToUSART("\r\n could not initialize file system\r\n");
+   break;
+  }
+  case NoMkDir: {
+   outputStringToUSART("\r\n could not create the requested directory\r\n");
+   break;
+  }
+  case NoChDir: {
+   outputStringToUSART("\r\n could not change to the requested directory\r\n");
+   break;
+  }
+  case NoFileOpen: {
+   outputStringToUSART("\r\n could not open the requested file\r\n");
+   break;
+  }
+  case NoFileWrite: {
+   outputStringToUSART("\r\n could not write to the file\r\n");
+   break;
+  }
+  case NoFileSeek: {
+   outputStringToUSART("\r\n could not seek as requested\r\n");
+   break;
+  }
+  case NoClose: {
+   outputStringToUSART("\r\n could not close file\r\n");
+   break;
+  }
+  default: {
+   outputStringToUSART("\r\n unknown error\r\n");
+   break;
+  } 
+ } // switch err
+} // end of tellFileWriteError
+
+
+*/
+
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
@@ -34,23 +236,21 @@ BYTE CardType;			// Card type flags
 /* the system does not support a real time clock.          */
 /* This is not required in read-only configuration.        */
 
-
 DWORD get_fattime ()
 {
-/* for testing, return a dummy value
-	RTC rtc;
 
-	// Get local time
-	rtc_gettime(&rtc);
+	// use the timestamp of the current alarm time
+	// this will be the time it is when the alarm has triggered, when work such as creating files occurs
 
 	// Pack date and time into a DWORD variable
-	return	  ((DWORD)(rtc.year - 1980) << 25)
-			| ((DWORD)rtc.month << 21)
-			| ((DWORD)rtc.mday << 16)
-			| ((DWORD)rtc.hour << 11)
-			| ((DWORD)rtc.min << 5)
-			| ((DWORD)rtc.sec >> 1);
-*/
+	return	  ((DWORD)(2000 + dt_CurAlarm.year - 1980) << 25)
+			| ((DWORD)dt_CurAlarm.month << 21)
+			| ((DWORD)dt_CurAlarm.day << 16)
+			| ((DWORD)dt_CurAlarm.hour << 11)
+			| ((DWORD)dt_CurAlarm.minute << 5)
+			| ((DWORD)dt_CurAlarm.second >> 1);
+	
+/*
 	// return default, winter solstice 2011
 	// 2011-12-22 05:30:00 UTC
 	return	  ((DWORD)(2011 - 1980) << 25)
@@ -59,6 +259,7 @@ DWORD get_fattime ()
 			| ((DWORD)5 << 11)
 			| ((DWORD)30 << 5)
 			| ((DWORD)0 >> 1);
+*/
 }
 
 /*-----------------------------------------------------------------------*/

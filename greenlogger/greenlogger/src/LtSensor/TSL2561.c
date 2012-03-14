@@ -45,7 +45,7 @@ uint16_t irrReadingNumber, cellVoltage;
 // on each sensor/channel/sensitivity, do 100 iterations, until either nonzero reading or 100 tries
 
 
-bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
+uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 	uint8_t irrSensorReadAddr, irrSensorWriteAddr, irrChannel;
 	uint8_t r, d, ct, regTimingVal = TSL2561_GAIN_HI_INTEG_LONG, intTmp;
 	uint16_t unsignedIntTmp;
@@ -60,7 +60,8 @@ bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 		irrSensorWriteAddr = TSL2561_DN_ADDR_WRITE;
 		irrSensorReadAddr = TSL2561_DN_ADDR_READ;		
 	} else {
-		return errBadParameters;
+		rd->validation = errBadParameters;
+		return rd->validation;
 	}
 //	outputStringToUART("\n\r entered irradiance routine \n\r");
 	// check device ID, could use to read from various devices
@@ -126,15 +127,18 @@ bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 					I2C_Stop();
 				} else { // could not write data to device
 					I2C_Stop();
-					return errNoI2CDataAck;
+					rd->validation = errNoI2CDataAck;
+					return rd->validation;
 				}
 			} else { // could not address device
-				outputStringToUART("\n\r sensor not present or not responding\n\r");
+//				outputStringToUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
-				return errNoI2CAddressAck;
+				rd->validation = errNoI2CAddressAck;
+				return rd->validation;
 			}
 		} else { // could not START
-			return errNoI2CStart;
+			rd->validation = errNoI2CStart;
+			return rd->validation;
 		}			
 		// device powered up
 		// set up sensitivity, prep to read sensor
@@ -156,15 +160,18 @@ bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 					I2C_Stop();
 				} else { // could not write data to device
 					I2C_Stop();
-					return errNoI2CDataAck;
+					rd->validation = errNoI2CDataAck;
+					return rd->validation;
 				}
 			} else { // could not address device
-				outputStringToUART("\n\r sensor not present or not responding\n\r");
+//				outputStringToUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
-				return errNoI2CAddressAck;
+				rd->validation = errNoI2CAddressAck;
+				return rd->validation;
 			}
 		} else { // could not START
-			return errNoI2CStart;
+			rd->validation = errNoI2CStart;
+			return rd->validation;
 		} // gain and integration time set up
 		//
 		// get the irradiance reading
@@ -204,12 +211,14 @@ bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 //				outputStringToUART(str);
 			
 			} else { // could not address device
-				outputStringToUART("\n\r sensor not present or not responding\n\r");
+//				outputStringToUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
-				return errNoI2CAddressAck;
+				rd->validation = errNoI2CAddressAck;
+				return rd->validation;
 			}
 		} else { // could not START
-			return errNoI2CStart;
+			rd->validation = errNoI2CStart;
+			return rd->validation;
 		}
 		// power down the device
 		r = I2C_Start();
@@ -233,15 +242,18 @@ bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 					I2C_Stop();
 				} else { // could not write data to device
 					I2C_Stop();
-					return errNoI2CDataAck;
+					rd->validation = errNoI2CDataAck;
+					return rd->validation;
 				}
 			} else { // could not address device
-				outputStringToUART("\n\r sensor not present or not responding\n\r");
+//				outputStringToUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
-				return errNoI2CAddressAck;
+				rd->validation = errNoI2CAddressAck;
+				return rd->validation;
 			}
 		} else { // could not START
-			return errNoI2CStart;
+			rd->validation = errNoI2CStart;
+			return rd->validation;
 		}
 		// exit the while(1) loop here, one way or another
 		//  break out of it either by value<max, or val=0 after 100 iterations, or minimum sensitivity
@@ -266,6 +278,7 @@ bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 				break;
 		}
 	} // end of while(1) loop
-	return I2C_OK;
+	rd->validation = I2C_OK;
+	return rd->validation;
 }
 

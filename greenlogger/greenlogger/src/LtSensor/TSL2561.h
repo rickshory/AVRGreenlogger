@@ -67,10 +67,7 @@
 #define	TSL2561_GAIN_LO_INTEG_SHORT 0b00000000 // 1x low gain, 13.7ms integration time. Multiplier 16 * (322/11) = 468.3636364, use 468 (0.08% error)
 #define	TSL2561_GAIN_LO_INTEG_SHORT_MULTIPLIER 468
 
-
 // options
-//#define TSL2561_CHANNEL_BROADBAND	0xac	// broadband channel
-//#define TSL2561_CHANNEL_INFRARED	0xae	// infrared channel
 #define TSL2561_CHANNEL_BROADBAND	0x0c	// broadband channel
 #define TSL2561_CHANNEL_INFRARED	0x0e	// infrared channel
 
@@ -92,12 +89,13 @@ typedef struct {
         };
     };
     uint16_t irrMultiplier;
+	uint8_t validation; // set to 0=OK, or the error codes of the getIrrReading function; see enum errI2C
 } irrData;
 
 irrData irrReadings[4];
 
 // functions
-bool getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd);
+uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd);
 
 
 #endif /* TSL2561_H_ */

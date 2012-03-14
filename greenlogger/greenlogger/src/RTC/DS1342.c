@@ -12,6 +12,7 @@
 #include <util/twi.h>
 
 extern volatile dateTime dt_RTC;
+extern volatile uint8_t timeZoneOffset;
 
 extern volatile uint8_t stateFlags1;
 extern int len;
@@ -101,6 +102,7 @@ uint8_t rtc_readTime (dateTime *t) {
 							t->year = (10 * ((r & 0xf0)>>4) + (r & 0x0f));
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x year\n\r", r);
 //							outputStringToUART(str);
+							t->houroffset = timeZoneOffset; // get from global var
 						}							
 					}
 //					outputStringToUART("\n\r exit from repeat start\n\r");
@@ -270,6 +272,7 @@ uint8_t rtc_readAlarm1 (dateTime *t) {
 //								len = sprintf(str, "\n\r I2C_Read(0): 0x%x day of month\n\r", r);
 //								outputStringToUART(str);
 							}
+							t->houroffset = timeZoneOffset; // get from global var
 						}							
 					}
 //					outputStringToUART("\n\r exit from repeat start\n\r");
@@ -474,6 +477,7 @@ void rtc_setdefault(void)
 	dt_RTC.month = 12;
 	dt_RTC.day = 21;
 	dt_RTC.houroffset = -8;
+	timeZoneOffset = dt_RTC.houroffset; // also set global
 	dt_RTC.hour = 21;
 	dt_RTC.minute = 30;
 	dt_RTC.second = 0;
@@ -527,13 +531,6 @@ void rtc_add1sec(void)
 			}				
 		}
 	}
-/*	dt_RTC.year = 11;
-	dt_RTC.month = 12;
-	dt_RTC.day = 22;
-	dt_RTC.houroffset = 0;
-	dt_RTC.hour = 5;
-	dt_RTC.minute = 30;
-*/	
 }
 
 /**

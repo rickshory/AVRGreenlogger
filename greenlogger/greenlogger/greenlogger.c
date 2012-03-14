@@ -66,7 +66,7 @@ volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blin
 volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sleep
 
 volatile
-uint8_t Timer1, Timer2;	/* 100Hz decrement timer */
+uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
 
 int len, err = 0;
 char str[128]; // generic space for strings to be output
@@ -83,6 +83,7 @@ char *commandBufferPtr;
 volatile uint8_t stateFlags1 = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_NextAlarm, dt_tmp, dt_LatestGPS;
+volatile uint8_t timeZoneOffset = 0; // globally available
 extern irrData irrReadings[4];
 extern adcData cellVoltageReading;
 
@@ -97,7 +98,7 @@ extern adcData cellVoltageReading;
  */
 int main(void)
 {
-//	uint8_t data;
+	uint8_t ct, swDnUp, swBbIr;
 	uint8_t cnt;
 	uint16_t cntout = 0;
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
@@ -172,7 +173,7 @@ int main(void)
 			;
 //		setSDCardPowerControl();
 			// monitor cell voltage, to decide whether there is enough power to proceed
-			//iTmp = readCellVoltage(&cellVoltageReading);
+			intTmp1 = readCellVoltage(&cellVoltageReading);
 			//if (stateFlags1 & (1<<isRoused)) {
 			//	outputStringToUART("\r\n  roused\r\n");
 			//	// timer diagnostics
@@ -182,17 +183,88 @@ int main(void)
 			
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToUART(datetime_string);
-			outputStringToUART("\r\n");
+//			outputStringToUART("\t");
 			//if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_IRRADIANCE) { 
 			//	outputStringToUART(" power too low\n\r");
 			//	machineState = Idle;
 			//	break;
 			//}
+			for (ct = 0; ct < 4; ct++) {
+				switch (ct)
+				{
+				case 0:
+					swDnUp = TSL2561_DnLooking;
+					swBbIr = TSL2561_CHANNEL_BROADBAND;
+					break;
+				case 1:
+					swDnUp = TSL2561_DnLooking;
+					swBbIr = TSL2561_CHANNEL_INFRARED;
+					break;
+				case 2:
+					swDnUp = TSL2561_UpLooking;
+					swBbIr = TSL2561_CHANNEL_BROADBAND;
+					break;
+				case 3:
+					swDnUp = TSL2561_UpLooking;
+					swBbIr = TSL2561_CHANNEL_INFRARED;
+					break;
+				}
+				intTmp1 = getIrrReading(swDnUp, swBbIr, &irrReadings[ct]);
+				if (!intTmp1) {
+					len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
+				} else if (intTmp1 == errNoI2CAddressAck) { // not present or not responding
+					len = sprintf(str, "\t-");
+				} else {
+					len = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", intTmp1);
+				}						
+				outputStringToUART(str);
+			}
+			// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
+			// using internal reference, Vref = 2.56V = 2560mV
+			// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
+			len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+			outputStringToUART(str);
+
+			outputStringToUART("\r\n");
 //        if (stateFlags.isRoused) { 
 //            // if roused, and Bluetooth is on, flag to keep BT on awhile after normal rouse timeout
 //            // createTimestamp sets secsSince1Jan2000
 //            timeToTurnOffBT = secsSince1Jan2000 + SECS_BT_HOLDS_POWER_AFTER_SLEEP;
 //        }
+			stateFlags1 &= ~(1<<timeToLogData); // default clear
+//			if (!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) {
+			if (dt_CurAlarm.second == 0) {
+			//  if (((!((char)timeStampBuffer[17] & 0x01)) && ((char)timeStampBuffer[19] == '0')) || (flags1.isDark)) {
+            // if an even number of minutes, and zero seconds
+            // or the once-per-hour wakeup while dark
+
+				stateFlags1 |= (1<<timeToLogData);
+			//	outputStringToUART("\n\r Time to log data \n\r");
+			} else {
+			//	outputStringToUART("\n\r Not time to log data \n\r");
+			}			
+
+			if (stateFlags1 & (1<<timeToLogData)) {
+//				outputStringToUART("\n\r Entered log data routine \n\r");
+				len = sprintf(str, "\n\r");
+				intTmp1 = writeCharsToSDCard(str, len);
+				len = sprintf(str, datetime_string);
+				intTmp1 = writeCharsToSDCard(str, len);
+				for (ct = 0; ct < 4; ct++) { // write irradiance readings
+					if (!(irrReadings[ct].validation)) {
+						len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
+					} else { // no valid data for this reading
+						len = sprintf(str, "\t");
+					}
+					intTmp1 = writeCharsToSDCard(str, len);
+				}
+				len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+				intTmp1 = writeCharsToSDCard(str, len);
+				len = sprintf(str, "\n\r");
+				intTmp1 = writeCharsToSDCard(str, len);	
+				
+				outputStringToUART("\n\r Data written to SD card \n\r");
+			}
 			machineState = Idle; // done with everything, return to Idle state
 			break; // if did everything, break here
 		} // end of getting data readings
@@ -619,12 +691,17 @@ void checkForCommands (void) {
             switch (commandBuffer[0]) { // command is 1st char in buffer
 
                 case 'C': case 'c':
-					{ // sd card diagnostics
-						outputStringToUART("\r\n SD card diagnostics\r\n");
+					{
+						len = sprintf(str, "\n\r test write to SD card 0x%x\n\r", (disk_initialize(0)));
+						intTmp1 = writeCharsToSDCard(str, len);
+						 // sd card diagnostics
+						outputStringToUART("\r\n test write to SD card\r\n");
 					//	len = sprintf(str, "\n\r PINB: 0x%x\n\r", (PINB));
 						// send_cmd(CMD0, 0)
 //					len = sprintf(str, "\n\r CMD0: 0x%x\n\r", (send_cmd(CMD0, 0)));
 						
+/*
+
 						len = sprintf(str, "\n\r disk_initialize: 0x%x\n\r", (disk_initialize(0)));
 						outputStringToUART(str);
 {
@@ -648,16 +725,19 @@ DSTATUS driveStatus = disk_initialize(0);
 	outputStringToUART(str);
 }
 
-/* Sometimes you may want to format the disk.
-if(f_mkfs(0,0,0)!=FR_OK) {
-//error
-}
-*/
+// Sometimes you may want to format the disk.
+//	if(f_mkfs(0,0,0)!=FR_OK) {
+//		error
+//	}
+//
 
-if (f_mkdir("0000")) {
+res = f_mkdir("0000");
+if (!((res == FR_OK) || (res == FR_EXIST)))
+{
 	len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
 	outputStringToUART(str);	
 }
+
 
 FIL logFile;
 //works
@@ -669,7 +749,6 @@ if(f_open(&logFile, "0000/GpsLog.txt", FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_
 //	len = sprintf(str, "\n\r f_size : 0x%x\n\r", f_size(&logFile));
 	len = sprintf(str, "\n\r f_size : 0x%x\n\r", (uint16_t)f_size(&logFile));
 	outputStringToUART(str);
-
 
 	// Move to end of the file to append data
 	res = f_lseek(&logFile, f_size(&logFile));
@@ -684,6 +763,7 @@ f_write(&logFile, "New log opened!\n", 16, &bytesWritten);
 f_close(&logFile);
 f_mount(0,0);
 }
+*/
 
 						break;						
 					}

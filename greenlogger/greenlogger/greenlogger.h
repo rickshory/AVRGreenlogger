@@ -31,17 +31,17 @@ enum machStates
 };
 
 
-// if an I2C attempt fails, is virtually always does so on one of these early attempts
+// if an I2C attempt fails, is virtually always does so on one of these early steps
 //  if these pass, the rest of the transmission is very reliable
 
 enum errI2C
 {
 	I2C_OK = 0,
-	errNoI2CStart, // could not initiate Start state on I2C bus
-	errNoI2CAddressAck, // no acknowledgment by a device at the tested address
-	errNoI2CDataAck, // no acknowledgment of a data write
-	errBadParameters // invalid parameters passed
-}; 
+	errNoI2CStart = 1, // could not initiate Start state on I2C bus
+	errNoI2CAddressAck = 2, // no acknowledgment by a device at the tested address
+	errNoI2CDataAck = 3, // no acknowledgment of a data write
+	errBadParameters = 4 // invalid parameters passed
+};
 
 enum stateRTC
 {
@@ -57,6 +57,9 @@ enum stateFlags1Bits
  isReadingSensors, // has been awakened by RTCC interrupt and is reading data
  isRoused, // triggered by external interrupt, and re-triggered by any activity while awake
  reRoused, // re-triggered while awake, used to reset timeout
+ timeToLogData, // flag that it is time to log data to SD card
+ writeDataHeaders, // flag to write column headers to SD card
+	//  done on init, reset, time change, and midnight rollover
  keepBT_on, // keep power on the the Bluetooth module, even after rouse timeout
  isLeveling, // diagnostics show accelerometer output rather than light sensors, used for leveling the system
  accelerometerIsThere // set if system finds ADXL345 on I2C bus

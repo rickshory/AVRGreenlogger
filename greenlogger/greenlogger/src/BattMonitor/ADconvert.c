@@ -96,7 +96,7 @@ uint8_t readCellVoltage (adcData *cellV) {
 	// use ADC1, which is port A bit 1. On 40-dip = physical pin 39; on 44-TQFP = physical pin 36
 	ADMUX |= 0b00000001;
 	
-	ADMUX |= (1<<ADLAR); // for testing, Left-adjust the result, only use high 8 bits
+//	ADMUX |= (1<<ADLAR); // for testing, Left-adjust the result, only use high 8 bits
 	
 	
 	// DIDR0 – Digital Input Disable Register 0
@@ -113,13 +113,13 @@ uint8_t readCellVoltage (adcData *cellV) {
 	// initiate a single conversion
 	ADCSRA |= (1<<ADSC);
 	// enter CPU Idle mode
-/*
-SE bit in SMCR must be written to logic one and a SLEEP
-instruction must be executed. The SM2, SM1, and SM0
 
-When the SM2..0 bits are written to 001, the SLEEP instruction makes the MCU enter ADC
-Noise Reduction mode
-*/	
+// SE bit in SMCR must be written to logic one and a SLEEP
+//  instruction must be executed. The SM2, SM1, and SM0
+
+// When the SM2..0 bits are written to 001, the SLEEP instruction makes the MCU enter ADC
+// Noise Reduction mode
+	
 	// SM2 = bit 3
 	// SM1 = bit 2
 	// SM0 = bit 1

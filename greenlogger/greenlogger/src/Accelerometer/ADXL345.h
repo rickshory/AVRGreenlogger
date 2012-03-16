@@ -5,10 +5,6 @@
  *  Author: rshory
  */ 
 
-// functions
-
-void findADXL345 (void);
-
 
 #ifndef ADXL345_H_
 #define ADXL345_H_
@@ -59,5 +55,43 @@ void findADXL345 (void);
 #define ADXL345_25HZ        0x08
 #define ADXL345_12HZ5       0x07
 #define ADXL345_6HZ25       0x06
+
+// union allows writing in Lo and Hi bytes of accelerometer axis value, and reading out whole word
+typedef struct {
+    union {
+        struct {
+            uint8_t xLoByte, xHiByte; // this is the correct endian-ness
+        };
+        struct  {
+            int16_t xWholeWord; // twos complement, can be negative
+        };
+	};	
+    union {
+        struct {
+            uint8_t yLoByte, yHiByte; // this is the correct endian-ness
+        };
+        struct  {
+            int16_t yWholeWord; // twos complement, can be negative
+        };
+		};	
+    union {
+        struct {
+            uint8_t zLoByte, zHiByte; // this is the correct endian-ness
+        };
+        struct  {
+            int16_t zWholeWord; // twos complement, can be negative
+        };
+    };
+    uint8_t dataFormat; // info on resolution and G range, read from DATA_FORMAT register of device
+	uint8_t validation; // set to 0=OK, or the error codes of the calling function; see enum errI2C
+} accelAxisData;
+
+// functions
+
+uint8_t setADXL345Register (uint8_t reg, uint8_t val);
+uint8_t findADXL345 (void);
+uint8_t initializeADXL345 (void);
+uint8_t clearAnyADXL345TapInterrupt (void);
+uint8_t readADXL345Axes (accelAxisData *d);
 
 #endif /* ADXL345_H_ */

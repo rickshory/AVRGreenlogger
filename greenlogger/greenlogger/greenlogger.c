@@ -84,6 +84,7 @@ volatile uint8_t stateFlags1 = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_NextAlarm, dt_tmp, dt_LatestGPS;
 volatile uint8_t timeZoneOffset = 0; // globally available
+volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 extern adcData cellVoltageReading;
 
@@ -111,6 +112,9 @@ int main(void)
     outputStringToUART("\r\n  enter I2C_Init\r\n");
 	I2C_Init(); // enable I2C 
 	outputStringToUART("\r\n  I2C_Init completed\r\n");
+	
+	initializeADXL345();
+	outputStringToUART("\r\n ADXL345 initialized\r\n");
 
 //	// Send the test string
 //	for (cnt = 0; cnt < strlen(test_string); cnt++) {
@@ -231,16 +235,14 @@ int main(void)
 //            // createTimestamp sets secsSince1Jan2000
 //            timeToTurnOffBT = secsSince1Jan2000 + SECS_BT_HOLDS_POWER_AFTER_SLEEP;
 //        }
-			stateFlags1 &= ~(1<<timeToLogData); // default clear
-//			if (!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) {
-			if (dt_CurAlarm.second == 0) {
-			//  if (((!((char)timeStampBuffer[17] & 0x01)) && ((char)timeStampBuffer[19] == '0')) || (flags1.isDark)) {
+//			if (dt_CurAlarm.second == 0) {
+			if (!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) {
             // if an even number of minutes, and zero seconds
             // or the once-per-hour wakeup while dark
-
 				stateFlags1 |= (1<<timeToLogData);
 			//	outputStringToUART("\n\r Time to log data \n\r");
 			} else {
+				stateFlags1 &= ~(1<<timeToLogData);
 			//	outputStringToUART("\n\r Not time to log data \n\r");
 			}			
 
@@ -263,7 +265,7 @@ int main(void)
 				len = sprintf(str, "\n\r");
 				intTmp1 = writeCharsToSDCard(str, len);	
 				
-				outputStringToUART("\n\r Data written to SD card \n\r");
+				outputStringToUART(" Data written to SD card \n\r\n\r");
 			}
 			machineState = Idle; // done with everything, return to Idle state
 			break; // if did everything, break here
@@ -689,6 +691,38 @@ void checkForCommands (void) {
         if (c == 0x0a) { // if linefeed, attempt to parse the command
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
+				
+                case 'L': case 'l': 
+				{ // experimenting with the accelerometer Leveling functions
+					uint8_t rs;
+//					outputStringToUART("\r\n about to initialize ADXL345\r\n");
+//					initializeADXL345();
+//					outputStringToUART("\r\n ADXL345 initialized\r\n");
+					// bring out of low power mode
+					// use 100Hz for now ; bit 4 set = reduced power, higher noise
+					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x0a);
+					if (rs) {
+						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
+						outputStringToUART(str);
+						break;
+					}
+					outputStringToUART("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
+					if (readADXL345Axes (&accelData)) {
+						outputStringToUART("\r\n could not get ADXL345 data\r\n");
+						break;
+					}
+					// set low power bit (4) and 25Hz sampling rate, for 40uA current
+					if (setADXL345Register(ADXL345_REG_BW_RATE, 0x18)) {
+						outputStringToUART("\r\n could not set ADXL345_REG_BW_RATE\r\n");
+						break;
+					}
+//				len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", (unsigned int)((int)x1 << 8 | (int)x0),
+//						  (unsigned int)((int)y1 << 8 | (int)y0),  (unsigned int)((int)z1 << 8 | (int)z0));
+					len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
+						accelData.yWholeWord,  accelData.zWholeWord);
+						outputStringToUART(str);
+                    break;
+                }
 
                 case 'C': case 'c':
 					{

@@ -37,10 +37,11 @@ enum machStates
 enum errI2C
 {
 	I2C_OK = 0,
-	errNoI2CStart = 1, // could not initiate Start state on I2C bus
-	errNoI2CAddressAck = 2, // no acknowledgment by a device at the tested address
-	errNoI2CDataAck = 3, // no acknowledgment of a data write
-	errBadParameters = 4 // invalid parameters passed
+	errNoI2CStart, // could not initiate Start state on I2C bus
+	errNoI2CAddressAck, // no acknowledgment by a device at the tested address
+	errNoI2CDataAck, // no acknowledgment of a data write
+	errNoI2CRepStart, // could not do a Repeat Start
+	errBadParameters // invalid parameters passed
 };
 
 enum stateRTC

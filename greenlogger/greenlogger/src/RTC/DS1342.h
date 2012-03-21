@@ -47,6 +47,7 @@ void datetime_copy(dateTime *from, dateTime *to);
 void datetime_addSeconds(dateTime *t, uint8_t s);
 void datetime_advanceIntervalShort(dateTime *t);
 void datetime_advanceIntervalLong(dateTime *t);
+void datetime_advanceInterval(dateTime *t);
 void datetime_normalize(dateTime *t);
 void datetime_getstring(char* dtstr, dateTime *dtp);
 void rtc_add1sec(void);
@@ -57,5 +58,6 @@ uint8_t rtc_readTime (dateTime *t);
 uint8_t rtc_setAlarm1 (dateTime *t);
 uint8_t rtc_readAlarm1 (dateTime *t);
 uint8_t rtc_enableAlarm1 (void);
+uint8_t rtc_setupNextAlarm(dateTime *pDt);
 
 #endif /* DS1342_H_ */

@@ -461,6 +461,50 @@ uint8_t rtc_enableAlarm1 (void) {
 	return I2C_OK;
 } // end of rtc_enableAlarm1
 
+/**
+ * \brief Set up and enable next Alarm
+ *
+ * This function reads the current RTC time, 
+ *  calculates the next alarm time based on the
+ *  interval determined by flags,
+ *  sets that alarm time, and enables the alarm
+ */
+uint8_t rtc_setupNextAlarm(dateTime *pDt) {
+	uint8_t n;
+	dateTime dt;
+//	outputStringToUART("\n\r entered setupNextAlarm fn \n\r\n\r");
+	n = rtc_readTime (&dt); // get current time
+//	datetime_getstring(str, &dt);
+//	outputStringToUART("\n\r time read from RTC: ");
+//	outputStringToUART(str);
+//	outputStringToUART("\n\r\n\r");
+	
+	if (n) return n;
+	else { // advance to next alarm time
+//		outputStringToUART("\n\r about to call datetime_advanceInterval fn \n\r\n\r");
+		datetime_advanceInterval(&dt);
+//		outputStringToUART("\n\r retd from datetime_advanceInterval fn \n\r\n\r");
+//		outputStringToUART("\n\r calcd alarm time: ");
+//		datetime_getstring(str, &dt);
+//		outputStringToUART(str);
+//		outputStringToUART("\n\r\n\r");
+		
+//		outputStringToUART("\n\r about to call rtc_setAlarm1 fn \n\r\n\r");
+		n = rtc_setAlarm1(&dt);
+//		outputStringToUART("\n\r retd from rtc_setAlarm1 fn \n\r\n\r");
+		if (n) return n;
+		else {
+			n = rtc_enableAlarm1();
+			if (n) return n;
+			else {
+				datetime_copy(&dt, pDt);
+				pDt->houroffset = timeZoneOffset;
+				enableRTCInterrupt();
+				return 0;
+			}
+		}
+	}
+}
 
 /**
  * \brief Set default RTC date/time
@@ -572,11 +616,16 @@ void datetime_addSeconds(dateTime *t, uint8_t s) {
  *  less than ten seconds total.
  */
 void datetime_advanceIntervalShort(dateTime *t) {
+//	outputStringToUART("\n\r entered datetime_advanceIntervalShort fn \n\r\n\r");
+//		outputStringToUART("\n\r in datetime_advanceIntervalShort fn \n\r\n\r");
+//		outputStringToUART("\n\r passed time: ");
+//		datetime_getstring(str, t);
+//		outputStringToUART(str);
+//		outputStringToUART("\n\r\n\r");
 	t->second = (t->second/10) * 10; // adjust to even tens-of-seconds
 	t->second += 10; // advance by 10 seconds
 	datetime_normalize(t);
 }
-
 
 /**
  * \brief sets date/time forward by 1 hr
@@ -595,6 +644,28 @@ void datetime_advanceIntervalLong(dateTime *t) {
 }
 
 /**
+ * \brief sets date/time forward by the appropriate interval
+ *
+ * This function takes a pointer to a dateTime struct,
+ *  and advances the time by the interval, long or short,
+ *  specified by flags. 
+ *
+ * \note See the functions datetime_advanceIntervalLong
+ *  and datetime_advanceIntervalShort
+ */
+void datetime_advanceInterval(dateTime *t) {
+//	outputStringToUART("\n\r entered datetime_advanceInterval fn \n\r\n\r");
+
+	// (write part to test flags here:)
+//	outputStringToUART("\n\r about to call datetime_advanceIntervalShort fn \n\r\n\r");
+//	while (1)
+//	{
+//		;
+//	}
+	datetime_advanceIntervalShort(t);
+}
+
+/**
  * \brief assures dateTime is valid
  *
  * This function takes a pointer to a dateTime struct,
@@ -605,6 +676,7 @@ void datetime_advanceIntervalLong(dateTime *t) {
  *  minutes, or hours.
  */
 void datetime_normalize(dateTime *t) {
+//	outputStringToUART("\n\r entered datetime_normalize fn \n\r\n\r");
 	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	while (t->second > 59) {
 		t->second -= 60;

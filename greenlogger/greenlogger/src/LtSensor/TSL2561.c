@@ -42,7 +42,7 @@ uint16_t irrReadingNumber, cellVoltage;
 // 0b00000000 // 1x low gain, 13.7ms integration time. Multiplier 16 * (322/11) = 468.3636364, use 468 (0.08% error)
 // (these bit patterns #defined in the header file)
 // power up and power down each device, for each channel, for each integration/gain setting
-// on each sensor/channel/sensitivity, do 100 iterations, until either nonzero reading or 100 tries
+// on each sensor/channel/sensitivity, do 10 iterations, until either nonzero reading or 10 tries
 
 
 uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
@@ -66,42 +66,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 //	outputStringToUART("\n\r entered irradiance routine \n\r");
 	// check device ID, could use to read from various devices
 	// can comment out this whole first section, if always using TSL2561
-/*
-	r = I2C_Start();
-    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-    outputStringToUART(str);
-	if (r == TW_START) {
-		r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
-		len = sprintf(str, "\n\r I2C_Write(TSL2561_UP_ADDR_WRITE): 0x%x\n\r", r);
-		outputStringToUART(str);
-		if (r != TW_MT_SLA_ACK) {
-			outputStringToUART("\n\r sensor not present or not responding\n\r");
-			return 0;
-		} else {				
-			d = 0x8a; // write; a byte command, setting the register to "ID" (Part number, Rev ID) = 0x0a
-			r = I2C_Write(d);
-			len = sprintf(str, "\n\r I2C_Write(0x8a): 0x%x\n\r", r);
-			outputStringToUART(str);
-			if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
-				r = I2C_Start(); // restart
-				len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-				outputStringToUART(str);
-				if (r == TW_REP_START) {
-					r = I2C_Read(0); // do NACK, since this is the last and only byte read
-					//	I2C_Stop(); // do this at the end, for now
-					len = sprintf(str, "\n\r result of reading part ID: 0x%x\n\r", r);
-					outputStringToUART(str);
-					// could use this to switch based on different devices
-								//if ((r & 0xF0) == 0x50) { // part number for TSL2561 (datasheet says 0x1n, but actually reads 0x5n)
-					// len = sprintf(str, " matched correct part number\n\r");
-					// outputStringToUART(str);						
-				}	
-			}
-		}
-	}		
-    I2C_Stop();
-    outputStringToUART("\n\r I2C_Stop completed \n\r");
-*/
+
 	while (1) { // read sensor, decreasing sensitivity till either not topped out, or min sensitivity
 		// set up and get a reading
 		// power up the device
@@ -186,7 +151,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 				r = I2C_Write(irrChannel);
 	//			len = sprintf(str, "\n\r I2C_Write(irrChannel): 0x%x\n\r", r);
 	//			outputStringToUART(str);
-				for (intTmp = 1; intTmp < 100; intTmp++) {  // poll device up to 100 times
+				for (intTmp = 1; intTmp < 10; intTmp++) {  // poll device up to 10 times
 	//				len = sprintf(str, "\n\r  Loop: 0x%x\n\r", intTmp);
 	//				outputStringToUART(str);
 					r = I2C_Start(); // restart, preparatory to reading
@@ -256,7 +221,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 			return rd->validation;
 		}
 		// exit the while(1) loop here, one way or another
-		//  break out of it either by value<max, or val=0 after 100 iterations, or minimum sensitivity
+		//  break out of it either by value<max, or val=0 after 10 iterations, or minimum sensitivity
 		
 		if (rd->irrWholeWord < 0xffff)
 			break; // if zero (dark) or valid reading less than topped out at 2^16-1

@@ -66,6 +66,18 @@ enum stateFlags1Bits
  accelerometerIsThere // set if system finds ADXL345 on I2C bus
 };
 
+enum stateFlags2Bits 
+{
+	nextAlarmSet, // next alarm has been correctly set
+	sFbit1, // not used yet
+	sFbit2, // not used yet
+	sFbit3, // not used yet
+	sFbit4, // not used yet
+	sFbit5, // not used yet
+	sFbit6, // not used yet
+	sFbit7 // not used yet
+};
+
 
 void outputStringToUART (char* St);
 void checkForCommands (void);

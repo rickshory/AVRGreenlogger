@@ -80,9 +80,9 @@ char datetime_string[25];
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
-volatile uint8_t stateFlags1 = 0;
+volatile uint8_t stateFlags1 = 0, stateFlags2 = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
-volatile dateTime dt_RTC, dt_CurAlarm, dt_NextAlarm, dt_tmp, dt_LatestGPS;
+volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
 volatile uint8_t timeZoneOffset = 0; // globally available
 volatile accelAxisData accelData;
 extern irrData irrReadings[4];
@@ -123,18 +123,18 @@ int main(void)
 	rtc_setdefault();
 	if (!rtc_setTime(&dt_RTC)) {
 		rtcStatus = rtcTimeSetToDefault;
-		datetime_copy(&dt_RTC, &dt_CurAlarm);
-		datetime_copy(&dt_RTC, &dt_NextAlarm);
-		datetime_advanceIntervalShort(&dt_NextAlarm);
-		if (!rtc_setAlarm1(&dt_NextAlarm)) {
-			outputStringToUART("\n\r Alarm1 set \n\r\n\r");
-			datetime_getstring(str, &dt_NextAlarm);
-			outputStringToUART(str);
-			outputStringToUART("\n\r\n\r");
-		}
-		if (!rtc_enableAlarm1()) {
-			outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
-		}
+//		datetime_copy(&dt_RTC, &dt_CurAlarm);
+//		datetime_copy(&dt_RTC, &dt_NextAlarm);
+//		datetime_advanceInterval(&dt_NextAlarm);
+//		if (!rtc_setAlarm1(&dt_NextAlarm)) {
+//			outputStringToUART("\n\r Alarm1 set \n\r\n\r");
+//			datetime_getstring(str, &dt_NextAlarm);
+//			outputStringToUART(str);
+//			outputStringToUART("\n\r\n\r");
+//		}
+//		if (!rtc_enableAlarm1()) {
+//			outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
+//		}
 		outputStringToUART("\n\r time set to default ");
 		datetime_getstring(str, &dt_RTC);
 		outputStringToUART(str);
@@ -143,40 +143,62 @@ int main(void)
 	} else {
 		outputStringToUART("\n\r could not set Real Time Clock \n\r");
 	}
-	
-	enableRTCInterrupt();
-	machineState = Idle;
+	stateFlags2 &= ~(1<<nextAlarmSet); // alarm not set yet
+//	enableRTCInterrupt();
+//	machineState = Idle;
 	stayRoused(20);
  
 	while (1) { // main program loop
+		if (!(stateFlags2 & (1<<nextAlarmSet)))
+		{
+//			outputStringToUART("\n\r about to call setupNextAlarm \n\r\n\r");
+			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+			stateFlags2 |= (1<<nextAlarmSet);
+		}		
+		
+
+		machineState = Idle; // beginning, or done with everything; return to Idle state
+
 		while (machineState == Idle) { // RTC interrupt will break out of this
 			;
 			checkForCommands();
 
 		} // end of (machState == Idle)
 		// when (machState != Idle) execution passes on from this point
-
+//		outputStringToUART("\n\r RTC alarm occurred \n\r\n\r");
 		// when RTCC occurs, changes machineState to GettingTimestamp
-		datetime_copy(&dt_NextAlarm, &dt_CurAlarm);
-		datetime_advanceIntervalShort(&dt_NextAlarm);
-		if (!rtc_setAlarm1(&dt_NextAlarm)) {
-			;
+		stateFlags2 &= ~(1<<nextAlarmSet);
+//		datetime_copy(&dt_NextAlarm, &dt_CurAlarm);
+//		datetime_advanceInterval(&dt_NextAlarm);
+//		if (!rtc_setAlarm1(&dt_NextAlarm)) {
+//			;
 //			outputStringToUART("\n\r Alarm1 set \n\r\n\r");
 //			datetime_getstring(str, &dt_NextAlarm);
 //			outputStringToUART(str);
 //			outputStringToUART("\n\r\n\r");
-		}
-		if (!rtc_enableAlarm1()) {
-			;
+//		}
+//		if (!rtc_enableAlarm1()) {
+//			;
 //			outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
-		}
-		enableRTCInterrupt();
+//		}
+//		enableRTCInterrupt();
 		stayRoused(3);
 
 		while (1) { // various tests may break early
 			;
 //		setSDCardPowerControl();
 			// monitor cell voltage, to decide whether there is enough power to proceed
+/*
+			{ // read 8 times and average
+				uint8_t ctCV;
+				uint16_t sumCellVoltage = 0;
+				for (ctCV = 0; ctCV < 8; ctCV++) {
+					intTmp1 = readCellVoltage(&cellVoltageReading);
+					sumCellVoltage += cellVoltageReading.adcWholeWord;
+				}
+				cellVoltageReading.adcWholeWord = (sumCellVoltage / 8);
+			}
+*/
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			//if (stateFlags1 & (1<<isRoused)) {
 			//	outputStringToUART("\r\n  roused\r\n");
@@ -223,13 +245,16 @@ int main(void)
 				}						
 				outputStringToUART(str);
 			}
+			
 			// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
 			// using internal reference, Vref = 2.56V = 2560mV
 			// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
 			len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 			outputStringToUART(str);
-
 			outputStringToUART("\r\n");
+			
+//			outputStringToUART("\n\r data output completed \n\r\n\r");
+			
 //        if (stateFlags.isRoused) { 
 //            // if roused, and Bluetooth is on, flag to keep BT on awhile after normal rouse timeout
 //            // createTimestamp sets secsSince1Jan2000
@@ -267,7 +292,7 @@ int main(void)
 				
 				outputStringToUART(" Data written to SD card \n\r\n\r");
 			}
-			machineState = Idle; // done with everything, return to Idle state
+			// let main loop restore Idle state, after assuring timer interrupts are re-established
 			break; // if did everything, break here
 		} // end of getting data readings
 		
@@ -395,213 +420,6 @@ int main(void)
         machState = ReadingSensors;
 //        getDataReadings(); // may make part or all of this a separate function later, but for now do straight-through
         // read broadband and infrared from down- and up-pointing sensors via I2C
-       //  __asm__ volatile("disi #0x3FFF"); // temporarily disable interrupts
-        // explicitly initialize data to defaults
-        for (irrReadingNumber = 0; irrReadingNumber < 4; irrReadingNumber++) {
-            irrReadings[irrReadingNumber].irrWholeWord = 0; // default value
-            irrReadings[irrReadingNumber].irrMultiplier = 1; // default gain
-        }
-//        len = sprintf(str, " diagnostics\n\r");
-//        outputStringToUSART(str);
-        len = sprintf(str, " cell voltage %u\n\r", cellVoltage);
-        outputStringToUSART(str);
-
-        I2C_Init(); // enable I2C module
-        // first few Bus Collision tests should be sufficient to determine if I2C is working
-        if (I2C2STATbits.BCL)
-        {
-            len = sprintf(str, " I2C bus collision during Init\n\r");
-            outputStringToUSART(str);
-            machState = Idle;
-            break;
-        }
-        I2C_Stop(); // create a Stop condition on the I2C bus
-        if (I2C2STATbits.BCL)
-        {
-            len = sprintf(str, " I2C bus collision during Stop\n\r");
-            outputStringToUSART(str);
-            machState = Idle;
-            break;
-        }
-        for (irrSensorNumber = 0; irrSensorNumber < 2; irrSensorNumber++) {
-        // 0 = down-looking sensor, 1 = up-looking sensor
-             if (irrSensorNumber == 0) {
-                 irrSensorWriteAddr = 0x52;
-                 irrSensorReadAddr = 0x53;
-             } else {
-                 irrSensorWriteAddr = 0x92;
-                 irrSensorReadAddr = 0x93;
-             }
-            I2C_Start(); // create a Start condition on the I2C bus
-            if (I2C2STATbits.BCL)
-            {
-                len = sprintf(str, " I2C bus collision during Start\n\r");
-                outputStringToUSART(str);
-                machState = Idle;
-                break;
-            }
-            r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
-//            d = irrSensorWriteAddr; // address the device, say we are going to write
-//            r = I2C_Write(d);
-// len = sprintf(str, " result of sending 0x%x = %x\n\r", d, r);
-// outputStringToUSART(str);
-            if (!r) { // device did not acknowledge
-                I2C_Stop();
-                if (irrSensorWriteAddr == 0x52)
-                    len = sprintf(str, " Down-pointing sensor not present, or not responding\n\r");
-                else
-                    len = sprintf(str, " Up-pointing sensor not present, or not responding\n\r");
-                outputStringToUSART(str);
-                continue;
-            }
-            d = 0x8A; // write; a byte command, setting the register to "ID" (Part number, Rev ID) = 0x0a
-            r = I2C_Write(d);
-// len = sprintf(str, " result of sending 0x%x = %x\n\r", d, r);
-// outputStringToUSART(str);
-            r = I2C_Write(irrSensorReadAddr);
-            I2C_ReStart(); // restart, preparatory to reading
-            r = I2C_Read(0); // do NACK, since this is the last and only byte read
-            I2C_Stop();
-// len = sprintf(str, " result of reading part ID: 0x%x\n\r", r);
-// outputStringToUSART(str);
-            //if ((r & 0xF0) == 0x50) { // part number for TSL2561 (datasheet says 0x1n, but actually reads 0x5n)
-// len = sprintf(str, " matched correct part number\n\r");
-// outputStringToUSART(str);
-                for (irrChannelNumber = 0; irrChannelNumber < 2; irrChannelNumber++) {
-                    // 0 = broadband channel, 1 = infrared channel
-// len = sprintf(str, " entered FOR loop for channels\n\r");
-// outputStringToUSART(str);
-                    if (irrChannelNumber == 0)
-                        irrChannel = 0xAC;
-                    else
-                        irrChannel = 0xAE;
-                    irrReadingNumber = irrChannelNumber + (irrSensorNumber + irrSensorNumber);
-                    irrReadings[irrReadingNumber].irrWholeWord = 0; // default value
-                    irrReadings[irrReadingNumber].irrMultiplier = 1; // default gain
-
-                    // start with high gain and high integration time
-                    stateFlags_2.irrSensorGain = 1;
-                    stateFlags_2.irrSensorIntegrationPeriodHi = 1;
-                    stateFlags_2.irrSensorIntegrationPeriodLo = 0;
-                    while (1) { // read sensor, adjusting gain and sensitivity till OK or topped out
-                        // power up device
-                        I2C_Start();
-                        r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
-                        d = 0x80; // write; a byte command, setting the register to CONTROL = 0x00
-                        r = I2C_Write(d);
-// len = sprintf(str, " result of sending 0x%x = %x\n\r", d, r);
-// outputStringToUSART(str);
-                        d = 0x03; // write to CONTROL, power-up code
-                        r = I2C_Write(d);
-// len = sprintf(str, " result of sending 0x%x = %x\n\r", d, r);
-// outputStringToUSART(str);
-                        I2C_Stop();
-                        // set up gain and integration time, prep to read sensor
-                        I2C_Start();
-                        r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
-                        d = 0x81; // write; a byte command, setting the register to TIMING = 0x01
-                        r = I2C_Write(d);
-                        d = 0x00;
-                        if (stateFlags_2.irrSensorGain)
-                            d |= 0x10; // set high gain bit
-                        if (stateFlags_2.irrSensorIntegrationPeriodHi)
-                            d |= 0x02; // irrSensorIntegrationPeriod code 11 is disallowed so this is unambiguous
-                        else {
-                            if (stateFlags_2.irrSensorIntegrationPeriodLo)
-                                d |= 0x01; // irrSensorIntegrationPeriod code 01, medium
-                        }
-// len = sprintf(str, "\n\r TIMING code, d = 0x%x\n\r", d);
-// outputStringToUSART(str);
-
-//
-//                        // set sensor gain 0=low, 1=high
-//                        if (stateFlags_2.irrSensorGain)
-//                            d = 0x12; // write to TIMING, high gain, long integration time
-//                        else
-//                            d = 0x10; 
-                        r = I2C_Write(d); // write to TIMING, the gain and integration time
-                        I2C_Stop();
-                        // get reading
-                        I2C_Start();
-                        r = I2C_Write(irrSensorWriteAddr);
-// d = irrSensorWriteAddr;
-// r = I2C_Write(d);
-// len = sprintf(str, " result of sending 0x%x = %x\n\r", d, r);
-// outputStringToUSART(str);
-                        r = I2C_Write(irrChannel);
-// d = irrChannel;
-// r = I2C_Write(d);
-// len = sprintf(str, " result of sending 0x%x = %x\n\r", d, r);
-// outputStringToUSART(str);
-                        for (intTmp = 1; intTmp < 100; intTmp++) {  // poll device up to 100 times
-                            I2C_ReStart(); // restart, preparatory to reading
-                            r = I2C_Write(irrSensorReadAddr); // address the device, say we are going to read
-// d = irrSensorReadAddr;
-// r = I2C_Write(d);
-// len = sprintf(str, " result of sending 0x%x = %x\n\r", d, r);
-// outputStringToUSART(str);
-                            irrReadings[irrReadingNumber].irrLoByte = I2C_Read(1); // do ACK, because not last byte
-                            irrReadings[irrReadingNumber].irrHiByte = I2C_Read(0); // do NACK, since this is the last byte
-                            I2C_Stop();
-// len = sprintf(str, "\n\r after %i tries, reading[%u] = %u\n\r", intTmp, irrReadingNumber, irrReadings[irrReadingNumber].irrWholeWord);
-// outputStringToUSART(str);
-                            if ((irrReadings[irrReadingNumber].irrWholeWord > 0))
-                                break;
-                            for (unsignedIntTmp = ~0; (unsignedIntTmp); unsignedIntTmp--) ; // wait a while
-                            while (*USART1_outputbuffer_head != *USART1_outputbuffer_tail) ; // in case something is printing
-                        } // end of polling FOR loop, either zero or value
-                        I2C_Stop();
- //len = sprintf(str, "\n\r exited FOR loop, reading[%u] = %u, Gain = %c, IntegrCode = %c%c\n\r", 
- //         irrReadingNumber, irrReadings[irrReadingNumber].irrWholeWord, (stateFlags_2.irrSensorGain ? '1' : '0'),
- //         (stateFlags_2.irrSensorIntegrationPeriodHi ? '1' : '0'), 
- //         (stateFlags_2.irrSensorIntegrationPeriodLo ? '1' : '0'));
- //outputStringToUSART(str);
-                        // turn off device
-                        I2C_Start();
-                        r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
-                        d = 0x80; // write; a byte command, setting the register to CONTROL = 0x00
-                        r = I2C_Write(d);
-                        d = 0x00; // write to CONTROL, power-down code
-                        r = I2C_Write(d);
-                        I2C_Stop();
-                       // exit loop here, one way or another
-                        if (irrReadings[irrReadingNumber].irrWholeWord < 0xFFFF)
-                            break; // if zero (dark) or valid reading less than topped out at 2^16-1
-                        if ((!stateFlags_2.irrSensorGain) && 
-                                  (!stateFlags_2.irrSensorIntegrationPeriodHi) && 
-                                  (!stateFlags_2.irrSensorIntegrationPeriodLo))
-                            break; // also if topped out but we have done everything possible,
-                                   // low gain and minimum integration period
-                        // if we didn't exit, adjust bits, try not to top out
-                        if (!stateFlags_2.irrSensorGain) { // if gain is already low
-                            if (stateFlags_2.irrSensorIntegrationPeriodHi) { // integ period high, code 10
-                                stateFlags_2.irrSensorIntegrationPeriodHi = 0; // set to medium code 01
-                                stateFlags_2.irrSensorIntegrationPeriodLo = 1;
-                            } else { // integ period is medium or low, 01 or 00
-                                if (stateFlags_2.irrSensorIntegrationPeriodLo) // if medium, code 01
-                                    stateFlags_2.irrSensorIntegrationPeriodLo = 0; // set to low, code 00
-                            }
-                        }
-                        if (stateFlags_2.irrSensorGain) // if gain is high
-                            stateFlags_2.irrSensorGain = 0; // set gain low
-                    } // end of attempts at reading device, either OK or topped out, or zero
-                    // calculate multiplier
-                    // if high integration time, code 10, leave as default for now
-                    if (!stateFlags_2.irrSensorIntegrationPeriodHi) {
-                        if (stateFlags_2.irrSensorIntegrationPeriodLo) // medium, code 01
-                            irrReadings[irrReadingNumber].irrMultiplier = 4; // (322/81), 0.62% error
-                        else // low, code 00
-                            irrReadings[irrReadingNumber].irrMultiplier = 29; // (322/11), 0.93% error
-                    }
-                    if (!stateFlags_2.irrSensorGain) // if gain is low
-                        irrReadings[irrReadingNumber].irrMultiplier *= 16; // multiply by 16
-
-                } // end of bb or ir channels
-             
-            //} // end of if correct device part number
-            // else {} // determine if TSL2581 and work with that
-
-        } // end of up- or down-looking device
 
 //    I2C2CONbits.I2CEN = 0; // disable I2C module
 // diagnostic for testing

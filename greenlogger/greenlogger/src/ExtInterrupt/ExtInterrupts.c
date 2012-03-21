@@ -103,21 +103,4 @@ ISR(PCINT0_vect)
 {
 	disableRTCInterrupt();
 	machineState = GettingTimestamp;
-/*
-	datetime_copy(&dt_NextAlarm, &dt_CurAlarm);
-	datetime_advanceIntervalShort(&dt_NextAlarm);
-	if (!rtc_setAlarm1(&dt_NextAlarm)) {
-		;
-//		outputStringToUART("\n\r Alarm1 set \n\r\n\r");
-//		datetime_getstring(str, &dt_NextAlarm);
-//		outputStringToUART(str);
-//		outputStringToUART("\n\r\n\r");
-	}
-	if (!rtc_enableAlarm1()) {
-		;
-//		outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
-	}
-	enableRTCInterrupt();
-	stayRoused(3);
-*/
 }

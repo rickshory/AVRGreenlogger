@@ -66,7 +66,9 @@ write zero to ADEN to avoid excessive power consumption
 */
 
 uint8_t readCellVoltage (adcData *cellV) {
-	
+	uint8_t ct;
+//	uint16_t
+	unsigned long sumOf8Readings = 0;
 	// set initial conditions; conversion-complete interrupt will fill in these values
 	cellV->adcWholeWord = 0;
 	cellV->adcMultiplier = 0; // currently, flags that we have no conversion yet
@@ -78,7 +80,9 @@ uint8_t readCellVoltage (adcData *cellV) {
 	// max	 200kHz				 40
 	// so, a division factor of either 64 (125kHz) or 128 (62.5kHz) would be OK
 	// using 128
-	ADCSRA |= ((1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0));
+	//ADCSRA |= ((1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0));
+	// using 64
+	ADCSRA |= ((1<<ADPS2) | (1<<ADPS1));
 	//
 	// The prescaler starts counting from the moment the ADC is switched on by setting the ADEN bit
 
@@ -101,63 +105,65 @@ uint8_t readCellVoltage (adcData *cellV) {
 	
 	// DIDR0 – Digital Input Disable Register 0
 	DIDR0 |= (1<<ADC1D); // disable digital input buffer on this pin to save power
+	
+	for (ct = 0; ct < 64; ct++) {
+		// enable ADC conversion complete interrupt
+		ADCSRA |= (1<<ADIE);
+		// clear interrupt flag
+		ADCSRA |= (1<<ADIF); // writing a 1 clears this flag
+		// global enable interrupts
+		sei();
+		// enable ADC
+		ADCSRA |= (1<<ADEN);	
+		// initiate a single conversion
+		ADCSRA |= (1<<ADSC);
+		// enter CPU Idle mode
 
-	// enable ADC conversion complete interrupt
-	ADCSRA |= (1<<ADIE);
-	// clear interrupt flag
-	ADCSRA |= (1<<ADIF); // writing a 1 clears this flag
-	// global enable interrupts
-	sei();
-	// enable ADC
-	ADCSRA |= (1<<ADEN);	
-	// initiate a single conversion
-	ADCSRA |= (1<<ADSC);
-	// enter CPU Idle mode
+	// SE bit in SMCR must be written to logic one and a SLEEP
+	//  instruction must be executed.
 
-// SE bit in SMCR must be written to logic one and a SLEEP
-//  instruction must be executed. The SM2, SM1, and SM0
-
-// When the SM2..0 bits are written to 001, the SLEEP instruction makes the MCU enter ADC
-// Noise Reduction mode
+	// When the SM2..0 bits are written to 001, the SLEEP instruction makes the MCU enter ADC
+	// Noise Reduction mode
 	
-	// SM2 = bit 3
-	// SM1 = bit 2
-	// SM0 = bit 1
-	// SE = bit 0
-	// don't set SE yet
-	SMCR = 0b00000010;
-	// set SE (sleep enable)
-	SMCR |= (1<<SE);
-	// go into Noise Reduction mode SLEEP
-	asm("sleep");
-	// after wakeup, clear SE to prevent SLEEP by accident
-	SMCR &= ~(1<<SE);
+		// SM2 = bit 3
+		// SM1 = bit 2
+		// SM0 = bit 1
+		// SE = bit 0
+		// don't set SE yet
+		SMCR = 0b00000010;
+		// set SE (sleep enable)
+		SMCR |= (1<<SE);
+		// go into Noise Reduction mode SLEEP
+		asm("sleep");
 	
-	while (ADCSRA & (1<<ADSC))
-		; // should break out of this when conversion is complete, regardless of Idle mode
-		
+		while (ADCSRA & (1<<ADSC))
+			; // should break out of this when conversion is complete, regardless of Idle mode
 	
+	/*
+	Auto Triggering is
+	enabled by setting the ADC Auto Trigger Enable bit, ADATE in ADCSRA. The trigger source is
+	selected by setting the ADC Trigger Select bits, ADTS in ADCSRB (see description of the ADTS
+	bits for a list of the trigger sources). When a positive edge occurs on the selected trigger signal,
+	the ADC prescaler is reset and a conversion is started. This provides a method of starting conversions
+	at fixed intervals. If the trigger signal still is set when the conversion completes, a new
+	conversion will not be started. If another positive edge occurs on the trigger signal during conversion,
+	the edge will be ignored. Note that an Interrupt Flag will be set even if the specific
+	interrupt is disabled or the global interrupt enable bit in SREG is cleared. A conversion can thus
+	be triggered without causing an interrupt. However, the Interrupt Flag must be cleared in order to
+	trigger a new conversion at the next interrupt event.
+	*/
+		cellV->adcLoByte = ADCL;
+		cellV->adcHiByte = ADCH;
+		sumOf8Readings += cellV->adcWholeWord;
+	}
 	
-	
-/*
-Auto Triggering is
-enabled by setting the ADC Auto Trigger Enable bit, ADATE in ADCSRA. The trigger source is
-selected by setting the ADC Trigger Select bits, ADTS in ADCSRB (see description of the ADTS
-bits for a list of the trigger sources). When a positive edge occurs on the selected trigger signal,
-the ADC prescaler is reset and a conversion is started. This provides a method of starting conversions
-at fixed intervals. If the trigger signal still is set when the conversion completes, a new
-conversion will not be started. If another positive edge occurs on the trigger signal during conversion,
-the edge will be ignored. Note that an Interrupt Flag will be set even if the specific
-interrupt is disabled or the global interrupt enable bit in SREG is cleared. A conversion can thus
-be triggered without causing an interrupt. However, the Interrupt Flag must be cleared in order to
-trigger a new conversion at the next interrupt event.
-*/
-	cellV->adcLoByte = ADCL;
-	cellV->adcHiByte = ADCH;
+	cellV->adcWholeWord = (sumOf8Readings / 64);
 	cellV->adcMultiplier = 1; // currently, flags a completed conversion
 	
 	// disable ADC to save power in sleep modes
 	ADCSRA &= ~(1<<ADEN);
+	// done, clear SE to prevent SLEEP by accident
+	SMCR &= ~(1<<SE);
 	
 	return cellV->adcHiByte; // for testing
 }

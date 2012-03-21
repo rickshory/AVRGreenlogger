@@ -202,7 +202,7 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
 * read Accelerometer, for system leveling
 *****************************************/
 
-uint8_t readADXL345Axes (accelAxisData *d) {
+uint8_t readADXL345Axes (volatile accelAxisData *d) {
     uint8_t r; // accelerometer readings
 //    if (!stateFlags.accelerometerIsThere) {
 //        // globals "len" and "str" available on return

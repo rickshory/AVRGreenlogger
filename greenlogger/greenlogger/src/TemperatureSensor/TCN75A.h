@@ -65,13 +65,14 @@ typedef struct {
             uint16_t tmprWholeWord;
         };
     };
-    uint16_t tmprMultiplier;
+    uint8_t verification;
 } tmprData;
 
 tmprData temperatureReading;
 
 // functions
-uint8_t initOneShotTemperatureReading (void);
-uint8_t getTemperatureReading (tmprData *tr);
+uint8_t temperature_DeviceShutdown(void);
+uint8_t temperature_InitOneShotReading (void);
+uint8_t temperature_GetReading (tmprData *tr);
 
 #endif /* TCN75A_H_ */

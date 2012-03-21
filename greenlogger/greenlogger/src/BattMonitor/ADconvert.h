@@ -24,6 +24,6 @@ typedef struct {
 
 
 // functions
-uint8_t readCellVoltage (adcData *cellV);
+uint8_t readCellVoltage (volatile adcData *cellV);
 
 #endif /* ADCONVERT_H_ */

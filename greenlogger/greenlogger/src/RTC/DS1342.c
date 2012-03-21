@@ -740,6 +740,205 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
 }
 
 /**
+ * \brief from a string, creates date/time
+ *
+ * This function fills a data/time struct from
+ *  a string. String must be in strict format
+ *  YY-MM-DD HH:MM:SS (century = 2000)
+ *  example: "2010-12-21 10:47:13"
+ *  Should previously test using fn 'isValidTimestamp'
+ *  If useGlobalTimeZone = true,
+ *  gets timezone offset from the global 'timeZoneOffset'
+ *  otherwise expects it in the 4 chars following date/time
+ *  in the format ' +NN', e.g. ' +03' or ' -08'
+ */
+void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone)
+{
+	uint8_t iTmp;
+	dtp->year = (10 * (dtstr[2] - '0')) + (dtstr[3] - '0');
+	dtp->month = (10 * (dtstr[5] - '0')) + (dtstr[6] - '0');
+	dtp->day = (10 * (dtstr[8] - '0')) + (dtstr[9] - '0');
+	dtp->hour = (10 * (dtstr[11] - '0')) + (dtstr[12] - '0');
+	dtp->minute = (10 * (dtstr[14] - '0')) + (dtstr[15] - '0');
+	dtp->second = (10 * (dtstr[17] - '0')) + (dtstr[18] - '0');
+	if (useGlobalTimeZone) {
+		dtp->houroffset = timeZoneOffset;
+	} else {
+		dtp->houroffset = (10 * (dtstr[21] - '0')) + (dtstr[22] - '0');
+		if (dtstr[20] == '-') {
+			dtp->houroffset *= -1;
+		}
+		
+	}
+	
+	//strcpy(dtstr, "2000-00-00 00:00:00 +00");
+	//dtstr[2] = '0'+ ((dtp->year) / 10);
+	//dtstr[3] = '0'+	((dtp->year) % 10);
+	//dtstr[5] = '0'+	((dtp->month) / 10);
+	//dtstr[6] = '0'+	((dtp->month) % 10);
+	//dtstr[8] = '0'+	((dtp->day) / 10);
+	//dtstr[9] = '0'+	((dtp->day) % 10);
+	//dtstr[11] = '0'+ ((dtp->hour) / 10);
+	//dtstr[12] = '0'+ ((dtp->hour) % 10);
+	//dtstr[14] = '0'+ ((dtp->minute) / 10);
+	//dtstr[15] = '0'+ ((dtp->minute) % 10);
+	//dtstr[17] = '0'+ ((dtp->second) / 10);
+	//dtstr[18] = '0'+ ((dtp->second) % 10);
+	//if ((dtp->houroffset) < 0) {
+		//iTmp  = -1 * (dtp->houroffset);
+		//dtstr[20] = '-';
+	//} else {
+		//iTmp  = (dtp->houroffset);
+		//dtstr[20] = '+';
+	//}
+	//dtstr[21] = '0'+ (iTmp / 10);
+	//dtstr[22] = '0'+ (iTmp % 10);
+}
+
+
+/**
+ * \brief  Is the string a valid date/time?
+ *
+ *  This function verifies that the string in the passed
+ * text buffer is a valid date/time.
+ *  Input: char pointer
+ *  Output: uint8_t, used as boolean; 1 = true, 0 = false
+ *  Precondition: date/time starting at pointer, in strict format:
+ *  20YY-MM-DD HH:MM:SS (century must be 2000)
+ *  use this fn before trying to set the time
+ */
+
+uint8_t isValidTimestamp(char* p)
+{
+	uint8_t i, m, d, v;
+    // example: "2010-12-21 10:47:13"
+    // year
+    if (*p++ != '2') // must always start with '20'
+        return 0;
+    if (*p++ != '0')
+        return 0;
+    i = *p++;
+    if ((i < '0') || (i > '9')) // tens of year
+        return 0;
+    i = *p++;
+    if ((i < '0') || (i > '9')) // ones of year
+        return 0;
+    if (*p++ != '-') // correct delimiter
+        return 0;
+    // month
+    i = *p++;
+    if ((i < '0') || (i > '1')) // tens of month
+        return 0;
+    m = 10 * (i & 0xf); // strip all but low nybble to convert to BCD
+    i = *p++;
+    if ((i < '0') || (i > '9')) // ones of month
+        return 0;
+    m = m + (i & 0xf); // strip all but low nybble to convert to BCD
+    if (m > 12) 
+        return 0;
+    if (*p++ != '-') // correct delimiter
+        return 0;
+    // day
+    i = *p++;
+    if ((i < '0') || (i > '3')) // tens of day
+        return 0;
+    d = 10 * (i & 0xf); // strip all but low nybble to convert to BCD
+    i = *p++;
+    if ((i < '0') || (i > '9')) // ones of day
+        return 0;
+    d = d + (i & 0xf); // strip all but low nybble to convert to BCD
+    if (d > 31) // takes care of January, March, May, July, August, October, and December
+        return 0;
+    if ((m = 2) && (d > 29)) // February
+        return 0;
+    if ((m = 4) && (d > 30)) // April
+        return 0;
+    if ((m = 6) && (d > 30)) // June
+        return 0;
+    if ((m = 9) && (d > 30)) // September
+        return 0;
+    if ((m = 11) && (d > 30)) // November
+        return 0;
+    if (*p++ != ' ') // correct delimiter
+        return 0;
+    // hour
+    i = *p++;
+    if ((i < '0') || (i > '2')) // tens of hour
+        return 0;
+    v = 10 * (i & 0xf); // strip all but low nybble to convert to BCD
+    i = *p++;
+    if ((i < '0') || (i > '9')) // ones of hour
+        return 0;
+    v = v + (i & 0xf); // strip all but low nybble to convert to BCD
+    if (v > 23) 
+        return 0;
+    if (*p++ != ':') // correct delimiter
+        return 0;
+    // minute
+    i = *p++;
+    if ((i < '0') || (i > '5')) // tens of minute
+        return 0;
+    v = 10 * (i & 0xf); // strip all but low nybble to convert to BCD
+    i = *p++;
+    if ((i < '0') || (i > '9')) // ones of minute
+        return 0;
+    v = v + (i & 0xf); // strip all but low nybble to convert to BCD
+    if (v > 59) 
+        return 0;
+    if (*p++ != ':') // correct delimiter
+        return 0;
+    // second
+    i = *p++;
+    if ((i < '0') || (i > '5')) // tens of second
+        return 0;
+    v = 10 * (i & 0xf); // strip all but low nybble to convert to BCD
+    i = *p++;
+    if ((i < '0') || (i > '9')) // ones of second
+        return 0;
+    v = v + (i & 0xf); // strip all but low nybble to convert to BCD
+    if (v > 59) 
+        return 0;
+    // passed all tests
+    return 1;
+} // end of isValidTimestamp
+
+/**
+ * \brief  Is the string a valid timezone offset?
+ *
+ *  This function verifies that the string in the passed
+ * text buffer is a valid timezone offset.
+ *  Input: char pointer
+ *  Output: int, used as boolean; 1 = true, 0 = false
+ *  Precondition: hour offset starting at pointer, in strict format:
+ *  +00 ('+' means plus or minus character, '00' is zero to twelve with leading zero if <10)
+ *  use this fn before trying to set the time, if hour offset is needed.
+ */
+
+uint8_t isValidTimezone(char* p)
+{
+    uint8_t i, h;
+    // examples: "-10", "+03"
+    // sign
+    i = *p++;
+    if (!((i == '-') || (i == '+'))) // correct sign
+        return 0;
+
+    i = *p++;
+    if ((i < '0') || (i > '1')) // tens of hour
+        return 0;
+    h = 10 * (i & 0xf); // strip all but low nybble to convert to BCD
+    i = *p++;
+    if ((i < '0') || (i > '9')) // ones of hour
+        return 0;
+    h = h + (i & 0xf); // strip all but low nybble to convert to BCD
+    if (h > 12) 
+        return 0;
+    // passed all tests
+    return 1;
+} // end of isValidTimezone
+
+
+/**
  * \brief Initialize the RTC
  *
  * This function will initialize the Real Time Clock

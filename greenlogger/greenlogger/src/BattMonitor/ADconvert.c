@@ -19,7 +19,7 @@ extern char str[128];
 extern uint8_t Timer1, Timer2;
 
 // global
-adcData cellVoltageReading;
+volatile adcData cellVoltageReading;
 
 // steps to do an Analog-to-Digital conversion
 /*
@@ -65,7 +65,7 @@ write zero to ADEN to avoid excessive power consumption
  REFS0
 */
 
-uint8_t readCellVoltage (adcData *cellV) {
+uint8_t readCellVoltage (volatile adcData *cellV) {
 	uint8_t ct;
 //	uint16_t
 	unsigned long sumOf8Readings = 0;
@@ -106,7 +106,8 @@ uint8_t readCellVoltage (adcData *cellV) {
 	// DIDR0 – Digital Input Disable Register 0
 	DIDR0 |= (1<<ADC1D); // disable digital input buffer on this pin to save power
 	
-	for (ct = 0; ct < 64; ct++) {
+	// (sec/125*10^3 cycles) * (25 cycles/conversion) * 64 conversions = 12.8ms 
+	for (ct = 0; ct < 64; ct++) { 
 		// enable ADC conversion complete interrupt
 		ADCSRA |= (1<<ADIE);
 		// clear interrupt flag

@@ -17,6 +17,9 @@
 
 #define commandBufferLen 30
 
+#define CELL_VOLTAGE_THRESHOLD_SD_CARD 456 // corresponds to 1140mV, where the NiMH cell voltage just starts to droop
+#define CELL_VOLTAGE_THRESHOLD_READ_DATA 427 // corresponds to 1067mV where cell voltage is just about to plummet
+#define CELL_VOLTAGE_THRESHOLD_UART 404 // corresponds to 1010mV where cell voltage is just above cutoff
 
 enum machStates
 {
@@ -38,9 +41,10 @@ enum errI2C
 {
 	I2C_OK = 0,
 	errNoI2CStart, // could not initiate Start state on I2C bus
-	errNoI2CAddressAck, // no acknowledgment by a device at the tested address
+	errNoI2CAddressAck, // no acknowledgment by a device at the tested address, to WRITE
 	errNoI2CDataAck, // no acknowledgment of a data write
 	errNoI2CRepStart, // could not do a Repeat Start
+	errNoI2CAddrAckRead, // could not address device to READ
 	errBadParameters // invalid parameters passed
 };
 

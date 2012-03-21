@@ -50,6 +50,8 @@ void datetime_advanceIntervalLong(dateTime *t);
 void datetime_advanceInterval(dateTime *t);
 void datetime_normalize(dateTime *t);
 void datetime_getstring(char* dtstr, dateTime *dtp);
+void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone);
+
 void rtc_add1sec(void);
 void rtc_setdefault(void);
 
@@ -59,5 +61,8 @@ uint8_t rtc_setAlarm1 (dateTime *t);
 uint8_t rtc_readAlarm1 (dateTime *t);
 uint8_t rtc_enableAlarm1 (void);
 uint8_t rtc_setupNextAlarm(dateTime *pDt);
+
+uint8_t isValidTimestamp(char* p);
+uint8_t isValidTimezone(char* p);
 
 #endif /* DS1342_H_ */

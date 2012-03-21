@@ -10,9 +10,11 @@
 
 #include <avr/io.h>
 #include <inttypes.h>
+#include "../greenlogger.h"
 #include "ff.h"
 #include "diskio.h"
 #include "RTC/DS1342.h"
+#include "BattMonitor/ADconvert.h"
 
 // 
 /*--------------------------------------------------------------------------
@@ -28,6 +30,8 @@ extern volatile dateTime dt_CurAlarm;
 
 extern volatile
 BYTE Timer1, Timer2;	// 100Hz decrement timer
+
+extern volatile adcData cellVoltageReading;
 
 static
 BYTE CardType;			// Card type flags
@@ -57,6 +61,10 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	FRESULT res;         // FatFs function common result code
 	char stDir[6], stFile[20];
 	BYTE sLen;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely write card
+	}
 
 	if(f_mount(0, &FileSystemObject)!=FR_OK) {
 		return sdMountFail;

@@ -76,7 +76,6 @@ char strJSON[128]; // string for JSON data
 const char test_string[] = "Count \n";
 char num_string[20];
 char datetime_string[25];
-//char* dt_stp = datetime_string;
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
@@ -86,7 +85,7 @@ volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
 volatile uint8_t timeZoneOffset = 0; // globally available
 volatile accelAxisData accelData;
 extern irrData irrReadings[4];
-extern adcData cellVoltageReading;
+volatile extern adcData cellVoltageReading;
 
 /**
  * \brief The main application
@@ -106,9 +105,11 @@ int main(void)
 	cli();
 	setupDiagnostics();
 	uart_init();
+	outputStringToUART("\r\n  UART Initialized\r\n");
 	commandBuffer[0] = '\0';
 	commandBufferPtr = commandBuffer; // "empty" the command buffer
 	sei();
+	intTmp1 = readCellVoltage(&cellVoltageReading);
     outputStringToUART("\r\n  enter I2C_Init\r\n");
 	I2C_Init(); // enable I2C 
 	outputStringToUART("\r\n  I2C_Init completed\r\n");
@@ -120,29 +121,24 @@ int main(void)
 //	for (cnt = 0; cnt < strlen(test_string); cnt++) {
 //		uart_putchar(test_string[cnt]);
 //	}
-	rtc_setdefault();
-	if (!rtc_setTime(&dt_RTC)) {
-		rtcStatus = rtcTimeSetToDefault;
-//		datetime_copy(&dt_RTC, &dt_CurAlarm);
-//		datetime_copy(&dt_RTC, &dt_NextAlarm);
-//		datetime_advanceInterval(&dt_NextAlarm);
-//		if (!rtc_setAlarm1(&dt_NextAlarm)) {
-//			outputStringToUART("\n\r Alarm1 set \n\r\n\r");
-//			datetime_getstring(str, &dt_NextAlarm);
-//			outputStringToUART(str);
-//			outputStringToUART("\n\r\n\r");
-//		}
-//		if (!rtc_enableAlarm1()) {
-//			outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
-//		}
-		outputStringToUART("\n\r time set to default ");
-		datetime_getstring(str, &dt_RTC);
-		outputStringToUART(str);
-		outputStringToUART("\n\r\n\r");
-		
+	intTmp1 = rtc_readTime(&dt_RTC);
+	if (dt_RTC.year) { // 0 on power up, otherwise must have been set
+		rtcStatus = rtcTimeManuallySet;
 	} else {
-		outputStringToUART("\n\r could not set Real Time Clock \n\r");
+		rtc_setdefault();
+		if (!rtc_setTime(&dt_RTC)) {
+			rtcStatus = rtcTimeSetToDefault;
+			outputStringToUART("\n\r time set to default ");
+			datetime_getstring(datetime_string, &dt_RTC);
+			outputStringToUART(datetime_string);
+			outputStringToUART("\n\r\n\r");
+		
+		} else {
+			outputStringToUART("\n\r could not set Real Time Clock \n\r");
+		}
 	}
+	
+	
 	stateFlags2 &= ~(1<<nextAlarmSet); // alarm not set yet
 //	enableRTCInterrupt();
 //	machineState = Idle;
@@ -210,11 +206,11 @@ int main(void)
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToUART(datetime_string);
 //			outputStringToUART("\t");
-			//if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_IRRADIANCE) { 
-			//	outputStringToUART(" power too low\n\r");
-			//	machineState = Idle;
-			//	break;
-			//}
+			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) { 
+				outputStringToUART(" power too low\n\r");
+				machineState = Idle;
+				break;
+			}
 			for (ct = 0; ct < 4; ct++) {
 				switch (ct)
 				{
@@ -245,7 +241,19 @@ int main(void)
 				}						
 				outputStringToUART(str);
 			}
+			// get temperature
+//			if (!temperature_InitOneShotReading()) {
+//				// temperature conversion time, typically 30ms
+//				for (Timer2 = 4; Timer2; );	// Wait for 40ms to be sure
+			if (!temperature_GetReading(&temperatureReading)) {
+					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
+					outputStringToUART(str);
+			} else
+				outputStringToUART("\t-");
+//			} else
+//				outputStringToUART("\t-");
 			
+			// calc cell voltage from ADC reading earlier
 			// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
 			// using internal reference, Vref = 2.56V = 2560mV
 			// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
@@ -273,6 +281,7 @@ int main(void)
 
 			if (stateFlags1 & (1<<timeToLogData)) {
 //				outputStringToUART("\n\r Entered log data routine \n\r");
+				// log irradiance
 				len = sprintf(str, "\n\r");
 				intTmp1 = writeCharsToSDCard(str, len);
 				len = sprintf(str, datetime_string);
@@ -285,6 +294,13 @@ int main(void)
 					}
 					intTmp1 = writeCharsToSDCard(str, len);
 				}
+				// log temperature
+				if (!temperatureReading.verification)
+					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
+				else
+					len = sprintf(str, "\t");
+				intTmp1 = writeCharsToSDCard(str, len);
+				// log cell voltage
 				len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 				intTmp1 = writeCharsToSDCard(str, len);
 				len = sprintf(str, "\n\r");
@@ -388,7 +404,7 @@ int main(void)
         }
         createTimestamp();
         outputStringToUSART(timeStampBuffer);
-        if (cellVoltage < CELL_VOLTAGE_THRESHOLD_READ_IRRADIANCE) { 
+        if (cellVoltage < CELL_VOLTAGE_THRESHOLD_READ_DATA) { 
             len = sprintf(str, " power too low\n\r");
             outputStringToUSART(str);
             machState = Idle;
@@ -481,6 +497,7 @@ int main(void)
 
 void outputStringToUART (char* St) {
 	uint8_t cnt;
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
 	for (cnt = 0; cnt < strlen(St); cnt++) {
 		uart_putchar(St[cnt]);
 	}
@@ -551,72 +568,6 @@ void checkForCommands (void) {
 					//	len = sprintf(str, "\n\r PINB: 0x%x\n\r", (PINB));
 						// send_cmd(CMD0, 0)
 //					len = sprintf(str, "\n\r CMD0: 0x%x\n\r", (send_cmd(CMD0, 0)));
-						
-/*
-
-						len = sprintf(str, "\n\r disk_initialize: 0x%x\n\r", (disk_initialize(0)));
-						outputStringToUART(str);
-{
-	FATFS FileSystemObject;
-	FRESULT res;         // FatFs function common result code
-
-if(f_mount(0, &FileSystemObject)!=FR_OK) {
-	//  flag error
-	len = sprintf(str, "\n\r f_mount failed: 0x%x\n\r", 0);
-	outputStringToUART(str);
-}
-
-DSTATUS driveStatus = disk_initialize(0);
-
-	if(driveStatus & STA_NOINIT ||
-		driveStatus & STA_NODISK ||
-		driveStatus & STA_PROTECT
-	) {
-//	flag error.
-	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
-	outputStringToUART(str);
-}
-
-// Sometimes you may want to format the disk.
-//	if(f_mkfs(0,0,0)!=FR_OK) {
-//		error
-//	}
-//
-
-res = f_mkdir("0000");
-if (!((res == FR_OK) || (res == FR_EXIST)))
-{
-	len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
-	outputStringToUART(str);	
-}
-
-
-FIL logFile;
-//works
-if(f_open(&logFile, "0000/GpsLog.txt", FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
-	len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
-	outputStringToUART(str);
-//flag error
-}
-//	len = sprintf(str, "\n\r f_size : 0x%x\n\r", f_size(&logFile));
-	len = sprintf(str, "\n\r f_size : 0x%x\n\r", (uint16_t)f_size(&logFile));
-	outputStringToUART(str);
-
-	// Move to end of the file to append data
-	res = f_lseek(&logFile, f_size(&logFile));
-
-unsigned int bytesWritten;
-f_write(&logFile, "New log opened!\n", 16, &bytesWritten);
-	len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
-	outputStringToUART(str);
-//Flush the write buffer with f_sync(&logFile);
-
-//Close and unmount.
-f_close(&logFile);
-f_mount(0,0);
-}
-*/
-
 						break;						
 					}
 
@@ -653,10 +604,10 @@ f_mount(0,0);
 
                 case 'F': case 'f':
 					{ // experimenting with temperature functions
-						if (!initOneShotTemperatureReading()) {
+						if (!temperature_InitOneShotReading()) {
 							// temperature conversion time, typically 30ms
 							for (Timer2 = 4; Timer2; );	// Wait for 40ms to be sure
-							if (!getTemperatureReading(&temperatureReading)) {
+							if (!temperature_GetReading(&temperatureReading)) {
 								len = sprintf(str, "\n\r Temperature: %d degrees C\n\r", (temperatureReading.tmprHiByte));
 								outputStringToUART(str);
 
@@ -666,66 +617,88 @@ f_mount(0,0);
 						break;
 					}						
 
-                case 'I': case 'i':
-					{ // experimenting with irradiance functions
-						uint8_t result;
-						result = getIrrReading(TSL2561_UpLooking, TSL2561_CHANNEL_BROADBAND, &irrReadings[0]);
-						if (!result) {
-							len = sprintf(str, "\n\r Val: %lu; Mult: %lu; Irr: %lu \n\r", 
-							     (unsigned long)irrReadings[0].irrWholeWord, (unsigned long)irrReadings[0].irrMultiplier, 
-								 (unsigned long)((unsigned long)irrReadings[0].irrWholeWord * (unsigned long)irrReadings[0].irrMultiplier));
-						} else {
-							len = sprintf(str, "\n\r Could not get irradiance, err code: %d", result);
-						}						
-						outputStringToUART(str);
-						break;
-					}						
-
-                case 'B': case 'b':
-					{ // experimenting with reading the battery voltage using the Analog to Digital converter
-						len = sprintf(str, "\n\r Hi byte: %d \n\r", readCellVoltage(&cellVoltageReading));
-						outputStringToUART(str);
-						len = sprintf(str, "\n\r 16bit value: %d \n\r", cellVoltageReading.adcWholeWord);
-						outputStringToUART(str);
-						
-
-						break;
-					}						
-
-                case 'T': case 't':
-					{ // experimenting with time functions
-						outputStringToUART("\n\r about to set time \n\r");
-						if (!rtc_setTime(&dt_RTC)) {
-							outputStringToUART("\n\r time set \n\r");
-						}
-						outputStringToUART("\n\r about to read time \n\r");
-						if (!rtc_readTime(&dt_tmp)) {
-//							dt_tmp.second = 22;
-//							len = sprintf(str, "\n\r Seconds: %d \n\r", dt_tmp.second);
-//							outputStringToUART(str);
-//							dt_tmp.year = 55;
-							datetime_getstring(str, &dt_tmp);
-							outputStringToUART(str);
-						} else {
-							outputStringToUART("Error reading time");
-						}
-						break;
-					}						
-
-/*
+                //case 'I': case 'i':
+					//{ // experimenting with irradiance functions
+						//uint8_t result;
+						//result = getIrrReading(TSL2561_UpLooking, TSL2561_CHANNEL_BROADBAND, &irrReadings[0]);
+						//if (!result) {
+							//len = sprintf(str, "\n\r Val: %lu; Mult: %lu; Irr: %lu \n\r", 
+							     //(unsigned long)irrReadings[0].irrWholeWord, (unsigned long)irrReadings[0].irrMultiplier, 
+								 //(unsigned long)((unsigned long)irrReadings[0].irrWholeWord * (unsigned long)irrReadings[0].irrMultiplier));
+						//} else {
+							//len = sprintf(str, "\n\r Could not get irradiance, err code: %d", result);
+						//}						
+						//outputStringToUART(str);
+						//break;
+					//}						
+//
+                //case 'B': case 'b':
+					//{ // experimenting with reading the battery voltage using the Analog to Digital converter
+						//len = sprintf(str, "\n\r Hi byte: %d \n\r", readCellVoltage(&cellVoltageReading));
+						//outputStringToUART(str);
+						//len = sprintf(str, "\n\r 16bit value: %d \n\r", cellVoltageReading.adcWholeWord);
+						//outputStringToUART(str);
+						//
+//
+						//break;
+					//}						
+//
+                //case 'T': case 't':
+					//{ // experimenting with time functions
+						//outputStringToUART("\n\r about to set time \n\r");
+						//if (!rtc_setTime(&dt_RTC)) {
+							//outputStringToUART("\n\r time set \n\r");
+						//}
+						//outputStringToUART("\n\r about to read time \n\r");
+						//if (!rtc_readTime(&dt_tmp)) {
+////							dt_tmp.second = 22;
+////							len = sprintf(str, "\n\r Seconds: %d \n\r", dt_tmp.second);
+////							outputStringToUART(str);
+////							dt_tmp.year = 55;
+							//datetime_getstring(str, &dt_tmp);
+							//outputStringToUART(str);
+						//} else {
+							//outputStringToUART("Error reading time");
+						//}
+						//break;
+					//}						
+//
                 case 'T': case 't':
 					{ // set time
-                    if (!isValidTimestamp(commandBuffer + 1)) {
-                         outputStringToUART("\r\n Invalid timestamp\r\n");
-                         break;
-                    }    
-                    if (!isValidTimezone(commandBuffer + 20)) {
-                         outputStringToUART("\r\n Invalid hour offset\r\n");
-                         break;
-                    }    
-                    outputStringToUART("\r\n Time changed from ");
-                    strcpy(strJSON, "\r\n{\"timechange\":{\"from\":\"");
-                    createTimestamp();
+					if (!isValidTimestamp(commandBuffer + 1)) {
+						outputStringToUART("\r\n Invalid timestamp\r\n");
+						break;
+					}    
+					if (!isValidTimezone(commandBuffer + 21)) {
+						outputStringToUART("\r\n Invalid hour offset\r\n");
+						break;
+					}
+					outputStringToUART("\r\n Time changed from ");
+					strcpy(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+					intTmp1 = rtc_readTime(&dt_tmp);
+					datetime_getstring(datetime_string, &dt_tmp);
+					strcat(strJSON, datetime_string);
+					outputStringToUART(datetime_string);
+					datetime_getFromUnixString(&dt_tmp, commandBuffer + 1, 0);
+					rtc_setTime(&dt_tmp);
+					strcat(strJSON, "\",\"to\":\"");
+					outputStringToUART(" to ");
+					datetime_getstring(datetime_string, &dt_tmp);
+					strcat(strJSON, datetime_string);
+					outputStringToUART(datetime_string);
+					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
+					outputStringToUART("\r\n");
+					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
+					rtcStatus = rtcTimeManuallySet;
+					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+
+//                    setTimeFromCharBuffer(commandBuffer + 3);
+//                    strncpy(timeZoneBuffer, commandBuffer + 20, 3);
+
+
+					// 
+/*
+					createTimestamp();
                     strcat(strJSON, timeStampBuffer + 2);
                     outputStringToUART(timeStampBuffer + 2);
                     strcat(strJSON, timeZoneBuffer);
@@ -745,9 +718,9 @@ f_mount(0,0);
                     stateFlags.timeHasBeenSet = 1; // presumably is now the correct time
                     stateFlags.timerHasBeenSynchronized = 0; // but timer not guaranteed to happen on 0 of seconds
                     startTimer1ToRunThisManySeconds(30); // keep system Roused
+*/
                     break;
                 }
-*/
 
                 case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)

@@ -92,6 +92,6 @@ uint8_t setADXL345Register (uint8_t reg, uint8_t val);
 uint8_t findADXL345 (void);
 uint8_t initializeADXL345 (void);
 uint8_t clearAnyADXL345TapInterrupt (void);
-uint8_t readADXL345Axes (accelAxisData *d);
+uint8_t readADXL345Axes (volatile accelAxisData *d);
 
 #endif /* ADXL345_H_ */

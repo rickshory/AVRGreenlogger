@@ -654,6 +654,8 @@ void datetime_advanceIntervalLong(dateTime *t) {
  *  and datetime_advanceIntervalShort
  */
 void datetime_advanceInterval(dateTime *t) {
+	uint8_t startingDay;
+	startingDay = t->day;
 //	outputStringToUART("\n\r entered datetime_advanceInterval fn \n\r\n\r");
 
 	// (write part to test flags here:)
@@ -663,6 +665,10 @@ void datetime_advanceInterval(dateTime *t) {
 //		;
 //	}
 	datetime_advanceIntervalShort(t);
+	
+	if (t->day !=startingDay) // day has rolled over
+		stateFlags1 |= (1<<writeDataHeaders); // flag to log column headers on next SD card write
+
 }
 
 /**

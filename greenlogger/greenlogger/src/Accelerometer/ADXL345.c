@@ -11,18 +11,18 @@
 #include <util/twi.h>
 
 
-extern volatile uint8_t stateFlags1;
+extern volatile uint8_t stateFlags2;
 extern int len;
 extern char str[128];
 
 /*****************************************
 * try to detect whether the ADXL345 Accelerometer is there, and functioning
-* returns with global "stateFlags1.accelerometerIsThere" set or cleared
+* returns with global "stateFlags2.accelerometerIsThere" set or cleared
 *****************************************/
 uint8_t findADXL345 (void) {
     uint8_t r;
     outputStringToUART("\n\r entered findADXL345 routine \n\r");
-	stateFlags1 &= ~(1<<accelerometerIsThere); // flag cleared, until accel found
+	stateFlags2 &= ~(1<<accelerometerIsThere); // flag cleared, until accel found
 	r = I2C_Start();
     len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
     outputStringToUART(str);
@@ -31,7 +31,7 @@ uint8_t findADXL345 (void) {
 		len = sprintf(str, "\n\r I2C_Write(ADXL345_ADDR_WRITE): 0x%x\n\r", r);
 		outputStringToUART(str);
 		if (r == TW_MT_SLA_ACK) {
-			stateFlags1 |= (1<<accelerometerIsThere); // accel found, set flag
+			stateFlags2 |= (1<<accelerometerIsThere); // accel found, set flag
 			r = I2C_Write(ADXL345_REG_DEVID); // tell the device the register we are going to want
 			len = sprintf(str, "\n\r I2C_Write(ADXL345_REG_DEVID): 0x%x\n\r", r);
 			outputStringToUART(str);
@@ -76,7 +76,7 @@ uint8_t initializeADXL345 (void) {
     uint8_t r;
 	outputStringToUART("\n\r entered initializeADXL345 routine \n\r");
 //	findADXL345();
-//    if (!(stateFlags1 & (1<<accelerometerIsThere)) {
+//    if (!(stateFlags2 & (1<<accelerometerIsThere)) {
 //        return;
 //    }
 // len = sprintf(str, "\n\r accelerometer found \n\r");
@@ -165,7 +165,7 @@ uint8_t initializeADXL345 (void) {
 
 uint8_t clearAnyADXL345TapInterrupt (void) {
     char r;
-//    if (!stateFlags.accelerometerIsThere) {
+//    if (!stateFlags2.accelerometerIsThere) {
 //        return;
 //    }
 	do {
@@ -204,7 +204,7 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
 
 uint8_t readADXL345Axes (volatile accelAxisData *d) {
     uint8_t r; // accelerometer readings
-//    if (!stateFlags.accelerometerIsThere) {
+//    if (!stateFlags2.accelerometerIsThere) {
 //        // globals "len" and "str" available on return
 //        len = sprintf(str, "\n\r no accelerometer");
 //        return;

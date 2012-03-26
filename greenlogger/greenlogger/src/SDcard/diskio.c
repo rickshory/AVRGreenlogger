@@ -26,6 +26,13 @@
 static volatile
 DSTATUS Stat = STA_NOINIT;	// Disk status
 
+extern volatile uint8_t stateFlags1;
+extern volatile uint8_t stateFlags2;
+
+extern volatile char str[128]; // generic space for strings to be output
+extern volatile char strJSON[128]; // string for JSON data
+extern volatile char strHdr[64];
+
 extern volatile dateTime dt_CurAlarm;
 
 extern volatile
@@ -106,7 +113,28 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	if (f_lseek(&logFile, f_size(&logFile)) != FR_OK)
 		return sdFileSeekFail;
 
-	unsigned int bytesWritten;
+	unsigned int bytesWritten, tmpLen;
+	// if flagged, insert any JSON messages
+	if (stateFlags1 & (1<<writeJSONMsg)){
+		tmpLen = strlen(strJSON);
+		if (f_write(&logFile, strJSON, tmpLen, &bytesWritten) != FR_OK)
+			return sdFileWriteFail;
+		if (bytesWritten < n)
+			return sdFileWritePartial;
+		stateFlags1 &= ~(1<<writeJSONMsg); // clear flag, write only once
+		strJSON[0] = 0; // "erase" the string
+	}
+	// if flagged, insert column headers
+	if (stateFlags1 & (1<<writeDataHeaders)){
+//		tmpLen = sprintf(str, "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r");
+		tmpLen = sprintf(str, strHdr);
+		if (f_write(&logFile, str, tmpLen, &bytesWritten) != FR_OK)
+			return sdFileWriteFail;
+		if (bytesWritten < n)
+			return sdFileWritePartial;
+		stateFlags1 &= ~(1<<writeDataHeaders); // clear flag, write only once
+	}
+	
 	if (f_write(&logFile, St, n, &bytesWritten) != FR_OK)
 		return sdFileWriteFail;
 	if (bytesWritten < n)

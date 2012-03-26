@@ -71,6 +71,7 @@ uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
 int len, err = 0;
 char str[128]; // generic space for strings to be output
 char strJSON[128]; // string for JSON data
+char strHdr[64] = "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r";
 
 // the string we send and receive on UART
 const char test_string[] = "Count \n";
@@ -108,6 +109,7 @@ int main(void)
 	outputStringToUART("\r\n  UART Initialized\r\n");
 	commandBuffer[0] = '\0';
 	commandBufferPtr = commandBuffer; // "empty" the command buffer
+	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup
 	sei();
 	intTmp1 = readCellVoltage(&cellVoltageReading);
     outputStringToUART("\r\n  enter I2C_Init\r\n");
@@ -122,8 +124,15 @@ int main(void)
 //		uart_putchar(test_string[cnt]);
 //	}
 	intTmp1 = rtc_readTime(&dt_RTC);
+	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+	datetime_getstring(datetime_string, &dt_RTC);
+	strcat(strJSON, datetime_string);
+	strcat(strJSON, "\",\"to\":\"");
+	
 	if (dt_RTC.year) { // 0 on power up, otherwise must have been set
 		rtcStatus = rtcTimeManuallySet;
+		strcat(strJSON, datetime_string);
+		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
 	} else {
 		rtc_setdefault();
 		if (!rtc_setTime(&dt_RTC)) {
@@ -132,12 +141,15 @@ int main(void)
 			datetime_getstring(datetime_string, &dt_RTC);
 			outputStringToUART(datetime_string);
 			outputStringToUART("\n\r\n\r");
-		
+			strcat(strJSON, datetime_string);
+			strcat(strJSON, "\",\"by\":\"default\"}}\r\n");
 		} else {
 			outputStringToUART("\n\r could not set Real Time Clock \n\r");
+			strcat(strJSON, datetime_string);
+			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
 		}
 	}
-	
+	stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
 	
 	stateFlags2 &= ~(1<<nextAlarmSet); // alarm not set yet
 //	enableRTCInterrupt();
@@ -674,7 +686,7 @@ void checkForCommands (void) {
 						break;
 					}
 					outputStringToUART("\r\n Time changed from ");
-					strcpy(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_tmp);
 					datetime_getstring(datetime_string, &dt_tmp);
 					strcat(strJSON, datetime_string);
@@ -688,8 +700,10 @@ void checkForCommands (void) {
 					outputStringToUART(datetime_string);
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 					outputStringToUART("\r\n");
+					stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
 					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
+					outputStringToUART(strHdr);
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 
 //                    setTimeFromCharBuffer(commandBuffer + 3);

@@ -107,7 +107,8 @@ uint8_t readCellVoltage (volatile adcData *cellV) {
 	DIDR0 |= (1<<ADC1D); // disable digital input buffer on this pin to save power
 	
 	// (sec/125*10^3 cycles) * (25 cycles/conversion) * 64 conversions = 12.8ms 
-	for (ct = 0; ct < 64; ct++) { 
+//	for (ct = 0; ct < 64; ct++) { 
+	for (ct = 0; ct < 16; ct++) { 
 		// enable ADC conversion complete interrupt
 		ADCSRA |= (1<<ADIE);
 		// clear interrupt flag
@@ -158,7 +159,8 @@ uint8_t readCellVoltage (volatile adcData *cellV) {
 		sumOf8Readings += cellV->adcWholeWord;
 	}
 	
-	cellV->adcWholeWord = (sumOf8Readings / 64);
+//	cellV->adcWholeWord = (sumOf8Readings / 64);
+	cellV->adcWholeWord = (sumOf8Readings / 16);
 	cellV->adcMultiplier = 1; // currently, flags a completed conversion
 	
 	// disable ADC to save power in sleep modes

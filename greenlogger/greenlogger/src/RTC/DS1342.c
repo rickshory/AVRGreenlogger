@@ -757,13 +757,20 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
  *  gets timezone offset from the global 'timeZoneOffset'
  *  otherwise expects it in the 4 chars following date/time
  *  in the format ' +NN', e.g. ' +03' or ' -08'
+ *  and sets global 'timeZoneOffset' from this
  */
 void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone)
 {
 	uint8_t iTmp;
 	dtp->year = (10 * (dtstr[2] - '0')) + (dtstr[3] - '0');
+//	len = sprintf(str, "\n\r year: %d\n\r", dtp->year);
+//	outputStringToUART(str);
 	dtp->month = (10 * (dtstr[5] - '0')) + (dtstr[6] - '0');
+//	len = sprintf(str, "\n\r month: %d\n\r", dtp->month);
+//	outputStringToUART(str);
 	dtp->day = (10 * (dtstr[8] - '0')) + (dtstr[9] - '0');
+//	len = sprintf(str, "\n\r day: %d\n\r", dtp->day);
+//	outputStringToUART(str);
 	dtp->hour = (10 * (dtstr[11] - '0')) + (dtstr[12] - '0');
 	dtp->minute = (10 * (dtstr[14] - '0')) + (dtstr[15] - '0');
 	dtp->second = (10 * (dtstr[17] - '0')) + (dtstr[18] - '0');
@@ -774,7 +781,7 @@ void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZo
 		if (dtstr[20] == '-') {
 			dtp->houroffset *= -1;
 		}
-		
+		timeZoneOffset = dtp->houroffset;
 	}
 	
 	//strcpy(dtstr, "2000-00-00 00:00:00 +00");

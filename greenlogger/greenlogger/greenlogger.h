@@ -9,8 +9,8 @@
 #ifndef GREENLOGGER_H_
 #define GREENLOGGER_H_
 
-#define RTC_CHIP_IS_DS1337
-// #define RTC_CHIP_IS_DS1342
+//#define RTC_CHIP_IS_DS1337
+#define RTC_CHIP_IS_DS1342
 
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"

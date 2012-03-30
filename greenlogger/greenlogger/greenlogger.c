@@ -72,6 +72,7 @@ int len, err = 0;
 char str[128]; // generic space for strings to be output
 char strJSON[128]; // string for JSON data
 char strHdr[64] = "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r";
+char strLog[64];
 
 // the string we send and receive on UART
 const char test_string[] = "Count \n";
@@ -100,9 +101,21 @@ volatile extern adcData cellVoltageReading;
 int main(void)
 {
 	uint8_t ct, swDnUp, swBbIr;
-	uint8_t cnt;
+	uint8_t errSD, cnt;
 	uint16_t cntout = 0;
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
+	// PortD, bit 4 controls power to the Bluetooth module
+	// high = enabled
+	DDRD |= (1<<4); // make output
+//	PORTD |= (1<<4); // set high; for testing make always-on
+	PORTD &= ~(1<<4); // set low; for testing make always-off
+	// PortD, bit controls the BAUD rate of the Bluetooth module
+	// high = 9600
+	// low = 115k or firmware setting
+	// for testing, hold at 9600
+	DDRD |= (1<<7); // make output
+	PORTD |= (1<<7); // set high
+	
 	cli();
 	setupDiagnostics();
 	uart_init();
@@ -196,17 +209,7 @@ int main(void)
 			;
 //		setSDCardPowerControl();
 			// monitor cell voltage, to decide whether there is enough power to proceed
-/*
-			{ // read 8 times and average
-				uint8_t ctCV;
-				uint16_t sumCellVoltage = 0;
-				for (ctCV = 0; ctCV < 8; ctCV++) {
-					intTmp1 = readCellVoltage(&cellVoltageReading);
-					sumCellVoltage += cellVoltageReading.adcWholeWord;
-				}
-				cellVoltageReading.adcWholeWord = (sumCellVoltage / 8);
-			}
-*/
+
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			//if (stateFlags1 & (1<<isRoused)) {
 			//	outputStringToUART("\r\n  roused\r\n");
@@ -217,10 +220,9 @@ int main(void)
 			
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToUART(datetime_string);
-//			outputStringToUART("\t");
-			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) { 
-				outputStringToUART(" power too low\n\r");
-				machineState = Idle;
+			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
+				len = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+				outputStringToUART(str);
 				break;
 			}
 			for (ct = 0; ct < 4; ct++) {
@@ -294,31 +296,43 @@ int main(void)
 			if (stateFlags1 & (1<<timeToLogData)) {
 //				outputStringToUART("\n\r Entered log data routine \n\r");
 				// log irradiance
-				len = sprintf(str, "\n\r");
-				intTmp1 = writeCharsToSDCard(str, len);
-				len = sprintf(str, datetime_string);
-				intTmp1 = writeCharsToSDCard(str, len);
+				strcpy(strLog, "\n\r");
+//				len = sprintf(str, "\n\r");
+//				intTmp1 = writeCharsToSDCard(str, len);
+				strcat(strLog, datetime_string);
+//				len = sprintf(str, datetime_string);
+//				intTmp1 = writeCharsToSDCard(str, len);
 				for (ct = 0; ct < 4; ct++) { // write irradiance readings
 					if (!(irrReadings[ct].validation)) {
 						len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
 					} else { // no valid data for this reading
 						len = sprintf(str, "\t");
 					}
-					intTmp1 = writeCharsToSDCard(str, len);
+					strcat(strLog, str);
+//					intTmp1 = writeCharsToSDCard(str, len);
 				}
 				// log temperature
 				if (!temperatureReading.verification)
 					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
 				else
 					len = sprintf(str, "\t");
-				intTmp1 = writeCharsToSDCard(str, len);
+				strcat(strLog, str);
+//				intTmp1 = writeCharsToSDCard(str, len);
 				// log cell voltage
-				len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
-				intTmp1 = writeCharsToSDCard(str, len);
-				len = sprintf(str, "\n\r");
-				intTmp1 = writeCharsToSDCard(str, len);	
+				len = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+				strcat(strLog, str);
+//				intTmp1 = writeCharsToSDCard(str, len);
+//				len = sprintf(str, "\n\r");
+//				intTmp1 = writeCharsToSDCard(str, len);
 				
-				outputStringToUART(" Data written to SD card \n\r\n\r");
+				len = strlen(strLog);
+				errSD = writeCharsToSDCard(strLog, len);
+					if (errSD) {
+						tellFileWriteError (errSD);
+//                stateFlags_2.isDataWriteTime = 0; // prevent trying to write anything later
+					} else {
+						outputStringToUART(" Data written to SD card \n\r\n\r");
+					}
 			}
 			// let main loop restore Idle state, after assuring timer interrupts are re-established
 			break; // if did everything, break here
@@ -538,6 +552,44 @@ void checkForCommands (void) {
         if (c == 0x0a) { // if linefeed, attempt to parse the command
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
+
+                case 'T': case 't':
+					{ // set time
+					if (!isValidTimestamp(commandBuffer + 1)) {
+						outputStringToUART("\r\n Invalid timestamp\r\n");
+						break;
+					}    
+					if (!isValidTimezone(commandBuffer + 21)) {
+						outputStringToUART("\r\n Invalid hour offset\r\n");
+						break;
+					}
+					outputStringToUART("\r\n Time changed from ");
+					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+					intTmp1 = rtc_readTime(&dt_tmp);
+					datetime_getstring(datetime_string, &dt_tmp);
+					strcat(strJSON, datetime_string);
+					outputStringToUART(datetime_string);
+					datetime_getFromUnixString(&dt_tmp, commandBuffer + 1, 0);
+					rtc_setTime(&dt_tmp);
+					strcat(strJSON, "\",\"to\":\"");
+					outputStringToUART(" to ");
+					datetime_getstring(datetime_string, &dt_tmp);
+					strcat(strJSON, datetime_string);
+					outputStringToUART(datetime_string);
+					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
+					outputStringToUART("\r\n");
+					stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
+					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
+					rtcStatus = rtcTimeManuallySet;
+					outputStringToUART(strHdr);
+					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+
+					// 
+/*
+                   startTimer1ToRunThisManySeconds(30); // keep system Roused
+*/
+                    break;
+                }
 				
                 case 'L': case 'l': 
 				{ // experimenting with the accelerometer Leveling functions
@@ -675,67 +727,6 @@ void checkForCommands (void) {
 						//break;
 					//}						
 //
-                case 'T': case 't':
-					{ // set time
-					if (!isValidTimestamp(commandBuffer + 1)) {
-						outputStringToUART("\r\n Invalid timestamp\r\n");
-						break;
-					}    
-					if (!isValidTimezone(commandBuffer + 21)) {
-						outputStringToUART("\r\n Invalid hour offset\r\n");
-						break;
-					}
-					outputStringToUART("\r\n Time changed from ");
-					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
-					intTmp1 = rtc_readTime(&dt_tmp);
-					datetime_getstring(datetime_string, &dt_tmp);
-					strcat(strJSON, datetime_string);
-					outputStringToUART(datetime_string);
-					datetime_getFromUnixString(&dt_tmp, commandBuffer + 1, 0);
-					rtc_setTime(&dt_tmp);
-					strcat(strJSON, "\",\"to\":\"");
-					outputStringToUART(" to ");
-					datetime_getstring(datetime_string, &dt_tmp);
-					strcat(strJSON, datetime_string);
-					outputStringToUART(datetime_string);
-					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
-					outputStringToUART("\r\n");
-					stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
-					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
-					rtcStatus = rtcTimeManuallySet;
-					outputStringToUART(strHdr);
-					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-
-//                    setTimeFromCharBuffer(commandBuffer + 3);
-//                    strncpy(timeZoneBuffer, commandBuffer + 20, 3);
-
-
-					// 
-/*
-					createTimestamp();
-                    strcat(strJSON, timeStampBuffer + 2);
-                    outputStringToUART(timeStampBuffer + 2);
-                    strcat(strJSON, timeZoneBuffer);
-                    outputStringToUART(timeZoneBuffer);
-                    setTimeFromCharBuffer(commandBuffer + 3);
-                    strncpy(timeZoneBuffer, commandBuffer + 20, 3);
-                    strcat(strJSON, "\",\"to\":\"");
-                    outputStringToUART(" to ");
-                    createTimestamp();
-                    strcat(strJSON, timeStampBuffer + 2);
-                    outputStringToUART(timeStampBuffer + 2);
-                    strcat(strJSON, timeZoneBuffer);
-                    outputStringToUART(timeZoneBuffer);
-                    strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
-                    outputStringToUART("\r\n");
-                    flags1.writeDataHeaders = 1; // log data column headers on next SD card write
-                    stateFlags.timeHasBeenSet = 1; // presumably is now the correct time
-                    stateFlags.timerHasBeenSynchronized = 0; // but timer not guaranteed to happen on 0 of seconds
-                    startTimer1ToRunThisManySeconds(30); // keep system Roused
-*/
-                    break;
-                }
-
                 case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)
                     outputStringToUART("\r\n output file data\r\n");

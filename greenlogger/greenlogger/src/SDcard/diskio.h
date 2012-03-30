@@ -129,6 +129,7 @@ void turnSDCardPowerOff(void);
 /* Prototypes for disk control functions */
 
 BYTE writeCharsToSDCard (char* St, BYTE n);
+void tellFileWriteError (BYTE err);
 BOOL assign_drives (int argc, char *argv[]);
 DSTATUS disk_initialize (BYTE);
 DSTATUS disk_status (BYTE);

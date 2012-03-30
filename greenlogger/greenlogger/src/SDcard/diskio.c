@@ -29,9 +29,9 @@ DSTATUS Stat = STA_NOINIT;	// Disk status
 extern volatile uint8_t stateFlags1;
 extern volatile uint8_t stateFlags2;
 
-extern volatile char str[128]; // generic space for strings to be output
-extern volatile char strJSON[128]; // string for JSON data
-extern volatile char strHdr[64];
+extern char str[128]; // generic space for strings to be output
+extern char strJSON[128]; // string for JSON data
+extern char strHdr[64];
 
 extern volatile dateTime dt_CurAlarm;
 
@@ -149,6 +149,80 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	f_mount(0,0);
 	return sdOK;
 }
+
+/**
+ * \brief Reports errors writing to the SD card
+ *
+ *  This function sends a message out the UART
+ * (if power is on) if there were any error
+ * writing to the SD card.
+ *  Use after the fn "writeCharsToSDCard"
+ *
+ * \note 
+ * 
+ */
+
+void tellFileWriteError (BYTE err)
+{
+ switch (err) {
+  //case IgnoreCard: {
+   //outputStringToUART("\r\n SD card ignored (\"O\" toggles)\r\n");
+   //break;
+  //}
+  case sdPowerTooLowForSDCard: {
+   outputStringToUART("\r\n power too low, SD write skipped\r\n");
+   break;
+  }
+  //case NoCard: {
+   //outputStringToUART("\r\n SD card not present or not detected\r\n");
+   //break;
+  //}
+  case sdMountFail: {
+   outputStringToUART("\r\n could not mount SD card\r\n");
+   break;
+  }
+  //case NoInit: {
+   //outputStringToUART("\r\n could not initialize file system\r\n");
+   //break;
+  //}
+  case sdInitFail: {
+   outputStringToUART("\r\n could not initialize SD card\r\n");
+   break;
+  }
+  case sdMkDirFail: {
+   outputStringToUART("\r\n could not create the requested directory\r\n");
+   break;
+  }
+  //case NoChDir: {
+   //outputStringToUART("\r\n could not change to the requested directory\r\n");
+   //break;
+  //}
+  case sdFileOpenFail: {
+   outputStringToUART("\r\n could not open the requested file\r\n");
+   break;
+  }
+  case sdFileSeekFail: {
+   outputStringToUART("\r\n could not seek as requested\r\n");
+   break;
+  }
+  case sdFileWriteFail: {
+   outputStringToUART("\r\n could not write to the file\r\n");
+   break;
+  }
+  case sdFileWritePartial: {
+   outputStringToUART("\r\n partial write to the file\r\n");
+   break;
+  }
+  //case NoClose: {
+   //outputStringToUART("\r\n could not close file\r\n");
+   //break;
+  //}
+  default: {
+   outputStringToUART("\r\n unknown error\r\n");
+   break;
+  } 
+ } // switch err
+} // end of tellFileWriteError
 
 /*
  sdOK = 0, // return value if it happened with no issues

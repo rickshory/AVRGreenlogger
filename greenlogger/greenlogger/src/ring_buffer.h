@@ -35,6 +35,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
+/* following are generic identifiers, don't prefix with e.g. "uart0_"
+ring_buffer
+get_next
+ring_buffer_get_next_write
+ring_buffer_get_next_read
+ring_buffer_is_full
+ring_buffer_is_empty
+ring_buffer_init
+ring_buffer_get
+ring_buffer_put
+*/
+
 #ifndef RING_BUFFER_H_INCLUDED
 #define RING_BUFFER_H_INCLUDED
 

@@ -51,10 +51,10 @@
 //! set the baud rate tolerance to 2%
 #define BAUD_TOL 2
 
-//! define the UART data buffer ready interrupt vector
+//! define the UART0 data buffer ready interrupt vector
 #define UART0_DATA_EMPTY_IRQ USART0_UDRE_vect
 
-//! define the UART data 
+//! define the UART0 data 
 #define UART0_RX_IRQ USART0_RX_vect
 
 #endif /* CONF_UART_H_INCLUDED */

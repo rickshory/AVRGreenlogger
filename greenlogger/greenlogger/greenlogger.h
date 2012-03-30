@@ -83,7 +83,7 @@ enum stateFlags2Bits
 };
 
 
-void outputStringToUART (char* St);
+void outputStringToUART0 (char* St);
 void checkForCommands (void);
 void enableAccelInterrupt (void);
 void disableAccelInterrupt(void);

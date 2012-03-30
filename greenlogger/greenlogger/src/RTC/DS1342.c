@@ -40,38 +40,38 @@ uint8_t rtc_readTime (dateTime *t) {
 	// read byte(s) with ACK or NACK as applicable
 	// do STOP
 
-//	outputStringToUART("\n\r entered readTime routine \n\r");
+//	outputStringToUART0("\n\r entered readTime routine \n\r");
 	r = I2C_Start();
 //    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//    outputStringToUART(str);
+//    outputStringToUART0(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
 //		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-//		    outputStringToUART(str);
+//		    outputStringToUART0(str);
 			if (r == TW_MT_SLA_ACK) {
 //			    r = I2C_Write(DS1342_CONTROL_STATUS); // for testing, look at this register
 			    r = I2C_Write(DS1342_TIME_SECONDS); // for testing, look at this register
 //			    len = sprintf(str, "\n\r I2C_Write(DS1342_TIME_SECONDS): 0x%x\n\r", r);
-//			    outputStringToUART(str);
+//			    outputStringToUART0(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					r = I2C_Start(); // restart
 //				    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//				    outputStringToUART(str);
+//				    outputStringToUART0(str);
 					if (r == TW_REP_START) {
 					    r = I2C_Write(DS1342_ADDR_READ); // address the device, say we are going to read
 //					    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_READ): 0x%x\n\r", r);
-//					    outputStringToUART(str);
+//					    outputStringToUART0(str);
 						if (r == TW_MR_SLA_ACK) {
 							// seconds
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							t->second = (10 * ((r & 0xf0)>>4) + (r & 0x0f));
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x sec\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// minutes
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							t->minute  = (10 * ((r & 0xf0)>>4) + (r & 0x0f));
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x min\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// hour
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							if (r & 0b01000000) { // 12-hour format
@@ -82,41 +82,41 @@ uint8_t rtc_readTime (dateTime *t) {
 								t->hour  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
 							}
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x hr\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// day of week
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x wk day\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// day of month
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							t->day  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x day of month\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// month (bit7 = century)
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							t->month = (10 * ((r & 0x10)>>4) + (r & 0x0f));
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x month\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// year, 00 to 99
 							r = I2C_Read(0); // do NACK, since this is the last byte
 							t->year = (10 * ((r & 0xf0)>>4) + (r & 0x0f));
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x year\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							t->houroffset = timeZoneOffset; // get from global var
 						}							
 					}
-//					outputStringToUART("\n\r exit from repeat start\n\r");
+//					outputStringToUART0("\n\r exit from repeat start\n\r");
 				} else { // could not write data to device
 					I2C_Stop();
 					return errNoI2CDataAck;
 				}
-//				outputStringToUART("\n\r exit from address device\n\r");
+//				outputStringToUART0("\n\r exit from address device\n\r");
 			} else { // could not address device
 				I2C_Stop();
 				return errNoI2CAddressAck;
 			}
 			I2C_Stop();
-//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+//		    outputStringToUART0("\n\r I2C_Stop completed \n\r");
 		} else { // could not START
 			return errNoI2CStart;
 		}			
@@ -140,18 +140,18 @@ uint8_t rtc_setTime (dateTime *t) {
 	// continue writing values to set entire time and date
 	// do STOP
 
-//	outputStringToUART("\n\r entered setTime routine \n\r");
+//	outputStringToUART0("\n\r entered setTime routine \n\r");
 	r = I2C_Start();
 //    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//    outputStringToUART(str);
+//    outputStringToUART0(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
 //		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-//		    outputStringToUART(str);
+//		    outputStringToUART0(str);
 			if (r == TW_MT_SLA_ACK) {
 			    r = I2C_Write(DS1342_TIME_SECONDS); // point to this register
 //			    len = sprintf(str, "\n\r I2C_Write(DS1342_TIME_SECONDS): 0x%x\n\r", r);
-//			    outputStringToUART(str);
+//			    outputStringToUART0(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					// convert Seconds to binary coded decimal
 					wholeUnits = (uint8_t)(t->second/10);
@@ -184,13 +184,13 @@ uint8_t rtc_setTime (dateTime *t) {
 					I2C_Stop();
 					return errNoI2CDataAck;
 				}
-//				outputStringToUART("\n\r exit from address device\n\r");
+//				outputStringToUART0("\n\r exit from address device\n\r");
 			} else { // could not address device
 				I2C_Stop();
 				return errNoI2CAddressAck;
 			}
 			I2C_Stop();
-//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+//		    outputStringToUART0("\n\r I2C_Stop completed \n\r");
 		} else { // could not START
 			return errNoI2CStart;
 		}			
@@ -223,37 +223,37 @@ uint8_t rtc_readAlarm1 (dateTime *t) {
 	// read byte(s) with ACK or NACK as applicable
 	// do STOP
 
-//	outputStringToUART("\n\r entered readTime routine \n\r");
+//	outputStringToUART0("\n\r entered readTime routine \n\r");
 	r = I2C_Start();
 //    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//    outputStringToUART(str);
+//    outputStringToUART0(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
 //		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-//		    outputStringToUART(str);
+//		    outputStringToUART0(str);
 			if (r == TW_MT_SLA_ACK) {
 			    r = I2C_Write(DS1342_ALARM1_SECONDS); // look at this register
 //			    len = sprintf(str, "\n\r I2C_Write(DS1342_ALARM1_SECONDS): 0x%x\n\r", r);
-//			    outputStringToUART(str);
+//			    outputStringToUART0(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					r = I2C_Start(); // restart
 //				    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//				    outputStringToUART(str);
+//				    outputStringToUART0(str);
 					if (r == TW_REP_START) {
 					    r = I2C_Write(DS1342_ADDR_READ); // address the device, say we are going to read
 //					    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_READ): 0x%x\n\r", r);
-//					    outputStringToUART(str);
+//					    outputStringToUART0(str);
 						if (r == TW_MR_SLA_ACK) {
 							// seconds
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							t->second = (10 * ((r & 0x70)>>4) + (r & 0x0f)); // ignore bit 7, alarm mask enable
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x sec\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// minutes
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							t->minute  = (10 * ((r & 0x70)>>4) + (r & 0x0f));
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x min\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// hour
 							r = I2C_Read(1); // do ACK, since this is not the last byte
 							if (r & 0b01000000) { // 12-hour format
@@ -264,29 +264,29 @@ uint8_t rtc_readAlarm1 (dateTime *t) {
 								t->hour  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
 							}
 //							len = sprintf(str, "\n\r I2C_Read(0): 0x%x hr\n\r", r);
-//							outputStringToUART(str);
+//							outputStringToUART0(str);
 							// day of week; unused but read to advance pointer
 							r = I2C_Read(0); // do NACK, since this is the last byte
 							if (!(r &0b01000000)) { // bit 6 low = this byte holds day of month
 								t->day  = (10 * ((r & 0x30)>>4) + (r & 0x0f));
 //								len = sprintf(str, "\n\r I2C_Read(0): 0x%x day of month\n\r", r);
-//								outputStringToUART(str);
+//								outputStringToUART0(str);
 							}
 							t->houroffset = timeZoneOffset; // get from global var
 						}							
 					}
-//					outputStringToUART("\n\r exit from repeat start\n\r");
+//					outputStringToUART0("\n\r exit from repeat start\n\r");
 				} else { // could not write data to device
 					I2C_Stop();
 					return errNoI2CDataAck;
 				}
-//				outputStringToUART("\n\r exit from address device\n\r");
+//				outputStringToUART0("\n\r exit from address device\n\r");
 			} else { // could not address device
 				I2C_Stop();
 				return errNoI2CAddressAck;
 			}
 			I2C_Stop();
-//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+//		    outputStringToUART0("\n\r I2C_Stop completed \n\r");
 		} else { // could not START
 			return errNoI2CStart;
 		}			
@@ -314,18 +314,18 @@ uint8_t rtc_setAlarm1 (dateTime *t) {
 	// continue writing to set the series of desired values
 	// do STOP
 
-//	outputStringToUART("\n\r entered setAlarm1 routine \n\r");
+//	outputStringToUART0("\n\r entered setAlarm1 routine \n\r");
 	r = I2C_Start();
 //    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//    outputStringToUART(str);
+//    outputStringToUART0(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
 //		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-//		    outputStringToUART(str);
+//		    outputStringToUART0(str);
 			if (r == TW_MT_SLA_ACK) {
 			    r = I2C_Write(DS1342_ALARM1_SECONDS); // point to this register
 //			    len = sprintf(str, "\n\r I2C_Write(DS1342_ALARM1_SECONDS): 0x%x\n\r", r);
-//			    outputStringToUART(str);
+//			    outputStringToUART0(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 					// convert Seconds to binary coded decimal
 					wholeUnits = (uint8_t)(t->second/10);
@@ -353,13 +353,13 @@ uint8_t rtc_setAlarm1 (dateTime *t) {
 					I2C_Stop();
 					return errNoI2CDataAck;
 				}
-//				outputStringToUART("\n\r exit from address device\n\r");
+//				outputStringToUART0("\n\r exit from address device\n\r");
 			} else { // could not address device
 				I2C_Stop();
 				return errNoI2CAddressAck;
 			}
 			I2C_Stop();
-//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+//		    outputStringToUART0("\n\r I2C_Stop completed \n\r");
 		} else { // could not START
 			return errNoI2CStart;
 		}			
@@ -389,18 +389,18 @@ uint8_t rtc_enableAlarm1 (void) {
 	//	INTCN = 1, interrupt (rather than sq wave) output on INTB pin
 	//	ECLK = 1; route both interrupts to INTB pin, but Alarm2 is disabled
 
-//	outputStringToUART("\n\r entered enableAlarm1 routine \n\r");
+//	outputStringToUART0("\n\r entered enableAlarm1 routine \n\r");
 	r = I2C_Start();
 //    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-//    outputStringToUART(str);
+//    outputStringToUART0(str);
 		if (r == TW_START) {
 		    r = I2C_Write(DS1342_ADDR_WRITE); // address the device, say we are going to write
 //		    len = sprintf(str, "\n\r I2C_Write(DS1342_ADDR_WRITE): 0x%x\n\r", r);
-//		    outputStringToUART(str);
+//		    outputStringToUART0(str);
 			if (r == TW_MT_SLA_ACK) {
 			    r = I2C_Write(DS1342_CONTROL); // point to this register
 //			    len = sprintf(str, "\n\r I2C_Write(DS1342_CONTROL): 0x%x\n\r", r);
-//			    outputStringToUART(str);
+//			    outputStringToUART0(str);
 				if (r == TW_MT_DATA_ACK) { // write-to-point-to-register was ack'd
 #ifdef RTC_CHIP_IS_DS1337
 					// DS1337_CONTROL, 0x0e
@@ -448,13 +448,13 @@ uint8_t rtc_enableAlarm1 (void) {
 					I2C_Stop();
 					return errNoI2CDataAck;
 				}
-//				outputStringToUART("\n\r exit from address device\n\r");
+//				outputStringToUART0("\n\r exit from address device\n\r");
 			} else { // could not address device
 				I2C_Stop();
 				return errNoI2CAddressAck;
 			}
 			I2C_Stop();
-//		    outputStringToUART("\n\r I2C_Stop completed \n\r");
+//		    outputStringToUART0("\n\r I2C_Stop completed \n\r");
 		} else { // could not START
 			return errNoI2CStart;
 		}			
@@ -472,26 +472,26 @@ uint8_t rtc_enableAlarm1 (void) {
 uint8_t rtc_setupNextAlarm(dateTime *pDt) {
 	uint8_t n;
 	dateTime dt;
-//	outputStringToUART("\n\r entered setupNextAlarm fn \n\r\n\r");
+//	outputStringToUART0("\n\r entered setupNextAlarm fn \n\r\n\r");
 	n = rtc_readTime (&dt); // get current time
 //	datetime_getstring(str, &dt);
-//	outputStringToUART("\n\r time read from RTC: ");
-//	outputStringToUART(str);
-//	outputStringToUART("\n\r\n\r");
+//	outputStringToUART0("\n\r time read from RTC: ");
+//	outputStringToUART0(str);
+//	outputStringToUART0("\n\r\n\r");
 	
 	if (n) return n;
 	else { // advance to next alarm time
-//		outputStringToUART("\n\r about to call datetime_advanceInterval fn \n\r\n\r");
+//		outputStringToUART0("\n\r about to call datetime_advanceInterval fn \n\r\n\r");
 		datetime_advanceInterval(&dt);
-//		outputStringToUART("\n\r retd from datetime_advanceInterval fn \n\r\n\r");
-//		outputStringToUART("\n\r calcd alarm time: ");
+//		outputStringToUART0("\n\r retd from datetime_advanceInterval fn \n\r\n\r");
+//		outputStringToUART0("\n\r calcd alarm time: ");
 //		datetime_getstring(str, &dt);
-//		outputStringToUART(str);
-//		outputStringToUART("\n\r\n\r");
+//		outputStringToUART0(str);
+//		outputStringToUART0("\n\r\n\r");
 		
-//		outputStringToUART("\n\r about to call rtc_setAlarm1 fn \n\r\n\r");
+//		outputStringToUART0("\n\r about to call rtc_setAlarm1 fn \n\r\n\r");
 		n = rtc_setAlarm1(&dt);
-//		outputStringToUART("\n\r retd from rtc_setAlarm1 fn \n\r\n\r");
+//		outputStringToUART0("\n\r retd from rtc_setAlarm1 fn \n\r\n\r");
 		if (n) return n;
 		else {
 			n = rtc_enableAlarm1();
@@ -616,12 +616,12 @@ void datetime_addSeconds(dateTime *t, uint8_t s) {
  *  less than ten seconds total.
  */
 void datetime_advanceIntervalShort(dateTime *t) {
-//	outputStringToUART("\n\r entered datetime_advanceIntervalShort fn \n\r\n\r");
-//		outputStringToUART("\n\r in datetime_advanceIntervalShort fn \n\r\n\r");
-//		outputStringToUART("\n\r passed time: ");
+//	outputStringToUART0("\n\r entered datetime_advanceIntervalShort fn \n\r\n\r");
+//		outputStringToUART0("\n\r in datetime_advanceIntervalShort fn \n\r\n\r");
+//		outputStringToUART0("\n\r passed time: ");
 //		datetime_getstring(str, t);
-//		outputStringToUART(str);
-//		outputStringToUART("\n\r\n\r");
+//		outputStringToUART0(str);
+//		outputStringToUART0("\n\r\n\r");
 	t->second = (t->second/10) * 10; // adjust to even tens-of-seconds
 	t->second += 10; // advance by 10 seconds
 	datetime_normalize(t);
@@ -656,10 +656,10 @@ void datetime_advanceIntervalLong(dateTime *t) {
 void datetime_advanceInterval(dateTime *t) {
 	uint8_t startingDay;
 	startingDay = t->day;
-//	outputStringToUART("\n\r entered datetime_advanceInterval fn \n\r\n\r");
+//	outputStringToUART0("\n\r entered datetime_advanceInterval fn \n\r\n\r");
 
 	// (write part to test flags here:)
-//	outputStringToUART("\n\r about to call datetime_advanceIntervalShort fn \n\r\n\r");
+//	outputStringToUART0("\n\r about to call datetime_advanceIntervalShort fn \n\r\n\r");
 //	while (1)
 //	{
 //		;
@@ -682,7 +682,7 @@ void datetime_advanceInterval(dateTime *t) {
  *  minutes, or hours.
  */
 void datetime_normalize(dateTime *t) {
-//	outputStringToUART("\n\r entered datetime_normalize fn \n\r\n\r");
+//	outputStringToUART0("\n\r entered datetime_normalize fn \n\r\n\r");
 	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	while (t->second > 59) {
 		t->second -= 60;
@@ -763,42 +763,42 @@ void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZo
 {
 //	uint8_t iTmp; //, tens, ones;
 //	len = sprintf(str, "\n\r char pointer: %d", dtstr);
-//	outputStringToUART(str);
-//	outputStringToUART("\n\r string: \n\r");
-//	outputStringToUART(dtstr);
+//	outputStringToUART0(str);
+//	outputStringToUART0("\n\r string: \n\r");
+//	outputStringToUART0(dtstr);
 //	len = sprintf(str, "\n\r tens of year ASCII code: %d", dtstr[2]);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 //	len = sprintf(str, "\n\r ones of year ASCII code: %d", dtstr[3]);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 
 //	tens = (dtstr[2] - '0');
 //	ones = (dtstr[3] - '0');
 //	tens = (dtstr[2] & 0xf);
 //	ones = (dtstr[3] & 0xf);
 //	len = sprintf(str, "\n\r tens of year: %d", tens);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 //	len = sprintf(str, "\n\r ones of year: %d", ones);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 	dtp->year = (uint8_t)(10 * (dtstr[2] - '0')) + (dtstr[3] - '0');
 //	dtp->year = (10 * tens) + ones;
 //	len = sprintf(str, "\n\r year: %d", dtp->year);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 //	dtp->month = (10 * (dtstr[5] - '0')) + (dtstr[6] - '0');
 	dtp->month = (10 * (dtstr[5] & 0xf)) + (dtstr[6] & 0xf);
 //	len = sprintf(str, "\n\r month: %d", dtp->month);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 	dtp->day = (10 * (dtstr[8] - '0')) + (dtstr[9] - '0');
 //	len = sprintf(str, "\n\r day: %d", dtp->day);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 	dtp->hour = (10 * (dtstr[11] - '0')) + (dtstr[12] - '0');
 //	len = sprintf(str, "\n\r hour: %d", dtp->hour);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 	dtp->minute = (10 * (dtstr[14] - '0')) + (dtstr[15] - '0');
 //	len = sprintf(str, "\n\r minute: %d", dtp->minute);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 	dtp->second = (10 * (dtstr[17] - '0')) + (dtstr[18] - '0');
 //	len = sprintf(str, "\n\r second: %d\n\r", dtp->second);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 	if (useGlobalTimeZone) {
 		dtp->houroffset = timeZoneOffset;
 	} else {

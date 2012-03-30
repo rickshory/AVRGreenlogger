@@ -77,7 +77,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		return sdMountFail;
 		//  flag error
 //		len = sprintf(str, "\n\r f_mount failed: 0x%x\n\r", 0);
-//		outputStringToUART(str);
+//		outputStringToUART0(str);
 	}
 
 	DSTATUS driveStatus = disk_initialize(0);
@@ -88,14 +88,14 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		return sdInitFail;
 //	flag error.
 //	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
-//	outputStringToUART(str);
+//	outputStringToUART0(str);
 	}
 	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
 	res = f_mkdir(stDir);
 	if (!((res == FR_OK) || (res == FR_EXIST))) {
 		return sdMkDirFail;
 //		len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
-//		outputStringToUART(str);	
+//		outputStringToUART0(str);	
 	}
 	
 	FIL logFile;
@@ -105,7 +105,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
 		return sdFileOpenFail;
 //		len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
-//		outputStringToUART(str);
+//		outputStringToUART0(str);
 	//flag error
 }
 
@@ -141,7 +141,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		return sdFileWritePartial;
 	
 //		len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
-//		outputStringToUART(str);
+//		outputStringToUART0(str);
 	//Flush the write buffer with f_sync(&logFile);
 
 	//Close and unmount.
@@ -153,7 +153,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 /**
  * \brief Reports errors writing to the SD card
  *
- *  This function sends a message out the UART
+ *  This function sends a message out UART0
  * (if power is on) if there were any error
  * writing to the SD card.
  *  Use after the fn "writeCharsToSDCard"
@@ -166,59 +166,59 @@ void tellFileWriteError (BYTE err)
 {
  switch (err) {
   //case IgnoreCard: {
-   //outputStringToUART("\r\n SD card ignored (\"O\" toggles)\r\n");
+   //outputStringToUART0("\r\n SD card ignored (\"O\" toggles)\r\n");
    //break;
   //}
   case sdPowerTooLowForSDCard: {
-   outputStringToUART("\r\n power too low, SD write skipped\r\n");
+   outputStringToUART0("\r\n power too low, SD write skipped\r\n");
    break;
   }
   //case NoCard: {
-   //outputStringToUART("\r\n SD card not present or not detected\r\n");
+   //outputStringToUART0("\r\n SD card not present or not detected\r\n");
    //break;
   //}
   case sdMountFail: {
-   outputStringToUART("\r\n could not mount SD card\r\n");
+   outputStringToUART0("\r\n could not mount SD card\r\n");
    break;
   }
   //case NoInit: {
-   //outputStringToUART("\r\n could not initialize file system\r\n");
+   //outputStringToUART0("\r\n could not initialize file system\r\n");
    //break;
   //}
   case sdInitFail: {
-   outputStringToUART("\r\n could not initialize SD card\r\n");
+   outputStringToUART0("\r\n could not initialize SD card\r\n");
    break;
   }
   case sdMkDirFail: {
-   outputStringToUART("\r\n could not create the requested directory\r\n");
+   outputStringToUART0("\r\n could not create the requested directory\r\n");
    break;
   }
   //case NoChDir: {
-   //outputStringToUART("\r\n could not change to the requested directory\r\n");
+   //outputStringToUART0("\r\n could not change to the requested directory\r\n");
    //break;
   //}
   case sdFileOpenFail: {
-   outputStringToUART("\r\n could not open the requested file\r\n");
+   outputStringToUART0("\r\n could not open the requested file\r\n");
    break;
   }
   case sdFileSeekFail: {
-   outputStringToUART("\r\n could not seek as requested\r\n");
+   outputStringToUART0("\r\n could not seek as requested\r\n");
    break;
   }
   case sdFileWriteFail: {
-   outputStringToUART("\r\n could not write to the file\r\n");
+   outputStringToUART0("\r\n could not write to the file\r\n");
    break;
   }
   case sdFileWritePartial: {
-   outputStringToUART("\r\n partial write to the file\r\n");
+   outputStringToUART0("\r\n partial write to the file\r\n");
    break;
   }
   //case NoClose: {
-   //outputStringToUART("\r\n could not close file\r\n");
+   //outputStringToUART0("\r\n could not close file\r\n");
    //break;
   //}
   default: {
-   outputStringToUART("\r\n unknown error\r\n");
+   outputStringToUART0("\r\n unknown error\r\n");
    break;
   } 
  } // switch err

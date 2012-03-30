@@ -118,23 +118,23 @@ int main(void)
 	
 	cli();
 	setupDiagnostics();
-	uart_init();
-	outputStringToUART("\r\n  UART Initialized\r\n");
+	uart0_init();
+	outputStringToUART0("\r\n  UART0 Initialized\r\n");
 	commandBuffer[0] = '\0';
 	commandBufferPtr = commandBuffer; // "empty" the command buffer
 	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup
 	sei();
 	intTmp1 = readCellVoltage(&cellVoltageReading);
-    outputStringToUART("\r\n  enter I2C_Init\r\n");
+    outputStringToUART0("\r\n  enter I2C_Init\r\n");
 	I2C_Init(); // enable I2C 
-	outputStringToUART("\r\n  I2C_Init completed\r\n");
+	outputStringToUART0("\r\n  I2C_Init completed\r\n");
 	
 	initializeADXL345();
-	outputStringToUART("\r\n ADXL345 initialized\r\n");
+	outputStringToUART0("\r\n ADXL345 initialized\r\n");
 
 //	// Send the test string
 //	for (cnt = 0; cnt < strlen(test_string); cnt++) {
-//		uart_putchar(test_string[cnt]);
+//		uart0_putchar(test_string[cnt]);
 //	}
 	intTmp1 = rtc_readTime(&dt_RTC);
 	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
@@ -150,14 +150,14 @@ int main(void)
 		rtc_setdefault();
 		if (!rtc_setTime(&dt_RTC)) {
 			rtcStatus = rtcTimeSetToDefault;
-			outputStringToUART("\n\r time set to default ");
+			outputStringToUART0("\n\r time set to default ");
 			datetime_getstring(datetime_string, &dt_RTC);
-			outputStringToUART(datetime_string);
-			outputStringToUART("\n\r\n\r");
+			outputStringToUART0(datetime_string);
+			outputStringToUART0("\n\r\n\r");
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"default\"}}\r\n");
 		} else {
-			outputStringToUART("\n\r could not set Real Time Clock \n\r");
+			outputStringToUART0("\n\r could not set Real Time Clock \n\r");
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
 		}
@@ -172,7 +172,7 @@ int main(void)
 	while (1) { // main program loop
 		if (!(stateFlags2 & (1<<nextAlarmSet)))
 		{
-//			outputStringToUART("\n\r about to call setupNextAlarm \n\r\n\r");
+//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
 			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 			stateFlags2 |= (1<<nextAlarmSet);
 		}		
@@ -186,21 +186,21 @@ int main(void)
 
 		} // end of (machState == Idle)
 		// when (machState != Idle) execution passes on from this point
-//		outputStringToUART("\n\r RTC alarm occurred \n\r\n\r");
+//		outputStringToUART0("\n\r RTC alarm occurred \n\r\n\r");
 		// when RTCC occurs, changes machineState to GettingTimestamp
 		stateFlags2 &= ~(1<<nextAlarmSet);
 //		datetime_copy(&dt_NextAlarm, &dt_CurAlarm);
 //		datetime_advanceInterval(&dt_NextAlarm);
 //		if (!rtc_setAlarm1(&dt_NextAlarm)) {
 //			;
-//			outputStringToUART("\n\r Alarm1 set \n\r\n\r");
+//			outputStringToUART0("\n\r Alarm1 set \n\r\n\r");
 //			datetime_getstring(str, &dt_NextAlarm);
-//			outputStringToUART(str);
-//			outputStringToUART("\n\r\n\r");
+//			outputStringToUART0(str);
+//			outputStringToUART0("\n\r\n\r");
 //		}
 //		if (!rtc_enableAlarm1()) {
 //			;
-//			outputStringToUART("\n\r Alarm1 enabled \n\r\n\r");
+//			outputStringToUART0("\n\r Alarm1 enabled \n\r\n\r");
 //		}
 //		enableRTCInterrupt();
 		stayRoused(3);
@@ -212,17 +212,17 @@ int main(void)
 
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			//if (stateFlags1 & (1<<isRoused)) {
-			//	outputStringToUART("\r\n  roused\r\n");
+			//	outputStringToUART0("\r\n  roused\r\n");
 			//	// timer diagnostics
 			//	len = sprintf(str, "\r\n countdown: %u seconds\r\n", (rouseCountdown/100));
-			//	outputStringToUART(str);
+			//	outputStringToUART0(str);
 			//}
 			
 			datetime_getstring(datetime_string, &dt_CurAlarm);
-			outputStringToUART(datetime_string);
+			outputStringToUART0(datetime_string);
 			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
 				len = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
-				outputStringToUART(str);
+				outputStringToUART0(str);
 				break;
 			}
 			for (ct = 0; ct < 4; ct++) {
@@ -253,7 +253,7 @@ int main(void)
 				} else {
 					len = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", intTmp1);
 				}						
-				outputStringToUART(str);
+				outputStringToUART0(str);
 			}
 			// get temperature
 //			if (!temperature_InitOneShotReading()) {
@@ -261,21 +261,21 @@ int main(void)
 //				for (Timer2 = 4; Timer2; );	// Wait for 40ms to be sure
 			if (!temperature_GetReading(&temperatureReading)) {
 					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
-					outputStringToUART(str);
+					outputStringToUART0(str);
 			} else
-				outputStringToUART("\t-");
+				outputStringToUART0("\t-");
 //			} else
-//				outputStringToUART("\t-");
+//				outputStringToUART0("\t-");
 			
 			// calc cell voltage from ADC reading earlier
 			// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
 			// using internal reference, Vref = 2.56V = 2560mV
 			// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
 			len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
-			outputStringToUART(str);
-			outputStringToUART("\r\n");
+			outputStringToUART0(str);
+			outputStringToUART0("\r\n");
 			
-//			outputStringToUART("\n\r data output completed \n\r\n\r");
+//			outputStringToUART0("\n\r data output completed \n\r\n\r");
 			
 //        if (stateFlags.isRoused) { 
 //            // if roused, and Bluetooth is on, flag to keep BT on awhile after normal rouse timeout
@@ -287,14 +287,14 @@ int main(void)
             // if an even number of minutes, and zero seconds
             // or the once-per-hour wakeup while dark
 				stateFlags1 |= (1<<timeToLogData);
-			//	outputStringToUART("\n\r Time to log data \n\r");
+			//	outputStringToUART0("\n\r Time to log data \n\r");
 			} else {
 				stateFlags1 &= ~(1<<timeToLogData);
-			//	outputStringToUART("\n\r Not time to log data \n\r");
+			//	outputStringToUART0("\n\r Not time to log data \n\r");
 			}			
 
 			if (stateFlags1 & (1<<timeToLogData)) {
-//				outputStringToUART("\n\r Entered log data routine \n\r");
+//				outputStringToUART0("\n\r Entered log data routine \n\r");
 				// log irradiance
 				strcpy(strLog, "\n\r");
 //				len = sprintf(str, "\n\r");
@@ -331,7 +331,7 @@ int main(void)
 						tellFileWriteError (errSD);
 //                stateFlags_2.isDataWriteTime = 0; // prevent trying to write anything later
 					} else {
-						outputStringToUART(" Data written to SD card \n\r\n\r");
+						outputStringToUART0(" Data written to SD card \n\r\n\r");
 					}
 			}
 			// let main loop restore Idle state, after assuring timer interrupts are re-established
@@ -340,18 +340,18 @@ int main(void)
 		
 /*
 		if (stateFlags1 & (1<<isRoused)) {
-			outputStringToUART("\r\n  roused\r\n");
+			outputStringToUART0("\r\n  roused\r\n");
 		} else { // allow to be roused again
 			enableAccelInterrupt();
 			enableRTCInterrupt();
 		}			
 		itoa(cntout, num_string, 10);
 		
-		outputStringToUART(num_string);
-		outputStringToUART("\t");
+		outputStringToUART0(num_string);
+		outputStringToUART0("\t");
 		datetime_getstring(datetime_string, &dt_RTC);
-		outputStringToUART(datetime_string);
-		outputStringToUART("\r\n");
+		outputStringToUART0(datetime_string);
+		outputStringToUART0("\r\n");
 		delay_ms(1000);
 		cntout++;
 		if (cntout == 65500) 
@@ -404,7 +404,7 @@ int main(void)
             assureSDCardIsOff();
             while (*USART1_outputbuffer_head != *USART1_outputbuffer_tail) ; // allow any output to finish
             // if following cause lockup, fix
-            _U1MD = 1; // disable UART module 1
+            _U1MD = 1; // disable UART0 module 1
             if (secsSince1Jan2000 > timeToTurnOffBT)
                 BT_PWR_CTL = 0; // turn off power to Bluetooth module, low disables booster module
             //
@@ -511,30 +511,30 @@ int main(void)
 }
 
 /**
- * \brief Send a string out the uart
+ * \brief Send a string out UART0
  *
  * Copy characters from the passed null-terminated
- * string to the UART output buffer. Inline fn "uart_putchar"
+ * string to the UART0 output buffer. Inline fn "uart0_putchar"
  * flags to start transmitting, if necessary.
  *
  * \
  *  
  */
 
-void outputStringToUART (char* St) {
+void outputStringToUART0 (char* St) {
 	uint8_t cnt;
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
 	for (cnt = 0; cnt < strlen(St); cnt++) {
-		uart_putchar(St[cnt]);
+		uart0_putchar(St[cnt]);
 	}
-	while (uart_char_queued_out())
+	while (uart0_char_queued_out())
 		;
-} // end of outputStringToUART
+} // end of outputStringToUART0
 
 /**
  * \brief Check the uart for commands
  *
- * Check UART receive buffer for commands
+ * Check UART0 receive buffer for commands
  *
  * \
  *  
@@ -543,10 +543,10 @@ void outputStringToUART (char* St) {
 void checkForCommands (void) {
     char c;
     while (1) {
-		if (!uart_char_waiting_in()) 
+		if (!uart0_char_waiting_in()) 
 			return;
 		
-		c = uart_getchar();
+		c = uart0_getchar();
         if (c == 0x0d) // if carriage-return
             c = 0x0a; // substitute linefeed
         if (c == 0x0a) { // if linefeed, attempt to parse the command
@@ -560,40 +560,40 @@ void checkForCommands (void) {
 					strcpy(tmpStr, commandBuffer + 1);
 //					if (!isValidTimestamp(commandBuffer + 1)) {
 					if (!isValidTimestamp(tmpStr)) {
-						outputStringToUART("\r\n Invalid timestamp\r\n");
-//						outputStringToUART("\r\n> ");
-//						outputStringToUART(commandBuffer);
-//						outputStringToUART("\r\n");
+						outputStringToUART0("\r\n Invalid timestamp\r\n");
+//						outputStringToUART0("\r\n> ");
+//						outputStringToUART0(commandBuffer);
+//						outputStringToUART0("\r\n");
 						break;
 					}
 //					if (!isValidTimezone(commandBuffer + 21)) {
 					if (!isValidTimezone(tmpStr + 20)) {
-						outputStringToUART("\r\n Invalid hour offset\r\n");
-//						outputStringToUART("\r\n> ");
-//						outputStringToUART(commandBuffer);
-//						outputStringToUART("\r\n");
+						outputStringToUART0("\r\n Invalid hour offset\r\n");
+//						outputStringToUART0("\r\n> ");
+//						outputStringToUART0(commandBuffer);
+//						outputStringToUART0("\r\n");
 						break;
 					}
-					outputStringToUART("\r\n Time changed from ");
+					outputStringToUART0("\r\n Time changed from ");
 					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_RTC);
 					datetime_getstring(datetime_string, &dt_RTC);
 					strcat(strJSON, datetime_string);
-					outputStringToUART(datetime_string);
+					outputStringToUART0(datetime_string);
 //					datetime_getFromUnixString(&dt_tmp, commandBuffer + 1, 0);
 					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
 					rtc_setTime(&dt_tmp);
 					strcat(strJSON, "\",\"to\":\"");
-					outputStringToUART(" to ");
+					outputStringToUART0(" to ");
 					datetime_getstring(datetime_string, &dt_tmp);
 					strcat(strJSON, datetime_string);
-					outputStringToUART(datetime_string);
+					outputStringToUART0(datetime_string);
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
-					outputStringToUART("\r\n");
+					outputStringToUART0("\r\n");
 					stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
 					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
-					outputStringToUART(strHdr);
+					outputStringToUART0(strHdr);
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 
 					// 
@@ -606,32 +606,32 @@ void checkForCommands (void) {
                 case 'L': case 'l': 
 				{ // experimenting with the accelerometer Leveling functions
 					uint8_t rs;
-//					outputStringToUART("\r\n about to initialize ADXL345\r\n");
+//					outputStringToUART0("\r\n about to initialize ADXL345\r\n");
 //					initializeADXL345();
-//					outputStringToUART("\r\n ADXL345 initialized\r\n");
+//					outputStringToUART0("\r\n ADXL345 initialized\r\n");
 					// bring out of low power mode
 					// use 100Hz for now ; bit 4 set = reduced power, higher noise
 					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x0a);
 					if (rs) {
 						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
-						outputStringToUART(str);
+						outputStringToUART0(str);
 						break;
 					}
-					outputStringToUART("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
+					outputStringToUART0("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
 					if (readADXL345Axes (&accelData)) {
-						outputStringToUART("\r\n could not get ADXL345 data\r\n");
+						outputStringToUART0("\r\n could not get ADXL345 data\r\n");
 						break;
 					}
 					// set low power bit (4) and 25Hz sampling rate, for 40uA current
 					if (setADXL345Register(ADXL345_REG_BW_RATE, 0x18)) {
-						outputStringToUART("\r\n could not set ADXL345_REG_BW_RATE\r\n");
+						outputStringToUART0("\r\n could not set ADXL345_REG_BW_RATE\r\n");
 						break;
 					}
 //				len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", (unsigned int)((int)x1 << 8 | (int)x0),
 //						  (unsigned int)((int)y1 << 8 | (int)y0),  (unsigned int)((int)z1 << 8 | (int)z0));
 					len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
 						accelData.yWholeWord,  accelData.zWholeWord);
-						outputStringToUART(str);
+						outputStringToUART0(str);
                     break;
                 }
 
@@ -640,7 +640,7 @@ void checkForCommands (void) {
 						len = sprintf(str, "\n\r test write to SD card 0x%x\n\r", (disk_initialize(0)));
 						intTmp1 = writeCharsToSDCard(str, len);
 						 // sd card diagnostics
-						outputStringToUART("\r\n test write to SD card\r\n");
+						outputStringToUART0("\r\n test write to SD card\r\n");
 					//	len = sprintf(str, "\n\r PINB: 0x%x\n\r", (PINB));
 						// send_cmd(CMD0, 0)
 //					len = sprintf(str, "\n\r CMD0: 0x%x\n\r", (send_cmd(CMD0, 0)));
@@ -649,27 +649,27 @@ void checkForCommands (void) {
 
                 case 'P': case 'p': 
 				{ // force SD card power off
-                    outputStringToUART("\r\n turning SD card power off\r\n");
+                    outputStringToUART0("\r\n turning SD card power off\r\n");
 					turnSDCardPowerOff();
-					outputStringToUART("\r\n SD card power turned off\r\n");
+					outputStringToUART0("\r\n SD card power turned off\r\n");
                     break;
                 }
 
                 case '^':
 				{ // force B3 high
-                    outputStringToUART("\r\n forcing B3 high\r\n");
+                    outputStringToUART0("\r\n forcing B3 high\r\n");
 					DDRB |= 0b00001000;
 					PORTB |= 0b00001000;
-					outputStringToUART("\r\n B3 forced high \r\n");
+					outputStringToUART0("\r\n B3 forced high \r\n");
                     break;
                 }
 
                 case 'v':
 				{ // force B3 low
-                    outputStringToUART("\r\n forcing B3 low\r\n");
+                    outputStringToUART0("\r\n forcing B3 low\r\n");
 					DDRB |= 0b00001000;
 					PORTB &= 0b11110111;
-					outputStringToUART("\r\n B3 forced low \r\n");
+					outputStringToUART0("\r\n B3 forced low \r\n");
                     break;
                 }
 				case 'A': case 'a':
@@ -685,7 +685,7 @@ void checkForCommands (void) {
 							for (Timer2 = 4; Timer2; );	// Wait for 40ms to be sure
 							if (!temperature_GetReading(&temperatureReading)) {
 								len = sprintf(str, "\n\r Temperature: %d degrees C\n\r", (temperatureReading.tmprHiByte));
-								outputStringToUART(str);
+								outputStringToUART0(str);
 
 							}
 						}
@@ -704,16 +704,16 @@ void checkForCommands (void) {
 						//} else {
 							//len = sprintf(str, "\n\r Could not get irradiance, err code: %d", result);
 						//}						
-						//outputStringToUART(str);
+						//outputStringToUART0(str);
 						//break;
 					//}						
 //
                 //case 'B': case 'b':
 					//{ // experimenting with reading the battery voltage using the Analog to Digital converter
 						//len = sprintf(str, "\n\r Hi byte: %d \n\r", readCellVoltage(&cellVoltageReading));
-						//outputStringToUART(str);
+						//outputStringToUART0(str);
 						//len = sprintf(str, "\n\r 16bit value: %d \n\r", cellVoltageReading.adcWholeWord);
-						//outputStringToUART(str);
+						//outputStringToUART0(str);
 						//
 //
 						//break;
@@ -721,37 +721,37 @@ void checkForCommands (void) {
 //
                 //case 'T': case 't':
 					//{ // experimenting with time functions
-						//outputStringToUART("\n\r about to set time \n\r");
+						//outputStringToUART0("\n\r about to set time \n\r");
 						//if (!rtc_setTime(&dt_RTC)) {
-							//outputStringToUART("\n\r time set \n\r");
+							//outputStringToUART0("\n\r time set \n\r");
 						//}
-						//outputStringToUART("\n\r about to read time \n\r");
+						//outputStringToUART0("\n\r about to read time \n\r");
 						//if (!rtc_readTime(&dt_tmp)) {
 ////							dt_tmp.second = 22;
 ////							len = sprintf(str, "\n\r Seconds: %d \n\r", dt_tmp.second);
-////							outputStringToUART(str);
+////							outputStringToUART0(str);
 ////							dt_tmp.year = 55;
 							//datetime_getstring(str, &dt_tmp);
-							//outputStringToUART(str);
+							//outputStringToUART0(str);
 						//} else {
-							//outputStringToUART("Error reading time");
+							//outputStringToUART0("Error reading time");
 						//}
 						//break;
 					//}						
 //
                 case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)
-                    outputStringToUART("\r\n output file data\r\n");
+                    outputStringToUART0("\r\n output file data\r\n");
                     break;
                 }
 /*
                 case 'O': { // toggle to use SD card, or ignore it
                     if (flags1.useSDcard) {
                         flags1.useSDcard = 0;
-                        outputStringToUART("\r\n Will now ignore SD card\r\n");
+                        outputStringToUART0("\r\n Will now ignore SD card\r\n");
                     } else {
                         flags1.useSDcard = 1;
-                        outputStringToUART("\r\n Will now write to SD card\r\n");
+                        outputStringToUART0("\r\n Will now write to SD card\r\n");
                     }
                     break;
                 }
@@ -760,7 +760,7 @@ void checkForCommands (void) {
                 case 'P': { // SD card power control
                     if (stateFlags_2.turnSDCardOffBetweenDataWrites) {
                         stateFlags_2.turnSDCardOffBetweenDataWrites = 0;
-                        outputStringToUART("\r\n No SD card power control \r\n");
+                        outputStringToUART0("\r\n No SD card power control \r\n");
                     } else { 
                         stateFlags_2.turnSDCardOffBetweenDataWrites = 1;
                         SD_POWER_TRIS = 0; // assure the pin is an output, source of the SD card power under software control
@@ -773,10 +773,10 @@ void checkForCommands (void) {
                 case 'L': { // toggle Leveling diagnostics
                     if (stateFlags.isLeveling) {
                         stateFlags.isLeveling = 0;;
-                        outputStringToUART("\r\n Ignore accelerometer output\r\n");
+                        outputStringToUART0("\r\n Ignore accelerometer output\r\n");
                     } else {
                         stateFlags.isLeveling = 1;
-                        outputStringToUART("\r\n Accelerometer output enabled\r\n");
+                        outputStringToUART0("\r\n Accelerometer output enabled\r\n");
                     }
                     break;
                 } 
@@ -785,10 +785,10 @@ void checkForCommands (void) {
                 case 'S': { // toggle to sleep between readings, or not
                     if (flags1.sleepBetweenReadings) {
                         flags1.sleepBetweenReadings = 0;
-                        outputStringToUART("\r\n Will stay awake continually\r\n");
+                        outputStringToUART0("\r\n Will stay awake continually\r\n");
                     } else {
                         flags1.sleepBetweenReadings = 1;
-                        outputStringToUART("\r\n Will now sleep between readings\r\n");
+                        outputStringToUART0("\r\n Will now sleep between readings\r\n");
                     }
                     break;
                 } 
@@ -798,10 +798,10 @@ void checkForCommands (void) {
                 case 'R': { // test the 'Rouse' bit
                     if (stateFlags.isRoused) {
                         stateFlags.isRoused = 0;
-                        outputStringToUART("\r\n Rouse bit cleared\r\n");
+                        outputStringToUART0("\r\n Rouse bit cleared\r\n");
                     } else {
                         stateFlags.isRoused = 1;
-                        outputStringToUART("\r\n Rouse bit set\r\n");
+                        outputStringToUART0("\r\n Rouse bit set\r\n");
                     }
                     break;
                 } 
@@ -811,10 +811,10 @@ void checkForCommands (void) {
                 case 'G': { // toggle irradiance gain
                     if (stateFlags_2.irrSensorGain) {
                         stateFlags_2.irrSensorGain = 0;
-                        outputStringToUART("\r\n Low gain\r\n");
+                        outputStringToUART0("\r\n Low gain\r\n");
                     } else {
                         stateFlags_2.irrSensorGain = 1;
-                        outputStringToUART("\r\n High gain\r\n");
+                        outputStringToUART0("\r\n High gain\r\n");
                     }
                     break;
                 } 
@@ -822,9 +822,9 @@ void checkForCommands (void) {
                 // put other commands here
                 default: 
 				{ // if no valid command, echo back the input
-                    outputStringToUART("\r\n> ");
-                    outputStringToUART(commandBuffer);
-                    outputStringToUART("\r\n");
+                    outputStringToUART0("\r\n> ");
+                    outputStringToUART0(commandBuffer);
+                    outputStringToUART0("\r\n");
 //                    startTimer1ToRunThisManySeconds(30); // keep system Roused another two minutes
 					break;
                 }

@@ -61,10 +61,10 @@
 #include "mega_uart_interrupt.h"
 
 /**
- * \def BUFFER_SIZE
- * \brief The size of the UART buffer
+ * \def UART0_BUFFER_SIZE
+ * \brief The size of the UART0 buffer
  */
-#define BUFFER_SIZE 100
+#define UART0_BUFFER_SIZE 100
 
 // set the correct BAUD and F_CPU defines before including setbaud.h
 #include "conf_clock.h"
@@ -80,26 +80,31 @@
 
 #include "ring_buffer.h"
 
-// buffers for use with the ring buffer (belong to the UART)
-uint8_t out_buffer[BUFFER_SIZE];
-uint8_t in_buffer[BUFFER_SIZE];
+// buffers for use with the ring buffer (belong to UART0)
+uint8_t uart0_out_buffer[UART0_BUFFER_SIZE];
+uint8_t uart0_in_buffer[UART0_BUFFER_SIZE];
 
-//! ring buffer to use for the UART transmission
-struct ring_buffer ring_buffer_out;
-//! ring buffer to use for the UART reception
-struct ring_buffer ring_buffer_in;
+//! ring buffer to use for UART0 transmission
+struct ring_buffer uart0_ring_buffer_out;
+//! ring buffer to use for UART0 reception
+struct ring_buffer uart0_ring_buffer_in;
+
+//! ring buffer to use for UART1 transmission
+struct ring_buffer uart1_ring_buffer_out;
+//! ring buffer to use for UART1 reception
+struct ring_buffer uart1_ring_buffer_in;
 
 /**
- * \brief UART data register empty interrupt handler
+ * \brief UART0 data register empty interrupt handler
  *
- * This handler is called each time the UART data register is available for
+ * This handler is called each time UART0 data register is available for
  * sending data.
  */
 ISR(UART0_DATA_EMPTY_IRQ)
 {
 	// if there is data in the ring buffer, fetch it and send it
-	if (!ring_buffer_is_empty(&ring_buffer_out)) {
-		UDR0 = ring_buffer_get(&ring_buffer_out);
+	if (!ring_buffer_is_empty(&uart0_ring_buffer_out)) {
+		UDR0 = ring_buffer_get(&uart0_ring_buffer_out);
 	}
 	else {
 		// no more data to send, turn off data ready interrupt
@@ -110,21 +115,21 @@ ISR(UART0_DATA_EMPTY_IRQ)
 /**
  * \brief Data RX interrupt handler
  *
- * This is the handler for UART receive data
+ * This is the handler for UART0 receive data
  */
 ISR(UART0_RX_IRQ)
 {
-	ring_buffer_put(&ring_buffer_in, UDR0);
+	ring_buffer_put(&uart0_ring_buffer_in, UDR0);
 }
 
 /**
- * \brief Initialize the UART with correct baud rate settings
+ * \brief Initialize UART0 with correct baud rate settings
  *
  * This function will initialize the UART baud rate registers with the correct
- * values using the AVR libc setbaud utility. In addition set the UART to
+ * values using the AVR libc setbaud utility. In addition set the UARTs to
  * 8-bit, 1 stop and no parity.
  */
-void uart_init(void)
+void uart0_init(void)
 {
 #if defined UBRR0H
 	// get the values from the setbaud tool
@@ -146,63 +151,63 @@ void uart_init(void)
 			(0 << UPM01) | (0 << UPM00) | (0 << UMSEL01) |
 			(0 << UMSEL00);
 
-	// initialize the in and out buffer for the UART
-	ring_buffer_out = ring_buffer_init(out_buffer, BUFFER_SIZE);
-	ring_buffer_in = ring_buffer_init(in_buffer, BUFFER_SIZE);
+	// initialize the in and out buffer for UART0
+	uart0_ring_buffer_out = ring_buffer_init(uart0_out_buffer, UART0_BUFFER_SIZE);
+	uart0_ring_buffer_in = ring_buffer_init(uart0_in_buffer, UART0_BUFFER_SIZE);
 }
 
 /**
- * \brief Function for putting a char in the UART buffer
+ * \brief Function for putting a char in the UART0 buffer
  *
- * \param data the data to add to the UART buffer and send
+ * \param data the data to add to the UART0 buffer and send
  *
  */
-inline void uart_putchar(uint8_t data)
+inline void uart0_putchar(uint8_t data)
 {
-	// Disable interrupts to get exclusive access to ring_buffer_out.
+	// Disable interrupts to get exclusive access to uart0_ring_buffer_out.
 	cli();
-	if (ring_buffer_is_empty(&ring_buffer_out)) {
+	if (ring_buffer_is_empty(&uart0_ring_buffer_out)) {
 		// First data in buffer, enable data ready interrupt
 		UCSR0B |=  (1 << UDRIE0);
 	}
 	// Put data in buffer
-	ring_buffer_put(&ring_buffer_out, data);
+	ring_buffer_put(&uart0_ring_buffer_out, data);
 
 	// Re-enable interrupts
 	sei();
 }
 
 /**
- * \brief Function for getting a char from the UART receive buffer
+ * \brief Function for getting a char from the UART0 receive buffer
  *
  * \retval Next data byte in recieve buffer
  */
-inline uint8_t uart_getchar(void)
+inline uint8_t uart0_getchar(void)
 {
-	return ring_buffer_get(&ring_buffer_in);
+	return ring_buffer_get(&uart0_ring_buffer_in);
 }
 
 
 /**
- * \brief Function to check if we have a char waiting in the UART receive buffer
+ * \brief Function to check if we have a char waiting in the UART0 receive buffer
  *
  * \retval true if data is waiting
  * \retval false if no data is waiting
  */
-inline bool uart_char_waiting_in(void)
+inline bool uart0_char_waiting_in(void)
 {
-	return !ring_buffer_is_empty(&ring_buffer_in);
+	return !ring_buffer_is_empty(&uart0_ring_buffer_in);
 }
 
 /**
- * \brief Function to check if we have a char waiting in the UART send buffer
+ * \brief Function to check if we have a char waiting in the UART0 send buffer
  *
  * \retval true if outgoing data is queued
  * \retval false if no outgoing data is queued
  */
-inline bool uart_char_queued_out(void)
+inline bool uart0_char_queued_out(void)
 {
-	return !ring_buffer_is_empty(&ring_buffer_out);
+	return !ring_buffer_is_empty(&uart0_ring_buffer_out);
 }
 
 //

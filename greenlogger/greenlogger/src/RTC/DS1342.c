@@ -761,19 +761,44 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
  */
 void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone)
 {
-	uint8_t iTmp;
-	dtp->year = (10 * (dtstr[2] - '0')) + (dtstr[3] - '0');
-//	len = sprintf(str, "\n\r year: %d\n\r", dtp->year);
+//	uint8_t iTmp; //, tens, ones;
+//	len = sprintf(str, "\n\r char pointer: %d", dtstr);
 //	outputStringToUART(str);
-	dtp->month = (10 * (dtstr[5] - '0')) + (dtstr[6] - '0');
-//	len = sprintf(str, "\n\r month: %d\n\r", dtp->month);
+//	outputStringToUART("\n\r string: \n\r");
+//	outputStringToUART(dtstr);
+//	len = sprintf(str, "\n\r tens of year ASCII code: %d", dtstr[2]);
+//	outputStringToUART(str);
+//	len = sprintf(str, "\n\r ones of year ASCII code: %d", dtstr[3]);
+//	outputStringToUART(str);
+
+//	tens = (dtstr[2] - '0');
+//	ones = (dtstr[3] - '0');
+//	tens = (dtstr[2] & 0xf);
+//	ones = (dtstr[3] & 0xf);
+//	len = sprintf(str, "\n\r tens of year: %d", tens);
+//	outputStringToUART(str);
+//	len = sprintf(str, "\n\r ones of year: %d", ones);
+//	outputStringToUART(str);
+	dtp->year = (uint8_t)(10 * (dtstr[2] - '0')) + (dtstr[3] - '0');
+//	dtp->year = (10 * tens) + ones;
+//	len = sprintf(str, "\n\r year: %d", dtp->year);
+//	outputStringToUART(str);
+//	dtp->month = (10 * (dtstr[5] - '0')) + (dtstr[6] - '0');
+	dtp->month = (10 * (dtstr[5] & 0xf)) + (dtstr[6] & 0xf);
+//	len = sprintf(str, "\n\r month: %d", dtp->month);
 //	outputStringToUART(str);
 	dtp->day = (10 * (dtstr[8] - '0')) + (dtstr[9] - '0');
-//	len = sprintf(str, "\n\r day: %d\n\r", dtp->day);
+//	len = sprintf(str, "\n\r day: %d", dtp->day);
 //	outputStringToUART(str);
 	dtp->hour = (10 * (dtstr[11] - '0')) + (dtstr[12] - '0');
+//	len = sprintf(str, "\n\r hour: %d", dtp->hour);
+//	outputStringToUART(str);
 	dtp->minute = (10 * (dtstr[14] - '0')) + (dtstr[15] - '0');
+//	len = sprintf(str, "\n\r minute: %d", dtp->minute);
+//	outputStringToUART(str);
 	dtp->second = (10 * (dtstr[17] - '0')) + (dtstr[18] - '0');
+//	len = sprintf(str, "\n\r second: %d\n\r", dtp->second);
+//	outputStringToUART(str);
 	if (useGlobalTimeZone) {
 		dtp->houroffset = timeZoneOffset;
 	} else {
@@ -843,10 +868,11 @@ uint8_t isValidTimestamp(char* p)
     if ((i < '0') || (i > '1')) // tens of month
         return 0;
     m = 10 * (i & 0xf); // strip all but low nybble to convert to BCD
+//    m = 10 * (i - 48); // convert from ASCII to number
     i = *p++;
     if ((i < '0') || (i > '9')) // ones of month
         return 0;
-    m = m + (i & 0xf); // strip all but low nybble to convert to BCD
+    m += (i & 0xf); // strip all but low nybble to convert to BCD
     if (m > 12) 
         return 0;
     if (*p++ != '-') // correct delimiter
@@ -859,18 +885,18 @@ uint8_t isValidTimestamp(char* p)
     i = *p++;
     if ((i < '0') || (i > '9')) // ones of day
         return 0;
-    d = d + (i & 0xf); // strip all but low nybble to convert to BCD
+    d += (i & 0xf); // strip all but low nybble to convert to BCD
     if (d > 31) // takes care of January, March, May, July, August, October, and December
         return 0;
-    if ((m = 2) && (d > 29)) // February
+    if ((m == 2) && (d > 29)) // February
         return 0;
-    if ((m = 4) && (d > 30)) // April
+    if ((m == 4) && (d > 30)) // April
         return 0;
-    if ((m = 6) && (d > 30)) // June
+    if ((m == 6) && (d > 30)) // June
         return 0;
-    if ((m = 9) && (d > 30)) // September
+    if ((m == 9) && (d > 30)) // September
         return 0;
-    if ((m = 11) && (d > 30)) // November
+    if ((m == 11) && (d > 30)) // November
         return 0;
     if (*p++ != ' ') // correct delimiter
         return 0;
@@ -882,7 +908,7 @@ uint8_t isValidTimestamp(char* p)
     i = *p++;
     if ((i < '0') || (i > '9')) // ones of hour
         return 0;
-    v = v + (i & 0xf); // strip all but low nybble to convert to BCD
+    v += (i & 0xf); // strip all but low nybble to convert to BCD
     if (v > 23) 
         return 0;
     if (*p++ != ':') // correct delimiter
@@ -895,7 +921,7 @@ uint8_t isValidTimestamp(char* p)
     i = *p++;
     if ((i < '0') || (i > '9')) // ones of minute
         return 0;
-    v = v + (i & 0xf); // strip all but low nybble to convert to BCD
+    v += (i & 0xf); // strip all but low nybble to convert to BCD
     if (v > 59) 
         return 0;
     if (*p++ != ':') // correct delimiter
@@ -908,7 +934,7 @@ uint8_t isValidTimestamp(char* p)
     i = *p++;
     if ((i < '0') || (i > '9')) // ones of second
         return 0;
-    v = v + (i & 0xf); // strip all but low nybble to convert to BCD
+    v += (i & 0xf); // strip all but low nybble to convert to BCD
     if (v > 59) 
         return 0;
     // passed all tests

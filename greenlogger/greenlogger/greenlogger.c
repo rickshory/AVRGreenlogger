@@ -107,8 +107,8 @@ int main(void)
 	// PortD, bit 4 controls power to the Bluetooth module
 	// high = enabled
 	DDRD |= (1<<4); // make output
-//	PORTD |= (1<<4); // set high; for testing make always-on
-	PORTD &= ~(1<<4); // set low; for testing make always-off
+	PORTD |= (1<<4); // set high; for testing make always-on
+//	PORTD &= ~(1<<4); // set low; for testing make always-off
 	// PortD, bit controls the BAUD rate of the Bluetooth module
 	// high = 9600
 	// low = 115k or firmware setting
@@ -553,23 +553,35 @@ void checkForCommands (void) {
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
 
-                case 'T': case 't':
-					{ // set time
-					if (!isValidTimestamp(commandBuffer + 1)) {
+                case 'T': case 't': { // set time
+					// get info from commandBuffer before any UART output, 
+					// because in some configurations any Tx feeds back to Rx
+					char tmpStr[commandBufferLen];
+					strcpy(tmpStr, commandBuffer + 1);
+//					if (!isValidTimestamp(commandBuffer + 1)) {
+					if (!isValidTimestamp(tmpStr)) {
 						outputStringToUART("\r\n Invalid timestamp\r\n");
+//						outputStringToUART("\r\n> ");
+//						outputStringToUART(commandBuffer);
+//						outputStringToUART("\r\n");
 						break;
-					}    
-					if (!isValidTimezone(commandBuffer + 21)) {
+					}
+//					if (!isValidTimezone(commandBuffer + 21)) {
+					if (!isValidTimezone(tmpStr + 20)) {
 						outputStringToUART("\r\n Invalid hour offset\r\n");
+//						outputStringToUART("\r\n> ");
+//						outputStringToUART(commandBuffer);
+//						outputStringToUART("\r\n");
 						break;
 					}
 					outputStringToUART("\r\n Time changed from ");
 					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
-					intTmp1 = rtc_readTime(&dt_tmp);
-					datetime_getstring(datetime_string, &dt_tmp);
+					intTmp1 = rtc_readTime(&dt_RTC);
+					datetime_getstring(datetime_string, &dt_RTC);
 					strcat(strJSON, datetime_string);
 					outputStringToUART(datetime_string);
-					datetime_getFromUnixString(&dt_tmp, commandBuffer + 1, 0);
+//					datetime_getFromUnixString(&dt_tmp, commandBuffer + 1, 0);
+					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
 					rtc_setTime(&dt_tmp);
 					strcat(strJSON, "\",\"to\":\"");
 					outputStringToUART(" to ");

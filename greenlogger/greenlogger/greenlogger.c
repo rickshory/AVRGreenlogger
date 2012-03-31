@@ -107,8 +107,8 @@ int main(void)
 	// PortD, bit 4 controls power to the Bluetooth module
 	// high = enabled
 	DDRD |= (1<<4); // make output
-	PORTD |= (1<<4); // set high; for testing make always-on
-//	PORTD &= ~(1<<4); // set low; for testing make always-off
+//	PORTD |= (1<<4); // set high; for testing make always-on
+	PORTD &= ~(1<<4); // set low; for testing make always-off
 	// PortD, bit controls the BAUD rate of the Bluetooth module
 	// high = 9600
 	// low = 115k or firmware setting

@@ -101,7 +101,7 @@ volatile extern adcData cellVoltageReading;
 int main(void)
 {
 	uint8_t ct, swDnUp, swBbIr;
-	uint8_t errSD, cnt;
+	uint8_t errSD, cnt, r;
 	uint16_t cntout = 0;
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
 	// PortD, bit 4 controls power to the Bluetooth module
@@ -118,24 +118,28 @@ int main(void)
 	
 	cli();
 	setupDiagnostics();
-	uart0_init();
-	outputStringToUART0("\r\n  UART0 Initialized\r\n");
 	commandBuffer[0] = '\0';
 	commandBufferPtr = commandBuffer; // "empty" the command buffer
 	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup
+	uart0_init();
+	uart1_init();
 	sei();
+	
+	outputStringToUART0("\r\n  UART0 Initialized\r\n");
+//	outputStringToUART1("\r\n  UART1 Initialized\r\n");
 	intTmp1 = readCellVoltage(&cellVoltageReading);
     outputStringToUART0("\r\n  enter I2C_Init\r\n");
 	I2C_Init(); // enable I2C 
 	outputStringToUART0("\r\n  I2C_Init completed\r\n");
 	
-	initializeADXL345();
-	outputStringToUART0("\r\n ADXL345 initialized\r\n");
-
-//	// Send the test string
-//	for (cnt = 0; cnt < strlen(test_string); cnt++) {
-//		uart0_putchar(test_string[cnt]);
-//	}
+	r = initializeADXL345();
+	if (r) {
+		len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
+		outputStringToUART0(str);
+	} else {
+		outputStringToUART0("\r\n ADXL345 initialized\r\n");
+	}
+		
 	intTmp1 = rtc_readTime(&dt_RTC);
 	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
 	datetime_getstring(datetime_string, &dt_RTC);
@@ -186,23 +190,8 @@ int main(void)
 
 		} // end of (machState == Idle)
 		// when (machState != Idle) execution passes on from this point
-//		outputStringToUART0("\n\r RTC alarm occurred \n\r\n\r");
 		// when RTCC occurs, changes machineState to GettingTimestamp
 		stateFlags2 &= ~(1<<nextAlarmSet);
-//		datetime_copy(&dt_NextAlarm, &dt_CurAlarm);
-//		datetime_advanceInterval(&dt_NextAlarm);
-//		if (!rtc_setAlarm1(&dt_NextAlarm)) {
-//			;
-//			outputStringToUART0("\n\r Alarm1 set \n\r\n\r");
-//			datetime_getstring(str, &dt_NextAlarm);
-//			outputStringToUART0(str);
-//			outputStringToUART0("\n\r\n\r");
-//		}
-//		if (!rtc_enableAlarm1()) {
-//			;
-//			outputStringToUART0("\n\r Alarm1 enabled \n\r\n\r");
-//		}
-//		enableRTCInterrupt();
 		stayRoused(3);
 
 		while (1) { // various tests may break early
@@ -220,6 +209,10 @@ int main(void)
 			
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToUART0(datetime_string);
+
+			outputStringToUART1(datetime_string);
+			outputStringToUART1("\r\n");
+			
 			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
 				len = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 				outputStringToUART0(str);
@@ -255,17 +248,11 @@ int main(void)
 				}						
 				outputStringToUART0(str);
 			}
-			// get temperature
-//			if (!temperature_InitOneShotReading()) {
-//				// temperature conversion time, typically 30ms
-//				for (Timer2 = 4; Timer2; );	// Wait for 40ms to be sure
 			if (!temperature_GetReading(&temperatureReading)) {
 					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
 					outputStringToUART0(str);
 			} else
 				outputStringToUART0("\t-");
-//			} else
-//				outputStringToUART0("\t-");
 			
 			// calc cell voltage from ADC reading earlier
 			// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
@@ -297,11 +284,7 @@ int main(void)
 //				outputStringToUART0("\n\r Entered log data routine \n\r");
 				// log irradiance
 				strcpy(strLog, "\n\r");
-//				len = sprintf(str, "\n\r");
-//				intTmp1 = writeCharsToSDCard(str, len);
 				strcat(strLog, datetime_string);
-//				len = sprintf(str, datetime_string);
-//				intTmp1 = writeCharsToSDCard(str, len);
 				for (ct = 0; ct < 4; ct++) { // write irradiance readings
 					if (!(irrReadings[ct].validation)) {
 						len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
@@ -309,7 +292,6 @@ int main(void)
 						len = sprintf(str, "\t");
 					}
 					strcat(strLog, str);
-//					intTmp1 = writeCharsToSDCard(str, len);
 				}
 				// log temperature
 				if (!temperatureReading.verification)
@@ -317,13 +299,9 @@ int main(void)
 				else
 					len = sprintf(str, "\t");
 				strcat(strLog, str);
-//				intTmp1 = writeCharsToSDCard(str, len);
 				// log cell voltage
 				len = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 				strcat(strLog, str);
-//				intTmp1 = writeCharsToSDCard(str, len);
-//				len = sprintf(str, "\n\r");
-//				intTmp1 = writeCharsToSDCard(str, len);
 				
 				len = strlen(strLog);
 				errSD = writeCharsToSDCard(strLog, len);
@@ -345,19 +323,6 @@ int main(void)
 			enableAccelInterrupt();
 			enableRTCInterrupt();
 		}			
-		itoa(cntout, num_string, 10);
-		
-		outputStringToUART0(num_string);
-		outputStringToUART0("\t");
-		datetime_getstring(datetime_string, &dt_RTC);
-		outputStringToUART0(datetime_string);
-		outputStringToUART0("\r\n");
-		delay_ms(1000);
-		cntout++;
-		if (cntout == 65500) 
-			cntout = 0;
-		rtc_add1sec();
-		checkForCommands();
 */		
 /*
         while (machState == Idle) { // RTCC interrupt will break out of this
@@ -532,7 +497,28 @@ void outputStringToUART0 (char* St) {
 } // end of outputStringToUART0
 
 /**
- * \brief Check the uart for commands
+ * \brief Send a string out UART1
+ *
+ * Copy characters from the passed null-terminated
+ * string to the UART1 output buffer. Inline fn "uart1_putchar"
+ * flags to start transmitting, if necessary.
+ *
+ * \
+ *  
+ */
+
+void outputStringToUART1 (char* St) {
+	uint8_t cnt;
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
+	for (cnt = 0; cnt < strlen(St); cnt++) {
+		uart1_putchar(St[cnt]);
+	}
+	while (uart1_char_queued_out())
+		;
+} // end of outputStringToUART1
+
+/**
+ * \brief Check the UART0 for commands
  *
  * Check UART0 receive buffer for commands
  *
@@ -558,20 +544,12 @@ void checkForCommands (void) {
 					// because in some configurations any Tx feeds back to Rx
 					char tmpStr[commandBufferLen];
 					strcpy(tmpStr, commandBuffer + 1);
-//					if (!isValidTimestamp(commandBuffer + 1)) {
 					if (!isValidTimestamp(tmpStr)) {
 						outputStringToUART0("\r\n Invalid timestamp\r\n");
-//						outputStringToUART0("\r\n> ");
-//						outputStringToUART0(commandBuffer);
-//						outputStringToUART0("\r\n");
 						break;
 					}
-//					if (!isValidTimezone(commandBuffer + 21)) {
 					if (!isValidTimezone(tmpStr + 20)) {
 						outputStringToUART0("\r\n Invalid hour offset\r\n");
-//						outputStringToUART0("\r\n> ");
-//						outputStringToUART0(commandBuffer);
-//						outputStringToUART0("\r\n");
 						break;
 					}
 					outputStringToUART0("\r\n Time changed from ");
@@ -580,7 +558,6 @@ void checkForCommands (void) {
 					datetime_getstring(datetime_string, &dt_RTC);
 					strcat(strJSON, datetime_string);
 					outputStringToUART0(datetime_string);
-//					datetime_getFromUnixString(&dt_tmp, commandBuffer + 1, 0);
 					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
 					rtc_setTime(&dt_tmp);
 					strcat(strJSON, "\",\"to\":\"");
@@ -605,10 +582,16 @@ void checkForCommands (void) {
 				
                 case 'L': case 'l': 
 				{ // experimenting with the accelerometer Leveling functions
-					uint8_t rs;
+					uint8_t rs, val;
 //					outputStringToUART0("\r\n about to initialize ADXL345\r\n");
-//					initializeADXL345();
+//					rs = initializeADXL345();
+//					if (rs) {
+//						len = sprintf(str, "\n\r initialize failed: %d\n\r", rs);
+//						outputStringToUART0(str);
+//						break;
+//					}
 //					outputStringToUART0("\r\n ADXL345 initialized\r\n");
+
 					// bring out of low power mode
 					// use 100Hz for now ; bit 4 set = reduced power, higher noise
 					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x0a);
@@ -617,14 +600,32 @@ void checkForCommands (void) {
 						outputStringToUART0(str);
 						break;
 					}
+					for (iTmp = 1; iTmp < 6; iTmp++) { // try reading bit 7, INT_SOURCE.DATA_READY
+						rs = readADXL345Register(ADXL345_REG_INT_SOURCE, &val);
+						if (rs) {
+							len = sprintf(str, "\n\r could not read ADXL345_REG_INT_SOURCE: %d\n\r", rs);
+							outputStringToUART0(str);
+							break;
+						}
+						if (val & (1 << 7)) {
+							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY set: 0x%x\n\r", val);
+						} else {
+							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY clear: 0x%x\n\r", val);
+						}							
+						outputStringToUART0(str);
+					}
+
+
 					outputStringToUART0("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
 					if (readADXL345Axes (&accelData)) {
 						outputStringToUART0("\r\n could not get ADXL345 data\r\n");
 						break;
 					}
 					// set low power bit (4) and 25Hz sampling rate, for 40uA current
-					if (setADXL345Register(ADXL345_REG_BW_RATE, 0x18)) {
-						outputStringToUART0("\r\n could not set ADXL345_REG_BW_RATE\r\n");
+					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x18);
+					if (rs) {
+						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
+						outputStringToUART0(str);
 						break;
 					}
 //				len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", (unsigned int)((int)x1 << 8 | (int)x0),

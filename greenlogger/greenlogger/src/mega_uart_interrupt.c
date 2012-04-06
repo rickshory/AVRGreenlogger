@@ -125,7 +125,7 @@ ISR(UART1_DATA_EMPTY_IRQ)
 {
 	// if there is data in the ring buffer, fetch it and send it
 	if (!ring_buffer_is_empty(&uart1_ring_buffer_out)) {
-		UDR0 = ring_buffer_get(&uart1_ring_buffer_out);
+		UDR1 = ring_buffer_get(&uart1_ring_buffer_out);
 	}
 	else {
 		// no more data to send, turn off data ready interrupt
@@ -216,7 +216,7 @@ void uart1_init(void)
 			(0 << UPM11) | (0 << UPM10) | (0 << UMSEL11) |
 			(0 << UMSEL10);
 
-	// initialize the in and out buffer for UART0
+	// initialize the in and out buffer for UART1
 	uart1_ring_buffer_out = ring_buffer_init(uart1_out_buffer, UART1_BUFFER_SIZE);
 	uart1_ring_buffer_in = ring_buffer_init(uart1_in_buffer, UART1_BUFFER_SIZE);
 }

@@ -3,10 +3,12 @@
  *
  * Created: 2/1/2012 2:23:10 PM
  *  Author: rshory
- *  sets up Timer3 with an interrupt that occurs every 10ms. This calls a function "timerproc"
-  which internally toggles all Port A pins every 1 second. An LED on a Port A pin allows verifying this is working.
-  The timerproc function counts down two variables Timer1 and Timer2
+ *  sets up Timer3 with an interrupt that occurs every 10ms. This calls a function "heartBeat"
+  which internally toggles pin A2 every 1 second. An LED there allows verifying this is working.
+  The heartBeat function counts down two variables Timer1 and Timer2
   which can be used as a delay timer by any routine by using code like this:
+  
+	for (Timer1 = 3; Timer1; );	// Wait for 30ms
   
  */ 
 #include <avr/io.h>

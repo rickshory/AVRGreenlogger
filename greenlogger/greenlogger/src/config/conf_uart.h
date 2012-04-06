@@ -54,7 +54,13 @@
 //! define the UART0 data buffer ready interrupt vector
 #define UART0_DATA_EMPTY_IRQ USART0_UDRE_vect
 
+//! define the UART1 data buffer ready interrupt vector
+#define UART1_DATA_EMPTY_IRQ USART1_UDRE_vect
+
 //! define the UART0 data 
 #define UART0_RX_IRQ USART0_RX_vect
+
+//! define the UART1 data 
+#define UART1_RX_IRQ USART1_RX_vect
 
 #endif /* CONF_UART_H_INCLUDED */

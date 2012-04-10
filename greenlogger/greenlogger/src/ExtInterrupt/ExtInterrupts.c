@@ -20,7 +20,9 @@ void stayRoused(int8_t sec)
 {
 	cli(); // temporarily disable interrupts to prevent Timer3 from
 		// changing the count partway through
-	rouseCountdown = 100 * sec;
+	if ((100 * sec) > rouseCountdown) { // never trim the rouse interval, only extend it
+		rouseCountdown = 100 * sec;
+	}
 	stateFlags1 |= (1<<isRoused);
 	sei();
 }
@@ -34,9 +36,9 @@ void stayRoused(int8_t sec)
  *  by the accelerometer. The accelerometer controls a transition on a 
  *  certain pin. This function sets up the microcontroller to respond to the
  *  pin change with an interrupt, which will bring it out of sleep mode.
- *  It uses Pin-Change interrupt 10 (PCINT10), bit B2
- *  on 44-TQFP package, this physical pin 42
- *  on 40-DIP package, this is physical pin 3
+ *  It uses Pin-Change interrupt 10 (PCINT10), bit B2.
+ *  On 44-TQFP package, this physical pin 42
+ *  On 40-DIP package, this is physical pin 3
  */
 
 void enableAccelInterrupt(void)
@@ -59,8 +61,9 @@ void disableAccelInterrupt(void)
 // is triggered by accelerometer
 ISR(PCINT1_vect)
 {
+	stateFlags1 |= (1<<tapDetected); // flag it
 	disableAccelInterrupt();
-	stayRoused(5);
+	stayRoused(120); // two minutes
 }
 
 /**
@@ -71,9 +74,9 @@ ISR(PCINT1_vect)
  *  by the external Real Time Clock chip. The RTC controls a transition on a 
  *  certain pin. This function sets up the microcontroller to respond to the
  *  pin change with an interrupt, which will bring it out of sleep mode.
- *  It uses Pin-Change interrupt 3 (PCINT3), bit A3
- *  on 44-TQFP package, this physical pin 34
- *  on 40-DIP package, this is physical pin 37
+ *  It uses Pin-Change interrupt 3 (PCINT3), bit A3.
+ *  On 44-TQFP package, this physical pin 34
+ *  On 40-DIP package, this is physical pin 37
  */
 
 void enableRTCInterrupt(void)

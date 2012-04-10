@@ -103,6 +103,7 @@ int main(void)
 	uint8_t ct, swDnUp, swBbIr;
 	uint8_t errSD, cnt, r;
 	uint16_t cntout = 0;
+	stayRoused(20); // initial, keep system roused for 20 seconds for diagnostic output
 	strJSON[0] = '\0'; // "erase" the string
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
 	// PortD, bit 4 controls power to the Bluetooth module
@@ -172,11 +173,14 @@ int main(void)
 	stateFlags2 &= ~(1<<nextAlarmSet); // alarm not set yet
 //	enableRTCInterrupt();
 //	machineState = Idle;
-	stayRoused(20);
  
 	while (1) { // main program loop
-		if (!(stateFlags2 & (1<<nextAlarmSet)))
-		{
+		if (stateFlags1 & (1<<tapDetected)) {
+			outputStringToUART0("\n\r Tap detected \n\r\n\r");
+			stateFlags1 &= ~(1<<tapDetected);
+		}
+		
+		if (!(stateFlags2 & (1<<nextAlarmSet))) {
 //			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
 			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 			stateFlags2 |= (1<<nextAlarmSet);
@@ -186,14 +190,41 @@ int main(void)
 		machineState = Idle; // beginning, or done with everything; return to Idle state
 
 		while (machineState == Idle) { // RTC interrupt will break out of this
-			;
+			intTmp1 =  clearAnyADXL345TapInterrupt();
+			if (intTmp1) {
+				len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
+				outputStringToUART0(str);
+			}
+			enableAccelInterrupt();
 			checkForCommands();
+
+		if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
+			// go to sleep
+			PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
+			// SE bit in SMCR must be written to logic one and a SLEEP
+			//  instruction must be executed.
+
+			// When the SM2..0 bits are written to 010, the SLEEP instruction makes the MCU enter
+			// Power-down mode
+	
+			// SM2 = bit 3
+			// SM1 = bit 2
+			// SM0 = bit 1
+			// SE = bit 0
+			// don't set SE yet
+			SMCR = 0b00000100;
+			// set SE (sleep enable)
+			SMCR |= (1<<SE);
+			// go intoPower-down mode SLEEP
+			asm("sleep");
+			
+		}
 
 		} // end of (machState == Idle)
 		// when (machState != Idle) execution passes on from this point
 		// when RTCC occurs, changes machineState to GettingTimestamp
 		stateFlags2 &= ~(1<<nextAlarmSet);
-		stayRoused(3);
+//		stayRoused(3);
 
 		while (1) { // various tests may break early
 			;
@@ -201,12 +232,13 @@ int main(void)
 			// monitor cell voltage, to decide whether there is enough power to proceed
 
 			intTmp1 = readCellVoltage(&cellVoltageReading);
-			//if (stateFlags1 & (1<<isRoused)) {
-			//	outputStringToUART0("\r\n  roused\r\n");
-			//	// timer diagnostics
-			//	len = sprintf(str, "\r\n countdown: %u seconds\r\n", (rouseCountdown/100));
-			//	outputStringToUART0(str);
-			//}
+			
+			if (stateFlags1 & (1<<isRoused)) {
+//				outputStringToUART0("\r\n  roused\r\n");
+				// timer diagnostics
+				len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
+				outputStringToUART0(str);
+			}
 			
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToUART0(datetime_string);
@@ -490,8 +522,10 @@ int main(void)
 void outputStringToUART0 (char* St) {
 	uint8_t cnt;
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
-	for (cnt = 0; cnt < strlen(St); cnt++) {
-		uart0_putchar(St[cnt]);
+	if (stateFlags1 & (1<<isRoused)) { // if system not roused, no output
+		for (cnt = 0; cnt < strlen(St); cnt++) {
+			uart0_putchar(St[cnt]);
+		}	
 	}
 	while (uart0_char_queued_out())
 		;
@@ -511,6 +545,7 @@ void outputStringToUART0 (char* St) {
 void outputStringToUART1 (char* St) {
 	uint8_t cnt;
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
+	
 	for (cnt = 0; cnt < strlen(St); cnt++) {
 		uart1_putchar(St[cnt]);
 	}
@@ -537,6 +572,7 @@ void checkForCommands (void) {
         if (c == 0x0d) // if carriage-return
             c = 0x0a; // substitute linefeed
         if (c == 0x0a) { // if linefeed, attempt to parse the command
+			stayRoused(120); // keep system roused
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
 
@@ -856,6 +892,7 @@ void heartBeat (void)
 //	static BYTE pv;
 //	BYTE n, s;
 	BYTE n;
+	int16_t t;
 	
 	if (--ToggleCountdown <= 0) 
 	{
@@ -865,7 +902,11 @@ void heartBeat (void)
 		ToggleCountdown = TOGGLE_INTERVAL;
 	}
 	
-	if (--rouseCountdown <= 0)
+	t = rouseCountdown;
+	if (t) rouseCountdown = --t;
+	
+//	if (--rouseCountdown <= 0)
+	if (!rouseCountdown)
 	{
 		stateFlags1 &= ~(1<<isRoused);
 	}

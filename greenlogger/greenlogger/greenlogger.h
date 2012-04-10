@@ -60,21 +60,21 @@ enum stateRTC
 enum stateFlags1Bits
 {
 	isReadingSensors, // has been awakened by RTCC interrupt and is reading data
+	tapDetected, // accelerometer tap detected, used for diagnostics
 	isRoused, // triggered by external interrupt, and re-triggered by any activity while awake
 	reRoused, // re-triggered while awake, used to reset timeout
 	timeToLogData, // flag that it is time to log data to SD card
 	writeJSONMsg, // there is a JSON message to log
 	writeDataHeaders, // flag to write column headers to SD card
 	//  done on init, reset, time change, and midnight rollover
-	keepBT_on, // keep power on the the Bluetooth module, even after rouse timeout
-	isLeveling, // diagnostics show accelerometer output rather than light sensors, used for leveling the system
+	keepBT_on // keep power on the the Bluetooth module, even after rouse timeout
  };
 
 enum stateFlags2Bits 
 {
+	isLeveling, // diagnostics show accelerometer output rather than light sensors, used for leveling the system
 	nextAlarmSet, // next alarm has been correctly set
 	accelerometerIsThere, // set if system finds ADXL345 on I2C bus
-	sFbit2, // not used yet
 	sFbit3, // not used yet
 	sFbit4, // not used yet
 	sFbit5, // not used yet

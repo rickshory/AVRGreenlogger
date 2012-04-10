@@ -30,7 +30,7 @@ extern volatile uint8_t stateFlags1;
 extern volatile uint8_t stateFlags2;
 
 extern char str[128]; // generic space for strings to be output
-extern char strJSON[128]; // string for JSON data
+extern char strJSON[256]; // string for JSON data
 extern char strHdr[64];
 
 extern volatile dateTime dt_CurAlarm;
@@ -67,7 +67,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
 	char stDir[6], stFile[20];
-	BYTE sLen;
+	BYTE sLen, retVal = sdOK;
 	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely write card
@@ -85,7 +85,8 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	if(driveStatus & STA_NOINIT ||
 		driveStatus & STA_NODISK ||
 		driveStatus & STA_PROTECT) {
-		return sdInitFail;
+			retVal = sdInitFail;
+			goto unmountVolume;
 //	flag error.
 //	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
 //	outputStringToUART0(str);
@@ -93,7 +94,8 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
 	res = f_mkdir(stDir);
 	if (!((res == FR_OK) || (res == FR_EXIST))) {
-		return sdMkDirFail;
+		retVal = sdMkDirFail;
+		goto unmountVolume;
 //		len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
 //		outputStringToUART0(str);	
 	}
@@ -103,51 +105,70 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	//works
 	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
 	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
-		return sdFileOpenFail;
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
 //		len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
 //		outputStringToUART0(str);
 	//flag error
 }
 
 	// Move to end of the file to append data
-	if (f_lseek(&logFile, f_size(&logFile)) != FR_OK)
-		return sdFileSeekFail;
+	if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
+		retVal = sdFileSeekFail;
+		goto closeFile;
+	}
 
 	unsigned int bytesWritten, tmpLen;
 	// if flagged, insert any JSON messages
 	if (stateFlags1 & (1<<writeJSONMsg)){
 		tmpLen = strlen(strJSON);
-		if (f_write(&logFile, strJSON, tmpLen, &bytesWritten) != FR_OK)
-			return sdFileWriteFail;
-		if (bytesWritten < n)
-			return sdFileWritePartial;
+		if (f_write(&logFile, strJSON, tmpLen, &bytesWritten) != FR_OK) {
+			retVal = sdFileWriteFail;
+			goto closeFile;
+		}
 		stateFlags1 &= ~(1<<writeJSONMsg); // clear flag, write only once
-		strJSON[0] = 0; // "erase" the string
+		strJSON[0] = '\0'; // "erase" the string
+		if (bytesWritten < n) { // probably strJSON is corrupted; proceed next time with string and flag cleared
+			// at least allow normal logging to resume
+			retVal = sdFileWritePartial;
+			goto closeFile;
+		}			
 	}
 	// if flagged, insert column headers
 	if (stateFlags1 & (1<<writeDataHeaders)){
 //		tmpLen = sprintf(str, "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r");
 		tmpLen = sprintf(str, strHdr);
+		stateFlags1 &= ~(1<<writeDataHeaders); // clear flag, attempt to write only once
 		if (f_write(&logFile, str, tmpLen, &bytesWritten) != FR_OK)
-			return sdFileWriteFail;
-		if (bytesWritten < n)
-			return sdFileWritePartial;
-		stateFlags1 &= ~(1<<writeDataHeaders); // clear flag, write only once
+			retVal = sdFileWriteFail;
+			goto closeFile;
+		if (bytesWritten < n) {
+			retVal = sdFileWritePartial;
+			goto closeFile;
+		}
+			
 	}
 	
 	if (f_write(&logFile, St, n, &bytesWritten) != FR_OK)
-		return sdFileWriteFail;
+		retVal = sdFileWriteFail;
+		goto closeFile;
+
 	if (bytesWritten < n)
-		return sdFileWritePartial;
+		retVal = sdFileWritePartial;
+		goto closeFile;
 	
 //		len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
 //		outputStringToUART0(str);
 	//Flush the write buffer with f_sync(&logFile);
 
+// retVal = sdOK;
+
 	//Close and unmount.
+	closeFile:
 	f_close(&logFile);
+	unmountVolume:
 	f_mount(0,0);
-	return sdOK;
+	return retVal;
 }
 
 /**

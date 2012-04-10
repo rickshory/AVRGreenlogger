@@ -70,7 +70,7 @@ uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
 
 int len, err = 0;
 char str[128]; // generic space for strings to be output
-char strJSON[128]; // string for JSON data
+char strJSON[256]; // string for JSON data
 char strHdr[64] = "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r";
 char strLog[64];
 
@@ -103,6 +103,7 @@ int main(void)
 	uint8_t ct, swDnUp, swBbIr;
 	uint8_t errSD, cnt, r;
 	uint16_t cntout = 0;
+	strJSON[0] = '\0'; // "erase" the string
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
 	// PortD, bit 4 controls power to the Bluetooth module
 	// high = enabled
@@ -600,23 +601,23 @@ void checkForCommands (void) {
 						outputStringToUART0(str);
 						break;
 					}
-					for (iTmp = 1; iTmp < 6; iTmp++) { // try reading bit 7, INT_SOURCE.DATA_READY
-						rs = readADXL345Register(ADXL345_REG_INT_SOURCE, &val);
-						if (rs) {
-							len = sprintf(str, "\n\r could not read ADXL345_REG_INT_SOURCE: %d\n\r", rs);
-							outputStringToUART0(str);
-							break;
-						}
-						if (val & (1 << 7)) {
-							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY set: 0x%x\n\r", val);
-						} else {
-							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY clear: 0x%x\n\r", val);
-						}							
-						outputStringToUART0(str);
-					}
+//					for (iTmp = 1; iTmp < 6; iTmp++) { // try reading bit 7, INT_SOURCE.DATA_READY
+//						rs = readADXL345Register(ADXL345_REG_INT_SOURCE, &val);
+//						if (rs) {
+//							len = sprintf(str, "\n\r could not read ADXL345_REG_INT_SOURCE: %d\n\r", rs);
+//							outputStringToUART0(str);
+//							break;
+//						}
+//						if (val & (1 << 7)) {
+//							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY set: 0x%x\n\r", val);
+//						} else {
+//							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY clear: 0x%x\n\r", val);
+//						}							
+//						outputStringToUART0(str);
+//					}
 
 
-					outputStringToUART0("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
+//					outputStringToUART0("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
 					if (readADXL345Axes (&accelData)) {
 						outputStringToUART0("\r\n could not get ADXL345 data\r\n");
 						break;

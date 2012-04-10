@@ -141,7 +141,7 @@ uint8_t initializeADXL345 (void) {
 				r = I2C_Write(ADXL345_REG_POWER_CTL);
 				r = I2C_Write(0x08); //
 				I2C_Stop();
-				outputStringToUART0("\n\r accelerometer initialization completed \n\r");
+//				outputStringToUART0("\n\r accelerometer initialization completed \n\r");
 				return I2C_OK;
 			} else { // could not write data to device
 				I2C_Stop();
@@ -165,9 +165,7 @@ uint8_t initializeADXL345 (void) {
 uint8_t clearAnyADXL345TapInterrupt (void) {
     char r;
 	uint8_t rs, val;
-//    if (!stateFlags2.accelerometerIsThere) {
-//        return;
-//    }
+	// clear the interrupt by reading the INT_SOURCE register until the flag bit is clear
 	do {
 		rs = readADXL345Register (ADXL345_REG_INT_SOURCE, &val);
 		if (rs) {
@@ -175,31 +173,6 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
 			outputStringToUART0(str);
 			return rs;
 		}
-//		// clear the interrupt by reading the INT_SOURCE register
-//		r = I2C_Start();
-//		if (r == TW_START) {
-//			r = I2C_Write(ADXL345_ADDR_WRITE); // address the device, say we are going to write
-//			if (r == TW_MT_SLA_ACK) {
-//				r = I2C_Write(ADXL345_REG_INT_SOURCE); // tell the device the register we are going to want
-//				if (r == TW_MT_DATA_ACK) {
-//					r = I2C_Start(); // restart, preparatory to reading
-//					r = I2C_Write(ADXL345_ADDR_READ); // address the device, say we are going to read
-//					r = I2C_Read(0); // do NACK, since this is the last and only byte read
-//					I2C_Stop();
-//				} else { // could not write data to device
-//					I2C_Stop();
-//					return errNoI2CDataAck;
-//				}
-//			} else { // could not address device
-//			I2C_Stop();
-//			return errNoI2CAddressAck;
-//			}
-//		} else { // could not START
-//			return errNoI2CStart;
-//		}
- len = sprintf(str, "\n\r result of clearing ADXL345 interrupt: 0x%x\n\r", val);
- outputStringToUART0(str);
-//    } while (r & 0x40); // tap = 0x40, double tap = 0x20
     } while (val & 0x40); // tap = 0x40, double tap = 0x20
 	return I2C_OK;
 } // end of clearAnyADXL345TapInterrupt
@@ -258,17 +231,13 @@ uint8_t readADXL345Axes (volatile accelAxisData *d) {
 				d->yHiByte = I2C_Read(1); // do ACK, since not the last byte
 				d->zLoByte = I2C_Read(1); // do ACK, since not the last byte
 				d->zHiByte = I2C_Read(0); // do NACK, since this is the last byte
-				len = sprintf(str, "\n\r X0=0x%x, X1=0x%x, Y0=0x%x, Y1=0x%x, Z0=0x%x, Z1=0x%x\n\r", 
-				     d->xLoByte, d->xHiByte, d->yLoByte, d->yHiByte, d->zLoByte, d->zHiByte);
-				outputStringToUART0(str);
+//				len = sprintf(str, "\n\r X0=0x%x, X1=0x%x, Y0=0x%x, Y1=0x%x, Z0=0x%x, Z1=0x%x\n\r", 
+//				     d->xLoByte, d->xHiByte, d->yLoByte, d->yHiByte, d->zLoByte, d->zHiByte);
+//				outputStringToUART0(str);
 				I2C_Stop();
 				d->validation = I2C_OK;
 				return I2C_OK;
 
-				
-//				// globals "len" and "str" available on return
-//				len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", (unsigned int)((int)x1 << 8 | (int)x0),
-//						  (unsigned int)((int)y1 << 8 | (int)y0),  (unsigned int)((int)z1 << 8 | (int)z0));
 				// put back in low power mode
 //				I2C_Start();
 //				r = I2C_Write(ADXL345_ADDR_WRITE); // address the device, say we are going to write

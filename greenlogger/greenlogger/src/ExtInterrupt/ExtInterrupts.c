@@ -12,7 +12,7 @@
 
 extern volatile uint8_t machineState;
 extern volatile uint16_t rouseCountdown;
-extern volatile char stateFlags1;
+extern volatile char stateFlags1, motionFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -61,7 +61,7 @@ void disableAccelInterrupt(void)
 // is triggered by accelerometer
 ISR(PCINT1_vect)
 {
-	stateFlags1 |= (1<<tapDetected); // flag it
+	motionFlags |= (1<<tapDetected); // flag it
 	disableAccelInterrupt();
 	stayRoused(120); // two minutes
 }

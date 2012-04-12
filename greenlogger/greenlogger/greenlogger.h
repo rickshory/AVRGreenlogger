@@ -21,6 +21,9 @@
 #define CELL_VOLTAGE_THRESHOLD_READ_DATA 427 // corresponds to 1067mV where cell voltage is just about to plummet
 #define CELL_VOLTAGE_THRESHOLD_UART 404 // corresponds to 1010mV where cell voltage is just above cutoff
 
+#define IRRADIANCE_THRESHOLD_DARK_IR 50 // infrared readings below this are considered "darkness"
+#define IRRADIANCE_THRESHOLD_DARK_BB 100 // broadband readings below this are considered "darkness"
+
 enum machStates
 {
  Asleep = 0, 
@@ -60,28 +63,53 @@ enum stateRTC
 enum stateFlags1Bits
 {
 	isReadingSensors, // has been awakened by RTCC interrupt and is reading data
-	tapDetected, // accelerometer tap detected, used for diagnostics
 	isRoused, // triggered by external interrupt, and re-triggered by any activity while awake
 	reRoused, // re-triggered while awake, used to reset timeout
-	timeToLogData, // flag that it is time to log data to SD card
 	writeJSONMsg, // there is a JSON message to log
 	writeDataHeaders, // flag to write column headers to SD card
 	//  done on init, reset, time change, and midnight rollover
-	keepBT_on // keep power on the the Bluetooth module, even after rouse timeout
+	keepBT_on, // keep power on the the Bluetooth module, even after rouse timeout
+	sfBit6, // unused
+	sfBit7 // unused
  };
 
-enum stateFlags2Bits 
+enum timeFlagsBits
 {
-	isLeveling, // diagnostics show accelerometer output rather than light sensors, used for leveling the system
 	nextAlarmSet, // next alarm has been correctly set
-	accelerometerIsThere, // set if system finds ADXL345 on I2C bus
-	sFbit3, // not used yet
-	sFbit4, // not used yet
-	sFbit5, // not used yet
-	sFbit6, // not used yet
-	sFbit7 // not used yet
+	timeToLogData, // flag that it is time to log data to SD card
+	tfBit2, // unused
+	tfBit3, // unused
+	tfBit4, // unused
+	tfBit5, // unused
+	tfBit6, // unused
+	tfBit7 // unused
 };
 
+enum irradFlagsBits 
+{
+	testDark, // temporary flag
+	isDarkBBDn, // broadband down-looking tests as dark
+	isDarkIRDn, // infrared down-looking tests as dark
+	isDarkBBUp, // broadband up-looking tests as dark
+	isDarkIRUp, // infrared up-looking tests as dark
+	isDark, // combined tests show light level(s) below threshold, use long sampling intervals
+	ifBit6, // unused
+	ifBit7 // unused
+};
+
+
+enum motionFlagsBits 
+{
+	// 
+	tapDetected, // accelerometer tap detected, used for diagnostics
+	isLeveling, // we are getting accelerometer axis readings, used for leveling the system
+	accelerometerIsThere, // set if system finds ADXL345 on I2C bus
+	mfBit3, // unused
+	mfBit4, // unused
+	mfBit5, // unused
+	mfBit6, // unused
+	mfBit7 // unused
+};
 
 void outputStringToUART0 (char* St);
 void outputStringToUART1 (char* St);

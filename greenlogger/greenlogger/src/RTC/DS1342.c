@@ -14,7 +14,7 @@
 extern volatile dateTime dt_RTC;
 extern volatile uint8_t timeZoneOffset;
 
-extern volatile uint8_t stateFlags1;
+extern volatile uint8_t stateFlags1, irradFlags;
 extern int len;
 extern char str[128];
 
@@ -656,16 +656,10 @@ void datetime_advanceIntervalLong(dateTime *t) {
 void datetime_advanceInterval(dateTime *t) {
 	uint8_t startingDay;
 	startingDay = t->day;
-//	outputStringToUART0("\n\r entered datetime_advanceInterval fn \n\r\n\r");
-
-	// (write part to test flags here:)
-//	outputStringToUART0("\n\r about to call datetime_advanceIntervalShort fn \n\r\n\r");
-//	while (1)
-//	{
-//		;
-//	}
-	datetime_advanceIntervalShort(t);
-	
+	if (irradFlags & (1<<isDark))
+		datetime_advanceIntervalLong(t);
+	else
+		datetime_advanceIntervalShort(t);
 	if (t->day !=startingDay) // day has rolled over
 		stateFlags1 |= (1<<writeDataHeaders); // flag to log column headers on next SD card write
 

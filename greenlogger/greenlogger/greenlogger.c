@@ -81,13 +81,14 @@ char datetime_string[25];
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
-volatile uint8_t stateFlags1 = 0, stateFlags2 = 0;
+volatile uint8_t stateFlags1 = 0, stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
 volatile uint8_t timeZoneOffset = 0; // globally available
 volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
+unsigned long lngTmp1, lngTmp2;
 
 /**
  * \brief The main application
@@ -170,20 +171,24 @@ int main(void)
 	}
 	stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
 	
-	stateFlags2 &= ~(1<<nextAlarmSet); // alarm not set yet
+	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
 //	enableRTCInterrupt();
 //	machineState = Idle;
  
 	while (1) { // main program loop
-		if (stateFlags1 & (1<<tapDetected)) {
+		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");
-			stateFlags1 &= ~(1<<tapDetected);
+			motionFlags &= ~(1<<tapDetected);
+		}
+		if (stateFlags1 & (1<<isRoused)) { // if roused
+			irradFlags &= ~(1<<isDark); // clear the Dark flag
+			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
 		}
 		
-		if (!(stateFlags2 & (1<<nextAlarmSet))) {
+		if (!(timeFlags & (1<<nextAlarmSet))) {
 //			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
 			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-			stateFlags2 |= (1<<nextAlarmSet);
+			timeFlags |= (1<<nextAlarmSet);
 		}		
 		
 
@@ -223,7 +228,7 @@ int main(void)
 		} // end of (machState == Idle)
 		// when (machState != Idle) execution passes on from this point
 		// when RTCC occurs, changes machineState to GettingTimestamp
-		stateFlags2 &= ~(1<<nextAlarmSet);
+		timeFlags &= ~(1<<nextAlarmSet);
 //		stayRoused(3);
 
 		while (1) { // various tests may break early
@@ -303,26 +308,51 @@ int main(void)
 //            timeToTurnOffBT = secsSince1Jan2000 + SECS_BT_HOLDS_POWER_AFTER_SLEEP;
 //        }
 //			if (dt_CurAlarm.second == 0) {
-			if (!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) {
+			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags & (1<<isDark))) {
             // if an even number of minutes, and zero seconds
             // or the once-per-hour wakeup while dark
-				stateFlags1 |= (1<<timeToLogData);
+				timeFlags |= (1<<timeToLogData);
 			//	outputStringToUART0("\n\r Time to log data \n\r");
 			} else {
-				stateFlags1 &= ~(1<<timeToLogData);
+				timeFlags &= ~(1<<timeToLogData);
 			//	outputStringToUART0("\n\r Not time to log data \n\r");
 			}			
 
-			if (stateFlags1 & (1<<timeToLogData)) {
+			if (timeFlags & (1<<timeToLogData)) {
 //				outputStringToUART0("\n\r Entered log data routine \n\r");
 				// log irradiance
 				strcpy(strLog, "\n\r");
 				strcat(strLog, datetime_string);
+				irradFlags &= ~((1<<isDarkBBDn) | (1<<isDarkIRDn) | (1<<isDarkBBUp) | (1<<isDarkIRUp)); // default clear
 				for (ct = 0; ct < 4; ct++) { // write irradiance readings
 					if (!(irrReadings[ct].validation)) {
-						len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
+						lngTmp1 = (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier);
+//						len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
+						len = sprintf(str, "\t%lu", lngTmp1);
+						if ((ct == 0) || (ct == 3)) { // broadband
+							lngTmp2 = (unsigned long)IRRADIANCE_THRESHOLD_DARK_BB;
+						} else { // infrared
+							lngTmp2 = (unsigned long)IRRADIANCE_THRESHOLD_DARK_IR;
+						}
+						if (lngTmp1 < lngTmp2) {
+							switch (ct) {
+								case 0:
+									irradFlags |= (1<<isDarkBBDn);
+									break;
+								case 1:
+									irradFlags |= (1<<isDarkIRDn);
+									break;
+								case 2:
+									irradFlags |= (1<<isDarkBBUp);
+									break;
+								case 3:
+									irradFlags |= (1<<isDarkIRUp);
+									break;
+							}
+						}
 					} else { // no valid data for this reading
 						len = sprintf(str, "\t");
+						// does not contribute to setting flags
 					}
 					strcat(strLog, str);
 				}
@@ -338,12 +368,23 @@ int main(void)
 				
 				len = strlen(strLog);
 				errSD = writeCharsToSDCard(strLog, len);
-					if (errSD) {
-						tellFileWriteError (errSD);
+				if (errSD) {
+					tellFileWriteError (errSD);
 //                stateFlags_2.isDataWriteTime = 0; // prevent trying to write anything later
-					} else {
-						outputStringToUART0(" Data written to SD card \n\r\n\r");
-					}
+				} else {
+					outputStringToUART0(" Data written to SD card \n\r\n\r");
+				}
+				
+				// if all contributing sensors are less than thresholds
+				if ((irradFlags & (1<<isDarkBBDn)) && 
+				     (irradFlags & (1<<isDarkIRDn)) && 
+					 (irradFlags & (1<<isDarkBBUp)) && 
+					 (irradFlags & (1<<isDarkIRUp))) {
+					// flag that it is dark
+					irradFlags |= (1<<isDark);
+				} else { // or not
+					irradFlags &= ~(1<<isDark);
+				}				
 			}
 			// let main loop restore Idle state, after assuring timer interrupts are re-established
 			break; // if did everything, break here

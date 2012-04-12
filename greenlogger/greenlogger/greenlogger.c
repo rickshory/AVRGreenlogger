@@ -237,14 +237,7 @@ int main(void)
 			// monitor cell voltage, to decide whether there is enough power to proceed
 
 			intTmp1 = readCellVoltage(&cellVoltageReading);
-			
-			if (stateFlags1 & (1<<isRoused)) {
-//				outputStringToUART0("\r\n  roused\r\n");
-				// timer diagnostics
-				len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
-				outputStringToUART0(str);
-			}
-			
+						
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToUART0(datetime_string);
 
@@ -352,7 +345,21 @@ int main(void)
 						}
 					} else { // no valid data for this reading
 						len = sprintf(str, "\t");
-						// does not contribute to setting flags
+						// treat invalid readings as if dark
+						switch (ct) {
+							case 0:
+								irradFlags |= (1<<isDarkBBDn);
+								break;
+							case 1:
+								irradFlags |= (1<<isDarkIRDn);
+								break;
+							case 2:
+								irradFlags |= (1<<isDarkBBUp);
+								break;
+							case 3:
+								irradFlags |= (1<<isDarkIRUp);
+								break;
+						}
 					}
 					strcat(strLog, str);
 				}
@@ -374,8 +381,7 @@ int main(void)
 				} else {
 					outputStringToUART0(" Data written to SD card \n\r\n\r");
 				}
-				
-				// if all contributing sensors are less than thresholds
+				// if all sensors are less than thresholds, or missing
 				if ((irradFlags & (1<<isDarkBBDn)) && 
 				     (irradFlags & (1<<isDarkIRDn)) && 
 					 (irradFlags & (1<<isDarkBBUp)) && 
@@ -390,51 +396,14 @@ int main(void)
 			break; // if did everything, break here
 		} // end of getting data readings
 		
-/*
 		if (stateFlags1 & (1<<isRoused)) {
-			outputStringToUART0("\r\n  roused\r\n");
-		} else { // allow to be roused again
-			enableAccelInterrupt();
-			enableRTCInterrupt();
-		}			
-*/		
+//				outputStringToUART0("\r\n  roused\r\n");
+			// timer diagnostics
+			len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
+			outputStringToUART0(str);
+		}
+			
 /*
-        while (machState == Idle) { // RTCC interrupt will break out of this
-            setSDCardPowerControl();
-            if (stateFlags.reRoused) {
-                stateFlags.reRoused = 0; // clear this flag
-                stateFlags.isRoused = 1;
-                startTimer1ToRunThisManySeconds(30);
-            }
-            if (stateFlags.isRoused) { // timer1 timeout will turn off
-                // clean up after any external interrupt
-                clearAnyADXL345TapInterrupt(); // otherwise will keep repeating interrupt
-                _INT1IF = 0; // clear INT1 interrupt flag 
-                _INT1IE = 1; // Enable INT1 external interrupt; was disabled within ISR, to keep from repeating
-                flags1.isDark = 0; // wake up, if asleep due to darkness
-            }
-
-
-            }
-
-
-        checkForCommands();
-
-        if (1) { // currently, don't look at any previous state
-            if ((flags1.isDark) && (!BT_PWR_CTL)) 
-            // if it has changed to Dark, set long intervals
-            // except don't do this until Bluetooth is off, or could hang with BT on
-            //   wasting power for hours; BT booster control is shutdown low
-                setupAlarm(0b1101011111111111);
-            else // Dark has ended, change to short intervals
-                setupAlarm(0b1100101111111111);
-    
-   // update flag
-            if (flags1.isDark)
-                flags1.wasDark = 1;
-            else 
-                flags1.wasDark = 0;
-        } // end if (isDark != wasDark)
 
 //    if (flags1.sleepBetweenReadings) { // go to sleep
 
@@ -459,88 +428,12 @@ int main(void)
     while (1) { // various tests may break early, 
         setSDCardPowerControl();
         // monitor cell voltage, to decide whether there is enough power to proceed
-        cellVoltage = getCellVoltage();
-        if (stateFlags.isRoused) { 
-//            outputStringToUSART("\r\n system roused\r\n");
-            // timer diagnostics
-
-            len = sprintf(str, "\r\n timer 1: %u seconds\r\n", (int)(TMR1/128));
-            outputStringToUSART(str);
-        }
-        createTimestamp();
-        outputStringToUSART(timeStampBuffer);
-        if (cellVoltage < CELL_VOLTAGE_THRESHOLD_READ_DATA) { 
-            len = sprintf(str, " power too low\n\r");
-            outputStringToUSART(str);
-            machState = Idle;
-            break;
         }
         if (stateFlags.isRoused) { 
             // if roused, and Bluetooth is on, flag to keep BT on awhile after normal rouse timeout
             // createTimestamp sets secsSince1Jan2000
             timeToTurnOffBT = secsSince1Jan2000 + SECS_BT_HOLDS_POWER_AFTER_SLEEP;
         }
-//        len = sprintf(str, " char 17=%u, 17&0x01=%u, char 19=%u \n\r", timeStampBuffer[17], ((char)timeStampBuffer[17] & 0x01), timeStampBuffer[19]);
-//        outputStringToUSART(str);
-        if (((!((char)timeStampBuffer[17] & 0x01)) && ((char)timeStampBuffer[19] == '0')) || (flags1.isDark)) {
-            // if an even number of minutes, and zero seconds
-            // or the once-per-hour wakeup while dark
-            stateFlags_2.isDataWriteTime = 1;
-        } else {
-            stateFlags_2.isDataWriteTime = 0;
-        }
-        if (stateFlags_2.isDataWriteTime) {
-            logAnyJSON();
-            assureDataHeadersLogged(); // writes headers on reset, time change, or midnight rollover
-            err = writeCharsToFile (timeStampBuffer, 21);
-            if (err) {
-                tellFileWriteError (err);
-                stateFlags_2.isDataWriteTime = 0; // prevent trying to write anything later
-            }
-        }
-        machState = ReadingSensors;
-//        getDataReadings(); // may make part or all of this a separate function later, but for now do straight-through
-        // read broadband and infrared from down- and up-pointing sensors via I2C
-
-//    I2C2CONbits.I2CEN = 0; // disable I2C module
-// diagnostic for testing
-//len = sprintf(str, "\r\n %u,%u\r\n ", irrReadings[0].irrWholeWord, irrReadings[0].irrMultiplier);
-//outputStringToUSART(str);
-
-    // prepare data string
-    len = sprintf(str, ",%lu,%lu,%lu,%lu,%u",
-          (unsigned long)((unsigned long)irrReadings[0].irrWholeWord * (unsigned long)irrReadings[0].irrMultiplier),
-          (unsigned long)((unsigned long)irrReadings[1].irrWholeWord * (unsigned long)irrReadings[1].irrMultiplier),
-          (unsigned long)((unsigned long)irrReadings[2].irrWholeWord * (unsigned long)irrReadings[2].irrMultiplier),
-          (unsigned long)((unsigned long)irrReadings[3].irrWholeWord * (unsigned long)irrReadings[3].irrMultiplier),
-           cellVoltage);
-    outputStringToUSART(str);
-    // if broadband reflected is less than threshold, flag that it is dark enough
-    //   to go to sleep, to save power overnight
-    if ((unsigned long)((unsigned long)irrReadings[0].irrWholeWord * (unsigned long)irrReadings[0].irrMultiplier) < 
-             bbIrradThresholdDark)
-        flags1.isDark = 1;
-    else
-        flags1.isDark = 0;
-    if (stateFlags_2.isDataWriteTime) {
-        // log data to SD card
-        err = writeCharsToFile (str, len);
-        if (err)
-            tellFileWriteError (err);
-        outputStringToUSART("\r\n SD card procedure done\r\n");
-    }
-//    if (stateFlags.isLeveling) { // show Leveling diagnostics
-//        readAccelerometer();
-//        outputStringToUSART("\r\n");
-//        outputStringToUSART(str);
-//    } 
-    machState = Idle; // done with everything, return to Idle state
-        break; // if did everything, break here
-    } // end of getting data readings
-    ;
- } // main program loop
-} // end of Main
-
 
 */
 

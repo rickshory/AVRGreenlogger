@@ -21,8 +21,13 @@
 #define CELL_VOLTAGE_THRESHOLD_READ_DATA 427 // corresponds to 1067mV where cell voltage is just about to plummet
 #define CELL_VOLTAGE_THRESHOLD_UART 404 // corresponds to 1010mV where cell voltage is just above cutoff
 
-#define IRRADIANCE_THRESHOLD_DARK_IR 50 // infrared readings below this are considered "darkness"
-#define IRRADIANCE_THRESHOLD_DARK_BB 100 // broadband readings below this are considered "darkness"
+// temporarily set artificially high, for testing
+#define IRRADIANCE_THRESHOLD_DARK_IR 500 // infrared readings below this are considered "darkness"
+#define IRRADIANCE_THRESHOLD_DARK_BB 1000 // broadband readings below this are considered "darkness"
+
+//#define IRRADIANCE_THRESHOLD_DARK_IR 50 // infrared readings below this are considered "darkness"
+//#define IRRADIANCE_THRESHOLD_DARK_BB 100 // broadband readings below this are considered "darkness"
+
 
 enum machStates
 {

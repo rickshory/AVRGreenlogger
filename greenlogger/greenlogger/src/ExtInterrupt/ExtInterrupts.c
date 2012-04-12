@@ -63,7 +63,7 @@ ISR(PCINT1_vect)
 {
 	motionFlags |= (1<<tapDetected); // flag it
 	disableAccelInterrupt();
-	stayRoused(120); // two minutes
+	stayRoused(30); // 30 seconds
 }
 
 /**

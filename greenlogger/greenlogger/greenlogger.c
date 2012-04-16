@@ -396,6 +396,8 @@ int main(void)
 			break; // if did everything, break here
 		} // end of getting data readings
 		
+		turnSDCardPowerOff();
+		
 		if (stateFlags1 & (1<<isRoused)) {
 //				outputStringToUART0("\r\n  roused\r\n");
 			// timer diagnostics
@@ -728,69 +730,6 @@ void checkForCommands (void) {
                     break;
                 }
  */
-/*
-                case 'P': { // SD card power control
-                    if (stateFlags_2.turnSDCardOffBetweenDataWrites) {
-                        stateFlags_2.turnSDCardOffBetweenDataWrites = 0;
-                        outputStringToUART0("\r\n No SD card power control \r\n");
-                    } else { 
-                        stateFlags_2.turnSDCardOffBetweenDataWrites = 1;
-                        SD_POWER_TRIS = 0; // assure the pin is an output, source of the SD card power under software control
-                    }
-                    setSDCardPowerControl(); // based on flag
-                    break;
-                } 
-*/
-/*
-                case 'L': { // toggle Leveling diagnostics
-                    if (stateFlags.isLeveling) {
-                        stateFlags.isLeveling = 0;;
-                        outputStringToUART0("\r\n Ignore accelerometer output\r\n");
-                    } else {
-                        stateFlags.isLeveling = 1;
-                        outputStringToUART0("\r\n Accelerometer output enabled\r\n");
-                    }
-                    break;
-                } 
-*/
-/*
-                case 'S': { // toggle to sleep between readings, or not
-                    if (flags1.sleepBetweenReadings) {
-                        flags1.sleepBetweenReadings = 0;
-                        outputStringToUART0("\r\n Will stay awake continually\r\n");
-                    } else {
-                        flags1.sleepBetweenReadings = 1;
-                        outputStringToUART0("\r\n Will now sleep between readings\r\n");
-                    }
-                    break;
-                } 
-*/
-/*
-
-                case 'R': { // test the 'Rouse' bit
-                    if (stateFlags.isRoused) {
-                        stateFlags.isRoused = 0;
-                        outputStringToUART0("\r\n Rouse bit cleared\r\n");
-                    } else {
-                        stateFlags.isRoused = 1;
-                        outputStringToUART0("\r\n Rouse bit set\r\n");
-                    }
-                    break;
-                } 
-*/
-
-/*
-                case 'G': { // toggle irradiance gain
-                    if (stateFlags_2.irrSensorGain) {
-                        stateFlags_2.irrSensorGain = 0;
-                        outputStringToUART0("\r\n Low gain\r\n");
-                    } else {
-                        stateFlags_2.irrSensorGain = 1;
-                        outputStringToUART0("\r\n High gain\r\n");
-                    }
-                    break;
-                } 
-*/
                 // put other commands here
                 default: 
 				{ // if no valid command, echo back the input

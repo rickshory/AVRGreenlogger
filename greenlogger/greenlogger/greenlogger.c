@@ -107,17 +107,8 @@ int main(void)
 	stayRoused(20); // initial, keep system roused for 20 seconds for diagnostic output
 	strJSON[0] = '\0'; // "erase" the string
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
-	// PortD, bit 4 controls power to the Bluetooth module
-	// high = enabled
-	DDRD |= (1<<4); // make output
-//	PORTD |= (1<<4); // set high; for testing make always-on
-	PORTD &= ~(1<<4); // set low; for testing make always-off
-	// PortD, bit controls the BAUD rate of the Bluetooth module
-	// high = 9600
-	// low = 115k or firmware setting
-	// for testing, hold at 9600
-	DDRD |= (1<<7); // make output
-	PORTD |= (1<<7); // set high
+	BT_power_off();
+	BT_baud_9600();
 	
 	cli();
 	setupDiagnostics();

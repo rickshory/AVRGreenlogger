@@ -118,18 +118,38 @@ uint8_t initializeADXL345 (void) {
 				//    d = 0x01; // most sensitive, 62.5 mg/LSB (0xFF = +16 g)
 				r = I2C_Write(0x30); // try ~3 g
 				I2C_Stop();
+				
 				// set tap duration
 				I2C_Start();
 				r = I2C_Write(ADXL345_ADDR_WRITE);
 				r = I2C_Write(ADXL345_REG_DUR);
-				//    d = 0x01; // most brief, 625 &#956;s/LSB.
+				// 625 us/LSB
 				r = I2C_Write(0xa0); // try 0.1s
 				I2C_Stop();
-				// enable the Single Tap interrupt (later will change to Double Tap)
+
+				// set tap latency (minimum time before 2nd tap)
+				I2C_Start();
+				r = I2C_Write(ADXL345_ADDR_WRITE);
+				r = I2C_Write(ADXL345_REG_Latent);
+				// 1.25 ms/LSB
+				r = I2C_Write(0xff); // try max, 318.75ms
+				I2C_Stop();
+
+				// set tap window (maximum time after 2nd tap)
+				I2C_Start();
+				r = I2C_Write(ADXL345_ADDR_WRITE);
+				r = I2C_Write(ADXL345_REG_Window);
+				// 1.25 ms/LSB
+				r = I2C_Write(0xff); // try max, 318.75ms
+				I2C_Stop();
+
+
+
+				// enable the Double Tap interrupt
 				I2C_Start();
 				r = I2C_Write(ADXL345_ADDR_WRITE);
 				r = I2C_Write(ADXL345_REG_INT_ENABLE);
-				r = I2C_Write(0x40); //  0x40 = single tap,  0x20 = double tap,  0x60 = both
+				r = I2C_Write(0x20); //  0x40 = single tap,  0x20 = double tap,  0x60 = both
 				I2C_Stop();
 				// initialize by clearing any interrupts
 				r = clearAnyADXL345TapInterrupt();

@@ -250,14 +250,11 @@ int main(void)
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 						
 			datetime_getstring(datetime_string, &dt_CurAlarm);
-			outputStringToUART0(datetime_string);
-
-			outputStringToUART1(datetime_string);
-			outputStringToUART1("\r\n");
+			outputStringToBothUARTs(datetime_string);
 			
 			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
 				len = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
-				outputStringToUART0(str);
+				outputStringToBothUARTs(str);
 				break;
 			}
 			for (ct = 0; ct < 4; ct++) {
@@ -288,30 +285,22 @@ int main(void)
 				} else {
 					len = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", intTmp1);
 				}						
-				outputStringToUART0(str);
+				outputStringToBothUARTs(str);
 			}
 			if (!temperature_GetReading(&temperatureReading)) {
 					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
-					outputStringToUART0(str);
+					outputStringToBothUARTs(str);
 			} else
-				outputStringToUART0("\t-");
+				outputStringToBothUARTs("\t-");
 			
 			// calc cell voltage from ADC reading earlier
 			// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
 			// using internal reference, Vref = 2.56V = 2560mV
 			// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
 			len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
-			outputStringToUART0(str);
-			outputStringToUART0("\r\n");
-			
-//			outputStringToUART0("\n\r data output completed \n\r\n\r");
-			
-//        if (stateFlags.isRoused) { 
-//            // if roused, and Bluetooth is on, flag to keep BT on awhile after normal rouse timeout
-//            // createTimestamp sets secsSince1Jan2000
-//            timeToTurnOffBT = secsSince1Jan2000 + SECS_BT_HOLDS_POWER_AFTER_SLEEP;
-//        }
-//			if (dt_CurAlarm.second == 0) {
+			outputStringToBothUARTs(str);
+			outputStringToBothUARTs("\r\n");
+
 			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags & (1<<isDark))) {
             // if an even number of minutes, and zero seconds
             // or the once-per-hour wakeup while dark
@@ -390,7 +379,7 @@ int main(void)
 					tellFileWriteError (errSD);
 //                stateFlags_2.isDataWriteTime = 0; // prevent trying to write anything later
 				} else {
-					outputStringToUART0(" Data written to SD card \n\r\n\r");
+					outputStringToBothUARTs(" Data written to SD card \n\r\n\r");
 				}
 				// if all sensors are less than thresholds, or missing
 				if ((irradFlags & (1<<isDarkBBDn)) && 
@@ -506,6 +495,19 @@ void outputStringToUART1 (char* St) {
 	while (uart1_char_queued_out())
 		;
 } // end of outputStringToUART1
+
+/**
+ * \brief Send the same string out both UART0 and UART1
+ *
+ * Call the fn to send a string out each UART
+ *
+ * \
+ *  
+ */
+void outputStringToBothUARTs (char* St) {
+	outputStringToUART0 (St);
+	outputStringToUART1 (St);
+}	
 
 /**
  * \brief Check the UART0 for commands

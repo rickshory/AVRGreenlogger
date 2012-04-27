@@ -191,55 +191,55 @@ void tellFileWriteError (BYTE err)
    //break;
   //}
   case sdPowerTooLowForSDCard: {
-   outputStringToUART0("\r\n power too low, SD write skipped\r\n");
+   outputStringToBothUARTs("\r\n power too low, SD write skipped\r\n");
    break;
   }
   //case NoCard: {
-   //outputStringToUART0("\r\n SD card not present or not detected\r\n");
+   //outputStringToBothUARTs("\r\n SD card not present or not detected\r\n");
    //break;
   //}
   case sdMountFail: {
-   outputStringToUART0("\r\n could not mount SD card\r\n");
+   outputStringToBothUARTs("\r\n could not mount SD card\r\n");
    break;
   }
   //case NoInit: {
-   //outputStringToUART0("\r\n could not initialize file system\r\n");
+   //outputStringToBothUARTs("\r\n could not initialize file system\r\n");
    //break;
   //}
   case sdInitFail: {
-   outputStringToUART0("\r\n could not initialize SD card\r\n");
+   outputStringToBothUARTs("\r\n could not initialize SD card\r\n");
    break;
   }
   case sdMkDirFail: {
-   outputStringToUART0("\r\n could not create the requested directory\r\n");
+   outputStringToBothUARTs("\r\n could not create the requested directory\r\n");
    break;
   }
   //case NoChDir: {
-   //outputStringToUART0("\r\n could not change to the requested directory\r\n");
+   //outputStringToBothUARTs("\r\n could not change to the requested directory\r\n");
    //break;
   //}
   case sdFileOpenFail: {
-   outputStringToUART0("\r\n could not open the requested file\r\n");
+   outputStringToBothUARTs("\r\n could not open the requested file\r\n");
    break;
   }
   case sdFileSeekFail: {
-   outputStringToUART0("\r\n could not seek as requested\r\n");
+   outputStringToBothUARTs("\r\n could not seek as requested\r\n");
    break;
   }
   case sdFileWriteFail: {
-   outputStringToUART0("\r\n could not write to the file\r\n");
+   outputStringToBothUARTs("\r\n could not write to the file\r\n");
    break;
   }
   case sdFileWritePartial: {
-   outputStringToUART0("\r\n partial write to the file\r\n");
+   outputStringToBothUARTs("\r\n partial write to the file\r\n");
    break;
   }
   //case NoClose: {
-   //outputStringToUART0("\r\n could not close file\r\n");
+   //outputStringToBothUARTs("\r\n could not close file\r\n");
    //break;
   //}
   default: {
-   outputStringToUART0("\r\n unknown error\r\n");
+   outputStringToBothUARTs("\r\n unknown error\r\n");
    break;
   } 
  } // switch err

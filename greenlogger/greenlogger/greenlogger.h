@@ -9,8 +9,8 @@
 #ifndef GREENLOGGER_H_
 #define GREENLOGGER_H_
 
-#define RTC_CHIP_IS_DS1337
-//#define RTC_CHIP_IS_DS1342
+//#define RTC_CHIP_IS_DS1337
+#define RTC_CHIP_IS_DS1342
 
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"
@@ -118,6 +118,7 @@ enum motionFlagsBits
 
 void outputStringToUART0 (char* St);
 void outputStringToUART1 (char* St);
+void outputStringToBothUARTs (char* St);
 void checkForCommands (void);
 void enableAccelInterrupt (void);
 void disableAccelInterrupt(void);

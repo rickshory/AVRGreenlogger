@@ -537,7 +537,7 @@ void checkForCommands (void) {
 					// because in some configurations any Tx feeds back to Rx
 					char tmpStr[commandBufferLen];
 					strcpy(tmpStr, commandBuffer + 1);
-					if (!isValidTimestamp(tmpStr)) {
+					if (!isValidDateTime(tmpStr)) {
 						outputStringToUART0("\r\n Invalid timestamp\r\n");
 						break;
 					}

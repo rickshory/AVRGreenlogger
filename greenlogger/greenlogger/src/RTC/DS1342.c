@@ -746,7 +746,7 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
  *  a string. String must be in strict format
  *  YY-MM-DD HH:MM:SS (century = 2000)
  *  example: "2010-12-21 10:47:13"
- *  Should previously test using fn 'isValidTimestamp'
+ *  Should previously test using fn 'isValidDateTime'
  *  If useGlobalTimeZone = true,
  *  gets timezone offset from the global 'timeZoneOffset'
  *  otherwise expects it in the 4 chars following date/time
@@ -827,7 +827,6 @@ void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZo
 	//dtstr[22] = '0'+ (iTmp % 10);
 }
 
-
 /**
  * \brief  Is the string a valid date/time?
  *
@@ -840,10 +839,28 @@ void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZo
  *  use this fn before trying to set the time
  */
 
-uint8_t isValidTimestamp(char* p)
+uint8_t isValidDateTime(char* p)
 {
-	uint8_t i, m, d, v;
     // example: "2010-12-21 10:47:13"
+	if (isValidDate(p) && (*(p+10) == ' ') && isValidTime(p+11)) return 1;
+	return 0;
+} // end of isValidDateTime
+
+/**
+ * \brief  Is the string a valid date?
+ *
+ *  This function verifies that the string in the passed
+ * text buffer is a valid date.
+ *  Input: char pointer
+ *  Output: uint8_t, used as boolean; 1 = true, 0 = false
+ *  Precondition: date starting at pointer, in strict format:
+ *  20YY-MM-DD (century must be 2000)
+ */
+
+uint8_t isValidDate(char* p)
+{
+	uint8_t i, y, m, d;
+    // example: "2010-12-21"
     // year
     if (*p++ != '2') // must always start with '20'
         return 0;
@@ -852,9 +869,11 @@ uint8_t isValidTimestamp(char* p)
     i = *p++;
     if ((i < '0') || (i > '9')) // tens of year
         return 0;
+	y = 10 * (i & 0xf);
     i = *p++;
     if ((i < '0') || (i > '9')) // ones of year
         return 0;
+	y += (i & 0xf);
     if (*p++ != '-') // correct delimiter
         return 0;
     // month
@@ -882,8 +901,13 @@ uint8_t isValidTimestamp(char* p)
     d += (i & 0xf); // strip all but low nybble to convert to BCD
     if (d > 31) // takes care of January, March, May, July, August, October, and December
         return 0;
-    if ((m == 2) && (d > 29)) // February
-        return 0;
+    if ((m == 2)) { // February
+		if (d > 29) return 0;
+		if (d > 28) { // leap year?
+			if (y % 4) return 0; 
+			// ignore century test, device will be obsolete by year 2100
+		}
+	}		
     if ((m == 4) && (d > 30)) // April
         return 0;
     if ((m == 6) && (d > 30)) // June
@@ -894,6 +918,25 @@ uint8_t isValidTimestamp(char* p)
         return 0;
     if (*p++ != ' ') // correct delimiter
         return 0;
+    // passed all tests
+    return 1;
+} // end of isValidDate
+
+/**
+ * \brief  Is the string a valid time?
+ *
+ *  This function verifies that the string in the passed
+ * text buffer is a valid time.
+ *  Input: char pointer
+ *  Output: uint8_t, used as boolean; 1 = true, 0 = false
+ *  Precondition: time starting at pointer, in strict format:
+ *  HH:MM:SS
+ */
+
+uint8_t isValidTime(char* p)
+{
+	uint8_t i, v;
+    // example: "21:47:13"
     // hour
     i = *p++;
     if ((i < '0') || (i > '2')) // tens of hour
@@ -933,7 +976,8 @@ uint8_t isValidTimestamp(char* p)
         return 0;
     // passed all tests
     return 1;
-} // end of isValidTimestamp
+} // end of isValidTime
+
 
 /**
  * \brief  Is the string a valid timezone offset?

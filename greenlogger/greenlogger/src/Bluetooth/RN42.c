@@ -19,12 +19,7 @@
  */
 inline void BT_power_on(void)
 {
-	// Disable interrupts
-//	cli();
-	DDRD |= (1<<4); // make output
 	PORTD |= (1<<4); // set high; power on
-	// Re-enable interrupts
-//	sei();
 }
 
 /**
@@ -35,12 +30,7 @@ inline void BT_power_on(void)
  */
 inline void BT_power_off(void)
 {
-	// Disable interrupts
-//	cli();
-	DDRD |= (1<<4); // make output
 	PORTD &= ~(1<<4); // set low; turn off
-	// Re-enable interrupts
-//	sei();
 }
 
 /**
@@ -51,12 +41,7 @@ inline void BT_power_off(void)
  */
 inline void BT_baud_9600(void)
 {
-	// Disable interrupts
-//	cli();
-	DDRD |= (1<<7); // make output
 	PORTD |= (1<<7); // set high, baud 9600
-	// Re-enable interrupts
-//	sei();
 }
 
 /**
@@ -67,10 +52,31 @@ inline void BT_baud_9600(void)
  */
 inline void BT_baud_115k(void)
 {
-	// Disable interrupts
-//	cli();
-	DDRD |= (1<<7); // make output
 	PORTD &= ~(1<<7); // set low, baud 115k
-	// Re-enable interrupts
-//	sei();
+}
+
+/**
+ * \brief Sets pin that monitors RN-42 Bluetooth module to be an input
+ *
+ * PortD, bit 5 reads the "CONNECTED" output of the RN-42 Bluetooth module: 
+ * HIGH when connected, LOW otherwise
+ *
+ */
+inline void BT_connection_setInput(void)
+{
+	DDRD &= ~(1<<5); // make input
+}
+
+/**
+ * \brief check if the RN-42 Bluetooth module has a live connection
+ *
+ * PortD, bit 5 reads the "CONNECTED" output of the RN-42 Bluetooth module: 
+ * HIGH when connected, LOW otherwise
+ *
+ * \retval true  if connection is active
+ * \retval false if no connection
+ */
+inline bool BT_connected(void)
+{
+	return (PIND & (1<<5)); // read pin
 }

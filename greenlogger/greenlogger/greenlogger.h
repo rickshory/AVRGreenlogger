@@ -9,8 +9,8 @@
 #ifndef GREENLOGGER_H_
 #define GREENLOGGER_H_
 
-//#define RTC_CHIP_IS_DS1337
-#define RTC_CHIP_IS_DS1342
+#define RTC_CHIP_IS_DS1337
+//#define RTC_CHIP_IS_DS1342
 
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"
@@ -73,8 +73,8 @@ enum stateFlags1Bits
 	writeJSONMsg, // there is a JSON message to log
 	writeDataHeaders, // flag to write column headers to SD card
 	//  done on init, reset, time change, and midnight rollover
-	keepBT_on, // keep power on the the Bluetooth module, even after rouse timeout
-	sfBit6, // unused
+	tryBluetooth, // turn on the Bluetooth module and try to get a connection
+	BT_was_connected, // track transitions between connected to not connected
 	sfBit7 // unused
  };
 

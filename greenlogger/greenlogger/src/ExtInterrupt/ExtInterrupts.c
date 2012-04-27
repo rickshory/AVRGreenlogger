@@ -9,9 +9,11 @@
 #include "compiler.h"
 #include "../greenlogger.h"
 #include "../RTC/DS1342.h"
+#include "../Bluetooth/RN42.h"
 
 extern volatile uint8_t machineState;
 extern volatile uint16_t rouseCountdown;
+extern volatile uint16_t tryBluetoothCountdown;
 extern volatile char stateFlags1, motionFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
@@ -27,6 +29,18 @@ void stayRoused(int8_t sec)
 	sei();
 }
 
+void keepTryingBluetooth(int8_t sec)
+{
+	cli(); // temporarily disable interrupts to prevent Timer3 from
+		// changing the count partway through
+	if ((100 * sec) > tryBluetoothCountdown) { // never trim the interval, only extend it
+		tryBluetoothCountdown = 100 * sec;
+	}
+//	BT_power_on();
+	PORTD |= (1<<4); // Bluetooth power on
+	stateFlags1 |= (1<<tryBluetooth);
+	sei();
+}
 
 /**
  * \brief Enables wake up by accelerometer

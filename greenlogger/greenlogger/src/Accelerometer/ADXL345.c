@@ -143,8 +143,6 @@ uint8_t initializeADXL345 (void) {
 				r = I2C_Write(0xff); // try max, 318.75ms
 				I2C_Stop();
 
-
-
 				// enable the Double Tap interrupt
 				I2C_Start();
 				r = I2C_Write(ADXL345_ADDR_WRITE);

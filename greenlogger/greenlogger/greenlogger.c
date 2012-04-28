@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief code for NDVI (greeness) logger, base on AVR ATmega1284P
+ * \brief code for NDVI (greenness) logger, base on AVR ATmega1284P
  *
  * Copyright (C) 2011 Rick Shory, based in part on source code that is:
  * Copyright (C) 2011 Atmel Corporation. All rights reserved.
@@ -64,7 +64,7 @@ volatile uint8_t machineState;
 volatile uint8_t iTmp;
 volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sleep
-volatile uint16_t tryBluetoothCountdown = 0; // timer for trying Bluetooth connection
+volatile uint16_t btCountdown = 0; // timer for trying Bluetooth connection
 
 volatile
 uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
@@ -176,8 +176,9 @@ int main(void)
 		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");
 			if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
-				keepTryingBluetooth(120); // try for two minutes to get a Bluetooth connection
-//				stateFlags1 |= (1<<tryBluetooth); // turn on Bluetooth module and try to get a connection
+				stayRoused(120);
+				keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
+//				stateFlags1 |= (1<<btPowered); // turn on Bluetooth module and try to get a connection
 			}
 			motionFlags &= ~(1<<tapDetected);
 		}
@@ -193,15 +194,15 @@ int main(void)
 			timeFlags |= (1<<nextAlarmSet);
 		}
 		
-		if (BT_connected())
-			keepTryingBluetooth(120); // keep the try-BT flag active for two minutes after a connection is lost
-//		if (stateFlags1 & (1<<tryBluetooth)) {
-//			BT_power_on();
-//			tryBluetoothCountdown = 1200; // try for two minutes
-//		} else {
-//			BT_power_off();
-//		}
-		
+		if (BT_connected()) {
+			keepBluetoothPowered(120); // keep the try-BT flag active briefly
+		} else { // not connected
+			if (stateFlags1 & (1<<BT_was_connected)) { // connection lost
+				; // action(s) when connection lost
+			}
+			stateFlags1 &= ~(1<<BT_was_connected); // clear the flag
+			
+		}		
 
 		machineState = Idle; // beginning, or done with everything; return to Idle state
 
@@ -212,6 +213,7 @@ int main(void)
 				outputStringToUART0(str);
 			}
 			enableAccelInterrupt();
+			checkForBTCommands();
 			checkForCommands();
 
 		if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
@@ -403,8 +405,8 @@ int main(void)
 				len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
 				outputStringToUART0(str);
 			}
-			if (stateFlags1 & (1<<tryBluetooth)) {
-				len = sprintf(str, "\r\n BT off in %u seconds\r\n", (tryBluetoothCountdown/100));
+			if (stateFlags1 & (1<<btPowered)) {
+				len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
 				outputStringToUART0(str);
 			}
 			
@@ -487,10 +489,10 @@ void outputStringToUART0 (char* St) {
 void outputStringToUART1 (char* St) {
 	uint8_t cnt;
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
-	if (!BT_connected()) return;
-	
-	for (cnt = 0; cnt < strlen(St); cnt++) {
-		uart1_putchar(St[cnt]);
+	if (BT_connected()) {
+		for (cnt = 0; cnt < strlen(St); cnt++) {
+			uart1_putchar(St[cnt]);
+		}
 	}
 	while (uart1_char_queued_out())
 		;
@@ -794,15 +796,14 @@ void heartBeat (void)
 		ToggleCountdown = TOGGLE_INTERVAL;
 	}
 	
-	if (tryBluetoothCountdown > rouseCountdown)
-		rouseCountdown = tryBluetoothCountdown; // stay roused at least as long as trying to get a BT connection
+	if (btCountdown > rouseCountdown)
+		rouseCountdown = btCountdown; // stay roused at least as long as trying to get a BT connection
 
-	t = tryBluetoothCountdown;
-	if (t) tryBluetoothCountdown = --t;
-	if (!tryBluetoothCountdown)
+	t = btCountdown;
+	if (t) btCountdown = --t;
+	if (!btCountdown)
 	{
-		stateFlags1 &= ~(1<<tryBluetooth);
-//		if (!BT_connected())
+		stateFlags1 &= ~(1<<btPowered);
 		BT_power_off();
 	}
 	

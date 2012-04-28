@@ -22,11 +22,11 @@
 #define CELL_VOLTAGE_THRESHOLD_UART 404 // corresponds to 1010mV where cell voltage is just above cutoff
 
 // temporarily set artificially high, for testing
-#define IRRADIANCE_THRESHOLD_DARK_IR 500 // infrared readings below this are considered "darkness"
-#define IRRADIANCE_THRESHOLD_DARK_BB 1000 // broadband readings below this are considered "darkness"
+//#define IRRADIANCE_THRESHOLD_DARK_IR 500 // infrared readings below this are considered "darkness"
+//#define IRRADIANCE_THRESHOLD_DARK_BB 1000 // broadband readings below this are considered "darkness"
 
-//#define IRRADIANCE_THRESHOLD_DARK_IR 50 // infrared readings below this are considered "darkness"
-//#define IRRADIANCE_THRESHOLD_DARK_BB 100 // broadband readings below this are considered "darkness"
+#define IRRADIANCE_THRESHOLD_DARK_IR 50 // infrared readings below this are considered "darkness"
+#define IRRADIANCE_THRESHOLD_DARK_BB 100 // broadband readings below this are considered "darkness"
 
 
 enum machStates
@@ -73,9 +73,9 @@ enum stateFlags1Bits
 	writeJSONMsg, // there is a JSON message to log
 	writeDataHeaders, // flag to write column headers to SD card
 	//  done on init, reset, time change, and midnight rollover
-	tryBluetooth, // turn on the Bluetooth module and try to get a connection
+	btPowered, // turn on the Bluetooth module and try to get a connection
 	BT_was_connected, // track transitions between connected to not connected
-	sfBit7 // unused
+	BT_cmd_serviced // unused
  };
 
 enum timeFlagsBits

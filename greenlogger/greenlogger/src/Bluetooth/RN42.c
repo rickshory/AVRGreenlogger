@@ -9,7 +9,24 @@
 #include "RN42.h"
 #include "../I2C/I2C.h"
 #include "../greenlogger.h"
+#include "../RTC/DS1342.h"
+#include "../Accelerometer/ADXL345.h"
+#include "../TemperatureSensor/TCN75A.h"
 #include <util/twi.h>
+
+extern char commandBuffer[commandBufferLen];
+extern char *commandBufferPtr;
+extern char str[128]; // generic space for strings to be output
+extern char strJSON[256]; // string for JSON data
+extern volatile uint8_t Timer1, Timer2, intTmp1;
+extern volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
+extern char datetime_string[25];
+extern volatile uint8_t stateFlags1, stateFlags2, timeFlags, irradFlags, motionFlags;
+extern volatile uint8_t rtcStatus;
+extern char strHdr[64];
+extern int len, err;
+extern volatile accelAxisData accelData;
+
 
 /**
  * \brief turns on power to the RN-42 Bluetooth module
@@ -80,3 +97,164 @@ inline bool BT_connected(void)
 {
 	return (PIND & (1<<5)); // read pin
 }
+
+/**
+ * \brief Check UART1 (Bluetooth) for commands
+ *
+ * Check the UART1 receive buffer for commands.
+ * UART1 communicates through the RN-42 Bluetooth module.
+ * \
+ *  
+ */
+
+void checkForBTCommands (void) {
+	char c;
+	if (!BT_connected()) return;
+
+	if (!(stateFlags1 & (1<<BT_was_connected))) { // new connection
+		// initialize and clear buffer, ignore anything there before
+		uart1_init_input_buffer();
+		stateFlags1 |= (1<<BT_was_connected); // set flag
+		return; // bail now, pick it up on next pass
+	}
+	
+//	if (stateFlags1 & (1<<BT_cmd_serviced)) { // just serviced a command
+//		// initialize and clear buffer, ignore anything there before
+//		uart1_init_input_buffer();
+//		stateFlags1 &= ~(1<<BT_cmd_serviced); // clear flag
+//		return; // bail now, pick it up on next pass
+//	}
+	
+//	if (!uart1_char_waiting_in()) return;
+//	while (1) {
+
+	while (uart1_char_waiting_in()) {
+		c = uart1_getchar();
+		if (c == 0x0d) // if carriage-return
+			c = 0x0a; // substitute linefeed
+		if (c == 0x0a) { // if linefeed, attempt to parse the command
+			*commandBufferPtr++ = '\0'; // null terminate
+			switch (commandBuffer[0]) { // command is 1st char in buffer
+
+				case 'T': case 't': { // set time
+					// get info from commandBuffer before any UART output, 
+					// because in some configurations any Tx feeds back to Rx
+					char tmpStr[commandBufferLen];
+					strcpy(tmpStr, commandBuffer + 1);
+					if (!isValidDateTime(tmpStr)) {
+						outputStringToUART1("\r\n Invalid timestamp\r\n");
+						break;
+					}
+					if (!isValidTimezone(tmpStr + 20)) {
+						outputStringToUART1("\r\n Invalid hour offset\r\n");
+						break;
+					}
+					outputStringToUART1("\r\n Time changed from ");
+					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+					intTmp1 = rtc_readTime(&dt_RTC);
+					datetime_getstring(datetime_string, &dt_RTC);
+					strcat(strJSON, datetime_string);
+					outputStringToUART1(datetime_string);
+					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
+					rtc_setTime(&dt_tmp);
+					strcat(strJSON, "\",\"to\":\"");
+					outputStringToUART1(" to ");
+					datetime_getstring(datetime_string, &dt_tmp);
+					strcat(strJSON, datetime_string);
+					outputStringToUART1(datetime_string);
+					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
+					outputStringToUART1("\r\n");
+					stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
+					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
+					rtcStatus = rtcTimeManuallySet;
+					outputStringToUART1(strHdr);
+					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+					break;
+				}
+				
+				case 'L': case 'l': 
+				{ // experimenting with the accelerometer Leveling functions
+					uint8_t rs, val;
+//					outputStringToUART1("\r\n about to initialize ADXL345\r\n");
+//					rs = initializeADXL345();
+//					if (rs) {
+//						len = sprintf(str, "\n\r initialize failed: %d\n\r", rs);
+//						outputStringToUART1(str);
+//						break;
+//					}
+//					outputStringToUART1("\r\n ADXL345 initialized\r\n");
+
+					// bring out of low power mode
+					// use 100Hz for now ; bit 4 set = reduced power, higher noise
+					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x0a);
+					if (rs) {
+						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
+						outputStringToUART1(str);
+						break;
+					}
+//					for (iTmp = 1; iTmp < 6; iTmp++) { // try reading bit 7, INT_SOURCE.DATA_READY
+//						rs = readADXL345Register(ADXL345_REG_INT_SOURCE, &val);
+//						if (rs) {
+//							len = sprintf(str, "\n\r could not read ADXL345_REG_INT_SOURCE: %d\n\r", rs);
+//							outputStringToUART1(str);
+//							break;
+//						}
+//						if (val & (1 << 7)) {
+//							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY set: 0x%x\n\r", val);
+//						} else {
+//							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY clear: 0x%x\n\r", val);
+//						}							
+//						outputStringToUART1(str);
+//					}
+
+
+//					outputStringToUART1("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
+					if (readADXL345Axes (&accelData)) {
+						outputStringToUART1("\r\n could not get ADXL345 data\r\n");
+						break;
+					}
+					// set low power bit (4) and 25Hz sampling rate, for 40uA current
+					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x18);
+					if (rs) {
+						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
+						outputStringToUART1(str);
+						break;
+					}
+//				len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", (unsigned int)((int)x1 << 8 | (int)x0),
+//						  (unsigned int)((int)y1 << 8 | (int)y0),  (unsigned int)((int)z1 << 8 | (int)z0));
+					len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
+						accelData.yWholeWord,  accelData.zWholeWord);
+						outputStringToUART1(str);
+					break;
+				}
+
+				case 'D': case 'd': 
+				{ // output file 'D'ata (or 'D'ump)
+					outputStringToUART1("\r\n output file data\r\n");
+					break;
+				}
+				// put other commands here
+				default: 
+				{ // if no valid command, echo back the input
+					outputStringToUART1("\r\n> ");
+					outputStringToUART1(commandBuffer);
+					outputStringToUART1("\r\n");
+//					startTimer1ToRunThisManySeconds(30); // keep system Roused another two minutes
+					break;
+				}
+			} // switch (commandBuffer[0])
+			commandBuffer[0] = '\0';
+			commandBufferPtr = commandBuffer; // "empty" the command buffer
+//			uart1_init_input_buffer();
+//			stateFlags1 |= (1<<BT_cmd_serviced); // set flag that command was serviced
+//			return; //
+		 } else { // some other character
+			 // ignore repeated linefeed (or linefeed following carriage return) or carriage return
+			 if (!((c == 0x0a) || (c == 0x0a))) { 
+				 if (commandBufferPtr < (commandBuffer + commandBufferLen - 1)) // if there is room
+					 *commandBufferPtr++ = c; // append char to the command buffer
+			 }
+		 } // done parsing character
+	} // while (1)
+} // end of checkForBTCommands
+

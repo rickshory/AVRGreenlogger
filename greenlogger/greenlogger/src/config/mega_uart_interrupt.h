@@ -18,5 +18,6 @@ extern inline uint8_t uart1_getchar(void);
 extern inline bool uart1_char_waiting_in(void);
 extern inline bool uart1_char_queued_out(void);
 extern void delay_ms(uint16_t x);
+extern inline void uart1_init_input_buffer(void);
 
 #endif /* MEGA_UART_INTERRUPT_H_ */

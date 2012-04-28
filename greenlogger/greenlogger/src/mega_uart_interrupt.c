@@ -327,6 +327,15 @@ inline bool uart1_char_queued_out(void)
 	return !ring_buffer_is_empty(&uart1_ring_buffer_out);
 }
 
+/**
+ * \brief Initialize UART1 receive buffer
+ *
+ */
+inline void uart1_init_input_buffer(void)
+{
+	uart1_ring_buffer_in = ring_buffer_init(uart1_in_buffer, UART1_BUFFER_SIZE);
+}	
+
 //
 /**
  * \brief General short delays

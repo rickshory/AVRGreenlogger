@@ -510,7 +510,7 @@ uint8_t rtc_setupNextAlarm(dateTime *pDt) {
  * \brief Set default RTC date/time
  *
  * This function sets the default 
- *  data/time of the global dateTime struct dt_RTC
+ *  date/time of the global dateTime struct dt_RTC
  *  to winter solstice 2011
  *  2011-12-21 21:30:00 PST, offset 8 hours west from
  *  2011-12-22 05:30:00 UTC

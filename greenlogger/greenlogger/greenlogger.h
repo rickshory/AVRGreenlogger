@@ -73,10 +73,22 @@ enum stateFlags1Bits
 	writeJSONMsg, // there is a JSON message to log
 	writeDataHeaders, // flag to write column headers to SD card
 	//  done on init, reset, time change, and midnight rollover
-	btPowered, // turn on the Bluetooth module and try to get a connection
-	BT_was_connected, // track transitions between connected to not connected
-	BT_cmd_serviced // unused
+	sfBit5, // unused
+	sfBit6, // unused
+	sfBit7 // unused
  };
+
+enum btFlagsBits
+{
+	btWasConnected, // track transitions between connected to not connected
+	btSerialBeingInput, // characters being input to the Bluetooth serial port, may verify as a command
+	btCmdServiced, // Bluetooth command has been serviced on this read cycle
+	btBit3, // unused
+	btBit4, // unused
+	btBit5, // unused
+	btBit6, // unused
+	btBit7 // unused
+	};
 
 enum timeFlagsBits
 {

@@ -21,7 +21,7 @@ extern char strJSON[256]; // string for JSON data
 extern volatile uint8_t Timer1, Timer2, intTmp1;
 extern volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
 extern char datetime_string[25];
-extern volatile uint8_t stateFlags1, stateFlags2, timeFlags, irradFlags, motionFlags;
+extern volatile uint8_t stateFlags1, stateFlags2, timeFlags, irradFlags, motionFlags, btFlags;
 extern volatile uint8_t rtcStatus;
 extern char strHdr[64];
 extern int len, err;
@@ -73,18 +73,6 @@ inline void BT_baud_115k(void)
 }
 
 /**
- * \brief Sets pin that monitors RN-42 Bluetooth module to be an input
- *
- * PortD, bit 5 reads the "CONNECTED" output of the RN-42 Bluetooth module: 
- * HIGH when connected, LOW otherwise
- *
- */
-inline void BT_connection_setInput(void)
-{
-	DDRD &= ~(1<<5); // make input
-}
-
-/**
  * \brief check if the RN-42 Bluetooth module has a live connection
  *
  * PortD, bit 5 reads the "CONNECTED" output of the RN-42 Bluetooth module: 
@@ -96,6 +84,22 @@ inline void BT_connection_setInput(void)
 inline bool BT_connected(void)
 {
 	return (PIND & (1<<5)); // read pin
+}
+
+/**
+ * \brief check if the RN-42 Bluetooth module is powered
+ *
+ * PortD, bit 4 is an output that enables the power supply to the 
+ * RN-42 Bluetooth module: 
+ * HIGH when enabled, LOW when shut down.
+ * This functions reads that state of that pin.
+ *
+ * \retval true  if connection is active
+ * \retval false if no connection
+ */
+inline bool BT_powered(void)
+{
+	return (PIND & (1<<4)); // read pin
 }
 
 /**
@@ -111,17 +115,17 @@ void checkForBTCommands (void) {
 	char c;
 	if (!BT_connected()) return;
 
-	if (!(stateFlags1 & (1<<BT_was_connected))) { // new connection
+	if (!(btFlags & (1<<btWasConnected))) { // new connection
 		// initialize and clear buffer, ignore anything there before
 		uart1_init_input_buffer();
-		stateFlags1 |= (1<<BT_was_connected); // set flag
+		btFlags |= (1<<btWasConnected); // set flag
 		return; // bail now, pick it up on next pass
 	}
 	
-//	if (stateFlags1 & (1<<BT_cmd_serviced)) { // just serviced a command
+//	if (btFlags & (1<<btCmdServiced)) { // just serviced a command
 //		// initialize and clear buffer, ignore anything there before
 //		uart1_init_input_buffer();
-//		stateFlags1 &= ~(1<<BT_cmd_serviced); // clear flag
+//		btFlags &= ~(1<<btCmdServiced); // clear flag
 //		return; // bail now, pick it up on next pass
 //	}
 	
@@ -246,7 +250,7 @@ void checkForBTCommands (void) {
 			commandBuffer[0] = '\0';
 			commandBufferPtr = commandBuffer; // "empty" the command buffer
 //			uart1_init_input_buffer();
-//			stateFlags1 |= (1<<BT_cmd_serviced); // set flag that command was serviced
+//			btFlags |= (1<<btCmdServiced); // set flag that command was serviced
 //			return; //
 		 } else { // some other character
 			 // ignore repeated linefeed (or linefeed following carriage return) or carriage return

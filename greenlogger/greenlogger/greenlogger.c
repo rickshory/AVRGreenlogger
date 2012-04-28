@@ -6,38 +6,7 @@
  * Copyright (C) 2011 Rick Shory, based in part on source code that is:
  * Copyright (C) 2011 Atmel Corporation. All rights reserved.
  *
- * \page License
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. The name of Atmel may not be used to endorse or promote products derived
- * from this software without specific prior written permission.
- *
- * 4. This software may only be redistributed and used in connection with an
- * Atmel AVR product.
- *
- * THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
- * EXPRESSLY AND SPECIFICALLY DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
- * DAMAGE.
- */
 /**
- *
  * greenlogger.c
  *
  * Created: 12/21/2011 10:04:15 AM
@@ -82,7 +51,7 @@ char datetime_string[25];
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
-volatile uint8_t stateFlags1 = 0, stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0;
+volatile uint8_t stateFlags1 = 0, stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
 volatile uint8_t timeZoneOffset = 0; // globally available
@@ -178,7 +147,6 @@ int main(void)
 			if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
 				stayRoused(120);
 				keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
-//				stateFlags1 |= (1<<btPowered); // turn on Bluetooth module and try to get a connection
 			}
 			motionFlags &= ~(1<<tapDetected);
 		}
@@ -197,10 +165,10 @@ int main(void)
 		if (BT_connected()) {
 			keepBluetoothPowered(120); // keep the try-BT flag active briefly
 		} else { // not connected
-			if (stateFlags1 & (1<<BT_was_connected)) { // connection lost
+			if (btFlags & (1<<btWasConnected)) { // connection lost
 				; // action(s) when connection lost
 			}
-			stateFlags1 &= ~(1<<BT_was_connected); // clear the flag
+			btFlags &= ~(1<<btWasConnected); // clear the flag
 			
 		}		
 
@@ -405,7 +373,7 @@ int main(void)
 				len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
 				outputStringToUART0(str);
 			}
-			if (stateFlags1 & (1<<btPowered)) {
+			if (BT_powered()) {
 				len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
 				outputStringToUART0(str);
 			}
@@ -803,7 +771,6 @@ void heartBeat (void)
 	if (t) btCountdown = --t;
 	if (!btCountdown)
 	{
-		stateFlags1 &= ~(1<<btPowered);
 		BT_power_off();
 	}
 	

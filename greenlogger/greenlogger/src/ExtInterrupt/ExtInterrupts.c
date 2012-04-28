@@ -39,7 +39,7 @@ void keepBluetoothPowered(int8_t sec)
 	}
 //	BT_power_on();
 	PORTD |= (1<<4); // Bluetooth power on
-	stateFlags1 |= (1<<btPowered);
+	
 	sei();
 }
 

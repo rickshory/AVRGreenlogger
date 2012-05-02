@@ -82,6 +82,7 @@ enum btFlagsBits
 {
 	btWasConnected, // track transitions between connected to not connected
 	btSerialBeingInput, // characters being input to the Bluetooth serial port, may verify as a command
+	btSerialFirstInput, // first input after buffer clear
 	btCmdServiced, // Bluetooth command has been serviced on this read cycle
 	btBit3, // unused
 	btBit4, // unused

@@ -64,8 +64,8 @@
  * \def UART0_BUFFER_SIZE
  * \brief The size of the UART buffers
  */
-#define UART0_BUFFER_SIZE 100
-#define UART1_BUFFER_SIZE 100
+#define UART0_BUFFER_SIZE 128
+#define UART1_BUFFER_SIZE 128
 
 // set the correct BAUD and F_CPU defines before including setbaud.h
 #include "conf_clock.h"
@@ -83,14 +83,27 @@
 
 // buffers for use with the ring buffer
 uint8_t uart0_out_buffer[UART0_BUFFER_SIZE];
+
+uint8_t dummyVar4;
+
 uint8_t uart0_in_buffer[UART0_BUFFER_SIZE];
-uint8_t uart1_out_buffer[UART0_BUFFER_SIZE];
-uint8_t uart1_in_buffer[UART0_BUFFER_SIZE];
+
+uint8_t dummyVar1;
 
 //! ring buffer to use for UART0 transmission
 struct ring_buffer uart0_ring_buffer_out;
 //! ring buffer to use for UART0 reception
 struct ring_buffer uart0_ring_buffer_in;
+
+uint8_t dummyVar2;
+
+uint8_t uart1_out_buffer[UART1_BUFFER_SIZE];
+
+uint8_t dummyVar5;
+
+uint8_t uart1_in_buffer[UART1_BUFFER_SIZE];
+
+uint8_t dummyVar3;
 
 //! ring buffer to use for UART1 transmission
 struct ring_buffer uart1_ring_buffer_out;

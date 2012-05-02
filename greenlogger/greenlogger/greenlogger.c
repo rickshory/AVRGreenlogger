@@ -142,6 +142,9 @@ int main(void)
 //	machineState = Idle;
  
 	while (1) { // main program loop
+		
+		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
+		
 		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");
 			if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
@@ -457,6 +460,7 @@ void outputStringToUART0 (char* St) {
 void outputStringToUART1 (char* St) {
 	uint8_t cnt;
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
+	if (btFlags & (1<<btSerialBeingInput)) return; // suppress output if user in typing
 	if (BT_connected()) {
 		for (cnt = 0; cnt < strlen(St); cnt++) {
 			uart1_putchar(St[cnt]);
@@ -491,10 +495,13 @@ void outputStringToBothUARTs (char* St) {
 void checkForCommands (void) {
     char c;
     while (1) {
-		if (!uart0_char_waiting_in()) 
+		cli();
+		if (!uart0_char_waiting_in()) {
+			sei();
 			return;
-		
+		}
 		c = uart0_getchar();
+		sei();
         if (c == 0x0d) // if carriage-return
             c = 0x0a; // substitute linefeed
         if (c == 0x0a) { // if linefeed, attempt to parse the command

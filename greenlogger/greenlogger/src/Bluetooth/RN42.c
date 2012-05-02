@@ -127,27 +127,13 @@ void checkForBTCommands (void) {
 		return; // bail now, pick it up on next pass
 	}
 	
-//	if (btFlags & (1<<btCmdServiced)) { // just serviced a command
-//		// initialize and clear buffer, ignore anything there before
-//		uart1_init_input_buffer();
-//		btFlags &= ~(1<<btCmdServiced); // clear flag
-//		return; // bail now, pick it up on next pass
-//	}
-	
-//	if (!uart1_char_waiting_in()) return;
-//	while (uart1_char_waiting_in()) {
-//		cli();
-//		c = uart1_getchar();
-//		sei();
-	while (1) {
-		cli();
-		if (!uart1_char_waiting_in()) {
-			sei();
-			return;
-		}
+	while (uart1_char_waiting_in()) {
 		c = uart1_getchar();
-		sei();
-
+		if (c == 0x08) { // backspace
+			if (btCmdBufferPtr > btCmdBuffer) { // if there is anything to backspace
+				btCmdBufferPtr--;
+			}
+		}
 		if (c == 0x0d) // if carriage-return
 			c = 0x0a; // substitute linefeed
 		if (c == 0x0a) { // if linefeed, attempt to parse the command
@@ -264,37 +250,15 @@ void checkForBTCommands (void) {
 			} // switch (btCmdBuffer[0])
 			btCmdBuffer[0] = '\0'; // "empty" the command buffer
 			btCmdBufferPtr = btCmdBuffer;
-			// for testing, explicitly empty the command buffer
-			{
-				uint8_t cnt;
-				for (cnt = 0; cnt < commandBufferLen; cnt++) {
-					btCmdBuffer[cnt] = '\0';
-				}
-			}
-			uart1_init_input_buffer();
-//			btFlags |= (1<<btCmdServiced); // set flag that command was serviced
-//			return; //
 		} else { // some other character
-			// ignore repeated linefeed (or linefeed following carriage return) or carriage return
-//			if (!((c == 0x0a) || (c == 0x0a))) {
-				if (btCmdBufferPtr < (btCmdBuffer + commandBufferLen - 1)) { // if there is room
-					if (btCmdBufferPtr == btCmdBuffer) { // if first input
-						outputStringToUART1("\r\n\r\n> "); // show the user a blank line & prompt
-					}
-					btFlags |= (1<<btSerialBeingInput); // flag that the user is inputting characters; blocks outputStringToUART1 fn
-					*btCmdBufferPtr++ = c; // append char to the command buffer
-					uart1_putchar(c); // echo the character
-//					// for testing, echo the whole command buffer
-//					{
-//						uint8_t cnt;
-//						for (cnt = 0; cnt < commandBufferLen; cnt++) {
-//							uart1_putchar(btCmdBuffer[cnt]);
-//						}
-//						while (uart1_char_queued_out())
-//							;						
-//					}
-				}					
-//			}
+			if (btCmdBufferPtr < (btCmdBuffer + commandBufferLen - 1)) { // if there is room
+				if (btCmdBufferPtr == btCmdBuffer) { // if first input
+					outputStringToUART1("\r\n\r\n> "); // show the user a blank line & prompt
+				}
+				btFlags |= (1<<btSerialBeingInput); // flag that the user is inputting characters; blocks outputStringToUART1 fn
+				*btCmdBufferPtr++ = c; // append char to the command buffer
+				uart1_putchar(c); // echo the character
+			}					
 		} // done parsing character
 	} // while characters in buffer
 } // end of checkForBTCommands

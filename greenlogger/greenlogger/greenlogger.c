@@ -143,7 +143,7 @@ int main(void)
  
 	while (1) { // main program loop
 		
-		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
+//		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
 		
 		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");
@@ -494,14 +494,13 @@ void outputStringToBothUARTs (char* St) {
 
 void checkForCommands (void) {
     char c;
-    while (1) {
-		cli();
-		if (!uart0_char_waiting_in()) {
-			sei();
-			return;
-		}
+    while (uart0_char_waiting_in()) {
 		c = uart0_getchar();
-		sei();
+		if (c == 0x08) { // backspace
+			if (commandBufferPtr > commandBuffer) { // if there is anything to backspace
+				commandBufferPtr--;
+			}
+		}
         if (c == 0x0d) // if carriage-return
             c = 0x0a; // substitute linefeed
         if (c == 0x0a) { // if linefeed, attempt to parse the command

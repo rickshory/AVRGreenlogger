@@ -34,6 +34,7 @@ extern char strJSON[256]; // string for JSON data
 extern char strHdr[64];
 
 extern volatile dateTime dt_CurAlarm;
+extern volatile int8_t timeZoneOffset;
 
 extern volatile
 BYTE Timer1, Timer2;	// 100Hz decrement timer
@@ -149,13 +150,15 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 			
 	}
 	
-	if (f_write(&logFile, St, n, &bytesWritten) != FR_OK)
+	if (f_write(&logFile, St, n, &bytesWritten) != FR_OK) {
 		retVal = sdFileWriteFail;
 		goto closeFile;
-
-	if (bytesWritten < n)
+	}
+	
+	if (bytesWritten < n) {
 		retVal = sdFileWritePartial;
 		goto closeFile;
+	}
 	
 //		len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
 //		outputStringToUART0(str);
@@ -170,6 +173,160 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	f_mount(0,0);
 	return retVal;
 }
+
+/**
+ * \brief Writes the global Timezone Offset to the SD card
+ *
+ * This function writes the globally maintained variable
+ * 'timeZoneOffset' to the SD card as a string in a file.
+ *  The string is e.g. "-07" where the first character is
+ * the sign and the next two are the hours + or - UT, always
+ * padded with zero.
+ * The file is named "TIMEZONE.TXT" and is in the root
+ * folder of the SD card.
+ * Using the SD card as persistent storage this way allows
+ * recovery of the time zone offset after a power-down
+ * reset.
+ * Run this function when 'timeZoneOffset' is changed.
+ * This function completely re writes the file
+ * The return value is the error code.
+
+*
+ * \note 
+ * 
+ */
+
+BYTE writeTimezoneToSDCard (void) {
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	char stTZ[5];
+	BYTE sLen, retVal = sdOK;
+	uint8_t iTmp;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely write card
+	}
+
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+			retVal = sdInitFail;
+			goto unmountVolume;
+	}
+	
+	FIL logFile;
+	if(f_open(&logFile, "TIMEZONE.TXT", FA_WRITE | FA_CREATE_ALWAYS)!=FR_OK) {
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
+}
+
+	int bytesWritten;
+	if (timeZoneOffset < 0) {
+		stTZ[0] = '-';
+		iTmp = -timeZoneOffset;
+	} else {
+		stTZ[0] = '+';
+		iTmp = timeZoneOffset;
+	}
+	stTZ[1] = '0' + (iTmp / 10);
+	stTZ[2] = '0' + (iTmp % 10);
+	stTZ[3] = 0;
+
+//	outputStringToBothUARTs(" Timezone string: ");
+//	outputStringToBothUARTs(stTZ);
+//	outputStringToBothUARTs("\n\r\n\r");
+	
+//	bytesWritten = f_printf(&logFile, "%d\n", timeZoneOffset);
+	bytesWritten =  f_puts(stTZ, &logFile);
+	
+//	sLen = sprintf(str, "\n\r timezone characters written to file : %d\n\r", bytesWritten);
+//	outputStringToBothUARTs(str);
+
+//Flush the write buffer with f_sync(&logFile);
+
+// retVal = sdOK;
+
+	//Close and unmount.
+	closeFile:
+	f_close(&logFile);
+	unmountVolume:
+	f_mount(0,0);
+	return retVal;
+}
+
+/**
+ * \brief Reads the global Timezone Offset from the SD card
+ *
+ * This function reads the globally maintained variable
+ * 'timeZoneOffset' from the SD card.
+ * The function expects a file named "TIMEZONE.TXT"
+ * in the root folder of the SD card.
+ *  The file contains a single string e.g. "-07" where the
+ * first character is the sign and the next two are the
+ * hours + or - UT, always padded with zero.
+ * Run this function to recover the time zone offset
+ * when the time is read from the RTC chip after a 
+ * uC reset.
+ * The return value is the error code. 
+*
+ * \note 
+ * 
+ */
+
+BYTE readTimezoneFromSDCard (void) {
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	char stTZ[10];
+	BYTE sLen, retVal = sdOK;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely read card
+	}
+
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+			retVal = sdInitFail;
+			goto unmountVolume;
+	}
+	FIL logFile;
+	if(f_open(&logFile, "TIMEZONE.TXT", FA_READ | FA_OPEN_EXISTING)!=FR_OK) {
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
+}	
+	f_gets(stTZ, 4, &logFile);
+	
+	if (f_error(&logFile)) {
+		retVal = sdFileReadFail;
+		goto closeFile;
+	}
+	
+	outputStringToUART0("\n\rTimezone read from file: ");
+	outputStringToUART0(stTZ);
+	outputStringToUART0("\n\r\n\r");
+
+	timeZoneOffset = atoi(stTZ);
+	
+	//Close and unmount.
+	closeFile:
+	f_close(&logFile);
+	unmountVolume:
+	f_mount(0,0);
+	return retVal;
+}
+
 
 /**
  * \brief Reports errors writing to the SD card
@@ -202,11 +359,7 @@ void tellFileWriteError (BYTE err)
    outputStringToBothUARTs("\r\n could not mount SD card\r\n");
    break;
   }
-  //case NoInit: {
-   //outputStringToBothUARTs("\r\n could not initialize file system\r\n");
-   //break;
-  //}
-  case sdInitFail: {
+ case sdInitFail: {
    outputStringToBothUARTs("\r\n could not initialize SD card\r\n");
    break;
   }
@@ -214,10 +367,6 @@ void tellFileWriteError (BYTE err)
    outputStringToBothUARTs("\r\n could not create the requested directory\r\n");
    break;
   }
-  //case NoChDir: {
-   //outputStringToBothUARTs("\r\n could not change to the requested directory\r\n");
-   //break;
-  //}
   case sdFileOpenFail: {
    outputStringToBothUARTs("\r\n could not open the requested file\r\n");
    break;
@@ -232,6 +381,10 @@ void tellFileWriteError (BYTE err)
   }
   case sdFileWritePartial: {
    outputStringToBothUARTs("\r\n partial write to the file\r\n");
+   break;
+  }
+  case sdFileReadFail: {
+   outputStringToBothUARTs("\r\n could not read from the file\r\n");
    break;
   }
   //case NoClose: {

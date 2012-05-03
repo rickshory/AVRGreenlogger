@@ -1,29 +1,15 @@
 /**
  * \file
  *
- * \brief based on megaAVR STK600 UART interrupt example
+ * \brief USART functions and ISRs
  *
+ * based in part on code that is
  * Copyright (C) 2011 Atmel Corporation. All rights reserved.
  *
  * Buffer leakage bug fixed by Rick Shory 2012-05-01
  */
 /**
  * \mainpage
-  * \section intro Introduction
- * This example demonstrates how to use the megaAVR UART with interrupts.
- *
- * \section files Files:
- * - mega_uart_interrupt_example.c: megaAVR UART interrupt example
- *
- * \section compinfo Compilation Info
- * This software was written for the <A href="http://gcc.gnu.org/">GNU GCC</A>
- * for AVR. \n
- * Other compilers may or may not work.
- *
- * \section contactinfo Contact Information
- * For further information, visit
- * <A href="http://www.atmel.com/">Atmel</A>.\n
- * Support and FAQ: http://support.atmel.no/
  */
 
  // _ASSERT_ENABLE_ is used for enabling assert, typical for debug purposes

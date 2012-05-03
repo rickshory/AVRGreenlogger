@@ -54,7 +54,7 @@ char *commandBufferPtr;
 volatile uint8_t stateFlags1 = 0, stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
-volatile uint8_t timeZoneOffset = 0; // globally available
+volatile int8_t timeZoneOffset = 0; // globally available
 volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
@@ -119,6 +119,17 @@ int main(void)
 		rtcStatus = rtcTimeManuallySet;
 		strcat(strJSON, datetime_string);
 		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
+		errSD = readTimezoneFromSDCard();
+		if (errSD) {
+			tellFileWriteError (errSD);
+		} else {
+			len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
+			outputStringToBothUARTs(str);
+
+//			outputStringToBothUARTs(" Timezone read from SD card \n\r\n\r");
+			dt_RTC.houroffset = timeZoneOffset;
+			dt_CurAlarm.houroffset = timeZoneOffset;
+		}
 	} else {
 		rtc_setdefault();
 		if (!rtc_setTime(&dt_RTC)) {
@@ -143,7 +154,7 @@ int main(void)
  
 	while (1) { // main program loop
 		
-//		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
+		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
 		
 		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");

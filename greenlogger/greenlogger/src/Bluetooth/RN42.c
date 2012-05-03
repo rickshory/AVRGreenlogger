@@ -16,6 +16,7 @@
 
 char btCmdBuffer[commandBufferLen];
 char *btCmdBufferPtr;
+uint8_t errSD;
 
 extern char commandBuffer[commandBufferLen];
 extern char *commandBufferPtr;
@@ -29,7 +30,7 @@ extern volatile uint8_t rtcStatus;
 extern char strHdr[64];
 extern int len, err;
 extern volatile accelAxisData accelData;
-
+extern volatile int8_t timeZoneOffset;
 
 /**
  * \brief turns on power to the RN-42 Bluetooth module
@@ -174,6 +175,14 @@ void checkForBTCommands (void) {
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART1(strHdr);
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+					// cache timezone offset in persistent storage on SD card
+					timeZoneOffset = dt_tmp.houroffset;
+					errSD = writeTimezoneToSDCard();
+					if (errSD) {
+						tellFileWriteError (errSD);
+					} else {
+						outputStringToBothUARTs(" Timezone written to SD card \n\r\n\r");
+					}
 					break;
 				}
 				

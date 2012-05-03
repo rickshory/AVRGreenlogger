@@ -16,6 +16,7 @@ enum fileWriteResults
  sdFileWriteFail, // could not write to the file
  sdFileWritePartial, // did not write all bytes to file
  sdFileSeekFail, // could not seek as requested
+ sdFileReadFail, // could not read as requested
  sdCloseFail, // could not close file
  sdPowerTooLowForSDCard, // cell voltage is below threshold to safely write card
  sdIgnoreCard // flag is set to ignore SD card
@@ -129,6 +130,9 @@ void turnSDCardPowerOff(void);
 /* Prototypes for disk control functions */
 
 BYTE writeCharsToSDCard (char* St, BYTE n);
+BYTE writeTimezoneToSDCard (void);
+BYTE readTimezoneFromSDCard (void);
+
 void tellFileWriteError (BYTE err);
 BOOL assign_drives (int argc, char *argv[]);
 DSTATUS disk_initialize (BYTE);

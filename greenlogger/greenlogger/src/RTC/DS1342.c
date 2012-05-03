@@ -12,7 +12,7 @@
 #include <util/twi.h>
 
 extern volatile dateTime dt_RTC;
-extern volatile uint8_t timeZoneOffset;
+extern volatile int8_t timeZoneOffset;
 
 extern volatile uint8_t stateFlags1, irradFlags;
 extern int len;
@@ -728,11 +728,14 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
 	dtstr[15] = '0'+ ((dtp->minute) % 10);
 	dtstr[17] = '0'+ ((dtp->second) / 10);
 	dtstr[18] = '0'+ ((dtp->second) % 10);
-	if ((dtp->houroffset) < 0) {
-		iTmp  = -1 * (dtp->houroffset);
+//	if ((dtp->houroffset) < 0) {
+	if ((timeZoneOffset) < 0) {
+//		iTmp  = -1 * (dtp->houroffset);
+		iTmp  = -1 * (timeZoneOffset);
 		dtstr[20] = '-';
 	} else {
-		iTmp  = (dtp->houroffset);
+//		iTmp  = (dtp->houroffset);
+		iTmp  = (timeZoneOffset);
 		dtstr[20] = '+';
 	}
 	dtstr[21] = '0'+ (iTmp / 10);
@@ -755,44 +758,13 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
  */
 void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone)
 {
-//	uint8_t iTmp; //, tens, ones;
-//	len = sprintf(str, "\n\r char pointer: %d", dtstr);
-//	outputStringToUART0(str);
-//	outputStringToUART0("\n\r string: \n\r");
-//	outputStringToUART0(dtstr);
-//	len = sprintf(str, "\n\r tens of year ASCII code: %d", dtstr[2]);
-//	outputStringToUART0(str);
-//	len = sprintf(str, "\n\r ones of year ASCII code: %d", dtstr[3]);
-//	outputStringToUART0(str);
 
-//	tens = (dtstr[2] - '0');
-//	ones = (dtstr[3] - '0');
-//	tens = (dtstr[2] & 0xf);
-//	ones = (dtstr[3] & 0xf);
-//	len = sprintf(str, "\n\r tens of year: %d", tens);
-//	outputStringToUART0(str);
-//	len = sprintf(str, "\n\r ones of year: %d", ones);
-//	outputStringToUART0(str);
 	dtp->year = (uint8_t)(10 * (dtstr[2] - '0')) + (dtstr[3] - '0');
-//	dtp->year = (10 * tens) + ones;
-//	len = sprintf(str, "\n\r year: %d", dtp->year);
-//	outputStringToUART0(str);
-//	dtp->month = (10 * (dtstr[5] - '0')) + (dtstr[6] - '0');
 	dtp->month = (10 * (dtstr[5] & 0xf)) + (dtstr[6] & 0xf);
-//	len = sprintf(str, "\n\r month: %d", dtp->month);
-//	outputStringToUART0(str);
 	dtp->day = (10 * (dtstr[8] - '0')) + (dtstr[9] - '0');
-//	len = sprintf(str, "\n\r day: %d", dtp->day);
-//	outputStringToUART0(str);
 	dtp->hour = (10 * (dtstr[11] - '0')) + (dtstr[12] - '0');
-//	len = sprintf(str, "\n\r hour: %d", dtp->hour);
-//	outputStringToUART0(str);
 	dtp->minute = (10 * (dtstr[14] - '0')) + (dtstr[15] - '0');
-//	len = sprintf(str, "\n\r minute: %d", dtp->minute);
-//	outputStringToUART0(str);
 	dtp->second = (10 * (dtstr[17] - '0')) + (dtstr[18] - '0');
-//	len = sprintf(str, "\n\r second: %d\n\r", dtp->second);
-//	outputStringToUART0(str);
 	if (useGlobalTimeZone) {
 		dtp->houroffset = timeZoneOffset;
 	} else {
@@ -802,29 +774,6 @@ void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZo
 		}
 		timeZoneOffset = dtp->houroffset;
 	}
-	
-	//strcpy(dtstr, "2000-00-00 00:00:00 +00");
-	//dtstr[2] = '0'+ ((dtp->year) / 10);
-	//dtstr[3] = '0'+	((dtp->year) % 10);
-	//dtstr[5] = '0'+	((dtp->month) / 10);
-	//dtstr[6] = '0'+	((dtp->month) % 10);
-	//dtstr[8] = '0'+	((dtp->day) / 10);
-	//dtstr[9] = '0'+	((dtp->day) % 10);
-	//dtstr[11] = '0'+ ((dtp->hour) / 10);
-	//dtstr[12] = '0'+ ((dtp->hour) % 10);
-	//dtstr[14] = '0'+ ((dtp->minute) / 10);
-	//dtstr[15] = '0'+ ((dtp->minute) % 10);
-	//dtstr[17] = '0'+ ((dtp->second) / 10);
-	//dtstr[18] = '0'+ ((dtp->second) % 10);
-	//if ((dtp->houroffset) < 0) {
-		//iTmp  = -1 * (dtp->houroffset);
-		//dtstr[20] = '-';
-	//} else {
-		//iTmp  = (dtp->houroffset);
-		//dtstr[20] = '+';
-	//}
-	//dtstr[21] = '0'+ (iTmp / 10);
-	//dtstr[22] = '0'+ (iTmp % 10);
 }
 
 /**

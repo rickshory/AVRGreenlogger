@@ -179,7 +179,7 @@ void checkForBTCommands (void) {
 					timeZoneOffset = dt_tmp.houroffset;
 					errSD = writeTimezoneToSDCard();
 					if (errSD) {
-						tellFileWriteError (errSD);
+						tellFileError (errSD);
 					} else {
 						outputStringToBothUARTs(" Timezone written to SD card \n\r\n\r");
 					}
@@ -245,6 +245,10 @@ void checkForBTCommands (void) {
 				case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)
 					outputStringToUART1("\r\n output file data\r\n");
+					 errSD = outputContentsOfFileForDate("2012-05-03"); // testing
+					 if (errSD) {
+						tellFileError (errSD);
+					}
 					break;
 				}
 				// put other commands here

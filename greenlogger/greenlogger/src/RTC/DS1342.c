@@ -865,8 +865,8 @@ uint8_t isValidDate(char* p)
         return 0;
     if ((m == 11) && (d > 30)) // November
         return 0;
-    if (*p++ != ' ') // correct delimiter
-        return 0;
+//    if (*p++ != ' ') // correct delimiter
+//        return 0;
     // passed all tests
     return 1;
 } // end of isValidDate

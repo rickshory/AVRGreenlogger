@@ -329,18 +329,91 @@ BYTE readTimezoneFromSDCard (void) {
 
 
 /**
+ * \brief Outputs file contents to USART
+ *
+ * This function reads the strings in a file and outputs
+ * them to the USARTs.
+ * The function looks for a file on the SD card
+ * corresponding to the passed string, which must be
+ * a date in strict format, e.g. "2012-05-03". The file in
+ * this case would be "12-05\03.TXT".
+* The return value is the error code, one of which is 
+ * "file not found". 
+*
+ * \note 
+ * 
+ */
+
+BYTE outputContentsOfFileForDate (char* stDt) {
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	char stFile[20], stLine[128];
+	BYTE sLen, retVal = sdOK;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely read card
+	}
+	
+	if (!isValidDate(stDt)) {
+		outputStringToBothUARTs("Invalid date: ");
+		outputStringToBothUARTs(stDt);
+		outputStringToBothUARTs("\n\r\n\r");
+		return sdInvalidDate; // not a valid calendar date, e.g. 2011-02-30; or date is malformed
+	}
+	
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+			retVal = sdInitFail;
+			goto unmountVolume;
+	}
+	
+	strncpy(stFile, stDt + 2, 5); // slice out e.g. "12-05" from "2012-05-03"
+	strcat(stFile, "/"); // append the folder delimiter
+	strncat(stFile, stDt + 8, 2); // append e.g. "03" from "2012-05-03"
+	strcat(stFile, ".TXT"); // complete the filename
+	
+	FIL logFile;
+	
+	if(f_open(&logFile, stFile, FA_READ | FA_OPEN_EXISTING)!=FR_OK) {
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
+}	
+	while (f_gets(stLine, (sizeof stLine) - 1, &logFile) != NULL) {
+		if (f_error(&logFile)) {
+			retVal = sdFileReadFail;
+			goto closeFile;
+		}
+		outputStringToBothUARTs(stLine);
+	}
+	
+	//Close and unmount.
+	closeFile:
+	f_close(&logFile);
+	unmountVolume:
+	f_mount(0,0);
+	return retVal;
+}
+
+
+/**
  * \brief Reports errors writing to the SD card
  *
- *  This function sends a message out UART0
+ *  This function sends a message out both UARTS
  * (if power is on) if there were any error
- * writing to the SD card.
- *  Use after the fn "writeCharsToSDCard"
+ * accessing files on the SD card.
  *
  * \note 
  * 
  */
 
-void tellFileWriteError (BYTE err)
+void tellFileError (BYTE err)
 {
  switch (err) {
   //case IgnoreCard: {
@@ -387,6 +460,10 @@ void tellFileWriteError (BYTE err)
    outputStringToBothUARTs("\r\n could not read from the file\r\n");
    break;
   }
+  case sdInvalidDate: {
+   outputStringToBothUARTs("\r\n invalid date\r\n");
+   break;
+  }
   //case NoClose: {
    //outputStringToBothUARTs("\r\n could not close file\r\n");
    //break;
@@ -396,7 +473,7 @@ void tellFileWriteError (BYTE err)
    break;
   } 
  } // switch err
-} // end of tellFileWriteError
+} // end of tellFileError
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */

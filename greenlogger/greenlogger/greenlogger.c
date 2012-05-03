@@ -6,7 +6,7 @@
  * Copyright (C) 2011 Rick Shory, based in part on source code that is:
  * Copyright (C) 2011 Atmel Corporation. All rights reserved.
  *
-/**
+ **
  * greenlogger.c
  *
  * Created: 12/21/2011 10:04:15 AM
@@ -121,7 +121,7 @@ int main(void)
 		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
 		errSD = readTimezoneFromSDCard();
 		if (errSD) {
-			tellFileWriteError (errSD);
+			tellFileError (errSD);
 		} else {
 			len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
 			outputStringToBothUARTs(str);
@@ -360,7 +360,7 @@ int main(void)
 				len = strlen(strLog);
 				errSD = writeCharsToSDCard(strLog, len);
 				if (errSD) {
-					tellFileWriteError (errSD);
+					tellFileError (errSD);
 //                stateFlags_2.isDataWriteTime = 0; // prevent trying to write anything later
 				} else {
 					outputStringToBothUARTs(" Data written to SD card \n\r\n\r");

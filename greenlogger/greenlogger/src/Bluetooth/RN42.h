@@ -18,6 +18,7 @@ extern inline void BT_baud_115k(void);
 extern inline bool BT_connected(void);
 extern inline bool BT_powered(void);
 void checkForBTCommands (void);
+void BT_dataDump(char* stOpt);
 
 
 #endif /* RN41_H_ */

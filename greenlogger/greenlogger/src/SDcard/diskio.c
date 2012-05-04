@@ -175,6 +175,114 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 }
 
 /**
+ * \brief Writes a string to a file on the SD card
+ *
+ * This function writes a single string to the named
+ * file on the SD card. It overwrites the file each
+ * time, so it is primarily for storing configuration
+ * parameters. This fn is the core of other functions
+ * that store specific parameters.
+ *
+ * The return value is the SD card file system error code.
+ * \note 
+ * 
+ */
+
+BYTE writeStringInFileToSDCard (char* stParam, char* stFile) {
+	
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	BYTE sLen, retVal = sdOK;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely write card
+	}
+
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+			retVal = sdInitFail;
+			goto unmountVolume;
+	}
+	
+	FIL logFile;
+	if(f_open(&logFile, stFile, FA_WRITE | FA_CREATE_ALWAYS)!=FR_OK) {
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
+	}
+
+	int bytesWritten;
+	bytesWritten =  f_puts(stParam, &logFile);
+	
+	//Close and unmount.
+	closeFile:
+	f_close(&logFile);
+	unmountVolume:
+	f_mount(0,0);
+	return retVal;
+}
+
+/**
+ * \brief Reads a string from a file on the SD card
+ *
+ * This function reads as a single string the contents of
+ * the named file on the SD card. It is primarily for
+ * retrieving configuration parameters. This fn is the
+ * core of other functions that fetch specific parameters.
+ *
+ * The return value is the SD card file system error code.
+ * \note 
+ * 
+ */
+BYTE readStringFromFileFromSDCard (char* stParam, char* stFile) {
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	BYTE sLen, retVal = sdOK;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely read card
+	}
+
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+			retVal = sdInitFail;
+			goto unmountVolume;
+	}
+	FIL logFile;
+	if(f_open(&logFile, stFile, FA_READ | FA_OPEN_EXISTING)!=FR_OK) {
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
+}	
+	f_gets(stParam, sizeof stParam, &logFile);
+	
+	if (f_error(&logFile)) {
+		retVal = sdFileReadFail;
+		goto closeFile;
+	}
+		
+	//Close and unmount.
+	closeFile:
+	f_close(&logFile);
+	unmountVolume:
+	f_mount(0,0);
+	return retVal;
+}
+
+
+/**
  * \brief Writes the global Timezone Offset to the SD card
  *
  * This function writes the globally maintained variable
@@ -355,9 +463,9 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 	}
 	
 	if (!isValidDate(stDt)) {
-		outputStringToBothUARTs("Invalid date: ");
-		outputStringToBothUARTs(stDt);
-		outputStringToBothUARTs("\n\r\n\r");
+//		outputStringToBothUARTs("Invalid date: ");
+//		outputStringToBothUARTs(stDt);
+//		outputStringToBothUARTs("\n\r\n\r");
 		return sdInvalidDate; // not a valid calendar date, e.g. 2011-02-30; or date is malformed
 	}
 	

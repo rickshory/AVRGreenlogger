@@ -131,6 +131,9 @@ void turnSDCardPowerOff(void);
 /* Prototypes for disk control functions */
 
 BYTE writeCharsToSDCard (char* St, BYTE n);
+BYTE writeStringInFileToSDCard (char* stParam, char* stFile);
+BYTE readStringFromFileFromSDCard (char* stParam, char* stFile);
+
 BYTE writeTimezoneToSDCard (void);
 BYTE readTimezoneFromSDCard (void);
 BYTE outputContentsOfFileForDate (char* stDt);

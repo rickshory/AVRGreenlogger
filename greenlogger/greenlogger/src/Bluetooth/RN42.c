@@ -117,6 +117,7 @@ inline bool BT_powered(void)
 
 void checkForBTCommands (void) {
 	char c;
+	char stTmp[commandBufferLen];
 	if (!BT_connected()) return;
 
 	if (!(btFlags & (1<<btWasConnected))) { // new connection
@@ -145,13 +146,12 @@ void checkForBTCommands (void) {
 				case 'T': case 't': { // set time
 					// get info from btCmdBuffer before any UART output, 
 					// because in some configurations any Tx feeds back to Rx
-					char tmpStr[commandBufferLen];
-					strcpy(tmpStr, btCmdBuffer + 1);
-					if (!isValidDateTime(tmpStr)) {
+					strcpy(stTmp, btCmdBuffer + 1);
+					if (!isValidDateTime(stTmp)) {
 						outputStringToUART1("\r\n Invalid timestamp\r\n");
 						break;
 					}
-					if (!isValidTimezone(tmpStr + 20)) {
+					if (!isValidTimezone(stTmp + 20)) {
 						outputStringToUART1("\r\n Invalid hour offset\r\n");
 						break;
 					}
@@ -161,7 +161,7 @@ void checkForBTCommands (void) {
 					datetime_getstring(datetime_string, &dt_RTC);
 					strcat(strJSON, datetime_string);
 					outputStringToUART1(datetime_string);
-					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
+					datetime_getFromUnixString(&dt_tmp, stTmp, 0);
 					rtc_setTime(&dt_tmp);
 					strcat(strJSON, "\",\"to\":\"");
 					outputStringToUART1(" to ");
@@ -244,11 +244,13 @@ void checkForBTCommands (void) {
 
 				case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)
-					outputStringToUART1("\r\n output file data\r\n");
-					 errSD = outputContentsOfFileForDate("2012-05-03"); // testing
-					 if (errSD) {
-						tellFileError (errSD);
-					}
+					strcpy(stTmp, btCmdBuffer); // make a copy of the command
+					BT_dataDump(stTmp); // let the general fn take it from there
+//					outputStringToUART1("\r\n output file data\r\n");
+//					 errSD = outputContentsOfFileForDate("2012-05-03"); // testing
+//					 if (errSD) {
+//						tellFileError (errSD);
+//					}
 					break;
 				}
 				// put other commands here
@@ -276,3 +278,20 @@ void checkForBTCommands (void) {
 	} // while characters in buffer
 } // end of checkForBTCommands
 
+void BT_dataDump(char* stOpt) {
+	if (stOpt[1] == '\0') { // basic command; default, output everything since last time
+		
+		return;
+	}
+	if ((stOpt[1] == 'A') || (stOpt[1] == 'a')) { // output all
+		
+		return;
+	}
+	// try command as a date; if not fn return value will tell user
+	errSD = outputContentsOfFileForDate(stOpt + 1);
+	if (errSD) {
+		tellFileError (errSD);
+	} else {
+		
+	}
+}

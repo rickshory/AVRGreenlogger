@@ -136,6 +136,9 @@ BYTE readStringFromFileFromSDCard (char* stParam, char* stFile);
 
 BYTE writeTimezoneToSDCard (void);
 BYTE readTimezoneFromSDCard (void);
+BYTE writeLastDumpDateToSDCard (char* stDate);
+BYTE readLastDumpDateFromSDCard (char* stDate);
+
 BYTE outputContentsOfFileForDate (char* stDt);
 
 void tellFileError (BYTE err);

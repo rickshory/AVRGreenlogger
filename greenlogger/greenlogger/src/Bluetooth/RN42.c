@@ -279,19 +279,65 @@ void checkForBTCommands (void) {
 } // end of checkForBTCommands
 
 void BT_dataDump(char* stOpt) {
-	if (stOpt[1] == '\0') { // basic command; default, output everything since last time
-		
+	char stLastDate[12] = "2011-12-21"; // system default starting date, winter solstice 2011.
+	// There would be no data before this unless user mistakenly set system time earlier.
+	char stTryDate[12], stCurDate[25];
+	datetime_getstring(stCurDate, &dt_CurAlarm); // get current timestamp as string
+	stCurDate[10] = '\0'; // truncate to only the date
+	outputStringToBothUARTs("\n\r current date: \"");
+	outputStringToBothUARTs(stCurDate);
+	outputStringToBothUARTs("\"\n\r");
+	
+//	// testing
+//	errSD = outputContentsOfFileForDate("2012-05-03");
+//	if (errSD) {
+//		tellFileError (errSD);
+//	}					
+//	return;
+	
+	if ((stOpt[1] == '\0') || (stOpt[1] == 'A') || (stOpt[1] == 'a')) { // valid options: "A" (all), or blank
+		if (stOpt[1] == '\0') { // basic command with no parameters; default, output everything since last time
+			errSD = readLastDumpDateFromSDCard(stLastDate); // attempt to fetch any later date
+		}
+		strcpy(stTryDate, stLastDate);
+		outputStringToBothUARTs("\n\r{\"datadump\":\"begin\"}\n\r");
+		do {
+			strcpy(stLastDate, stTryDate);
+//			outputStringToBothUARTs("\n\r");
+			outputStringToBothUARTs("\n\r{\"datafor\":\"");
+			outputStringToBothUARTs(stTryDate);
+			outputStringToBothUARTs("\"}\n\r");
+			errSD = outputContentsOfFileForDate(stTryDate);
+				if (errSD) {
+					tellFileError (errSD);
+				}					
+			datetime_advanceDatestring1Day(stTryDate);
+		} while (strcmp(stTryDate, stCurDate) <= 0);
+//		outputStringToBothUARTs("\n\r");
+		outputStringToBothUARTs("\n\r{\"datadump\":\"end\"}\n\r");
+		errSD = writeLastDumpDateToSDCard(stLastDate);
+		if (errSD) {
+			tellFileError (errSD);
+		}
 		return;
 	}
-	if ((stOpt[1] == 'A') || (stOpt[1] == 'a')) { // output all
-		
-		return;
-	}
+//	if ((stOpt[1] == 'A') || (stOpt[1] == 'a')) { // output all
+//		
+//		return;
+//	}
 	// try command as a date; if not fn return value will tell user
+	outputStringToBothUARTs("\n\r{\"datadump\":\"begin\"}\n\r");
+	outputStringToBothUARTs("\n\r{\"datafor\":\"");
+	outputStringToBothUARTs(stOpt + 1);
+	outputStringToBothUARTs("\"}\n\r");
 	errSD = outputContentsOfFileForDate(stOpt + 1);
+	outputStringToBothUARTs("\n\r{\"datadump\":\"end\"}\n\r");
 	if (errSD) {
 		tellFileError (errSD);
-	} else {
-		
+	} else { // if it was a valid date, and we dumped that data
+		errSD = writeLastDumpDateToSDCard(stOpt + 1); // record this date
+		if (errSD) {
+			tellFileError (errSD);
+		}			
 	}
 }

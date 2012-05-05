@@ -48,6 +48,7 @@ void datetime_addSeconds(dateTime *t, uint8_t s);
 void datetime_advanceIntervalShort(dateTime *t);
 void datetime_advanceIntervalLong(dateTime *t);
 void datetime_advanceInterval(dateTime *t);
+void datetime_advanceDatestring1Day(char* s);
 void datetime_normalize(dateTime *t);
 void datetime_getstring(char* dtstr, dateTime *dtp);
 void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone);

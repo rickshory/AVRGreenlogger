@@ -666,6 +666,29 @@ void datetime_advanceInterval(dateTime *t) {
 }
 
 /**
+ * \brief sets a date string forward by 1 day
+ *
+ * This function updates the passed date string (in the
+ * format "2012-05-03") to the next valid date.
+ *
+ * \note 
+ * 
+ */
+void datetime_advanceDatestring1Day(char* s) {
+	char stDateTmp[27];
+	dateTime t;
+	strcpy(stDateTmp, s); // make a copy of the date string
+	strcat(stDateTmp, " 01:01:01 +01"); // fill out full date/time with dummy vals
+	datetime_getFromUnixString(&t, stDateTmp, 0);
+	(t.day)++;
+	datetime_normalize(&t);
+	datetime_getstring(stDateTmp, &t);
+	strncpy(s, stDateTmp, 10);
+}
+
+
+
+/**
  * \brief assures dateTime is valid
  *
  * This function takes a pointer to a dateTime struct,
@@ -678,28 +701,29 @@ void datetime_advanceInterval(dateTime *t) {
 void datetime_normalize(dateTime *t) {
 //	outputStringToUART0("\n\r entered datetime_normalize fn \n\r\n\r");
 	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	while (t->second > 59) {
+	while ((t->second) > 59) {
 		t->second -= 60;
-		t->minute++;
+		(t->minute)++;
 	}
-	while (t->minute > 59) {
+	while ((t->minute) > 59) {
 		t->minute -= 60;
-		t->hour++;
+		(t->hour)++;
 	}
-	while (t->hour > 23) {
+	while ((t->hour) > 23) {
 		t->hour -= 24;
-		t->day++;
+		(t->day)++;
 	}
-	if ((t->year % 4) == 0)
+	if (((t->year) % 4) == 0)
 		m[1] = 29;
 //	else
 //		m[1] = 28;
-	while (t->day > m[(t->month)-1]) {
-		t->day -= m[(t->month)-1];
-		t->month++;
-		if (t->month > 12) {
-			t->month = 1;
-			t->year++;
+
+	while ((t->day) > m[(t->month)-1]) {
+		(t->day) -= m[(t->month)-1];
+		(t->month)++;
+		if ((t->month) > 12) {
+			(t->month) = 1;
+			(t->year)++;
 		}
 	}
 }
@@ -747,7 +771,7 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
  *
  * This function fills a data/time struct from
  *  a string. String must be in strict format
- *  YY-MM-DD HH:MM:SS (century = 2000)
+ *  20YY-MM-DD HH:MM:SS (century = 2000)
  *  example: "2010-12-21 10:47:13"
  *  Should previously test using fn 'isValidDateTime'
  *  If useGlobalTimeZone = true,

@@ -437,6 +437,49 @@ BYTE readTimezoneFromSDCard (void) {
 
 
 /**
+ * \brief Writes a date string to the SD card as file LASTDUMP
+ *
+ * This function writes the passed string to the SD card.
+ * The string must be a valid date in the format:
+ * "2012-05-03". The string is written to the file 
+ * "LASTDUMP.TXT", in the root folder of the SD card.
+ * This function overwrites any previous file of this name.
+ *
+ * The return value is the SD card error code.
+*
+ * \note  The default for a dump is the data since the 
+ * previous dump. The system writes this LASTDUMP
+ * parameter to record a dump, and then looks at it
+ * on the next dump to see how far back to fetch data.
+ *
+ */
+BYTE writeLastDumpDateToSDCard (char* stDate) {
+	if (!isValidDate(stDate)) return sdInvalidDate;
+	return writeStringInFileToSDCard(stDate, "LASTDUMP.TXT");
+}
+
+
+/**
+ * \brief Reads a date string from the file LASTDUMP on the SD card.
+ *
+ * This function reads the contents of the file 
+ * "LASTDUMP.TXT", in the root folder of the SD card, as a string.
+ * The string is in the date format: "2012-05-03".
+ *
+ * The return value is the SD card error code.
+*
+ * \note  The default for a dump is the data since the 
+ * previous dump. The system writes this LASTDUMP
+ * parameter to record a dump, and then looks at it
+ * on the next dump to see how far back to fetch data.
+ *
+ */
+BYTE readLastDumpDateFromSDCard (char* stDate) {
+	return readStringFromFileFromSDCard(stDate, "LASTDUMP.TXT");
+}
+
+
+/**
  * \brief Outputs file contents to USART
  *
  * This function reads the strings in a file and outputs
@@ -481,11 +524,30 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 			retVal = sdInitFail;
 			goto unmountVolume;
 	}
-	
+/*
 	strncpy(stFile, stDt + 2, 5); // slice out e.g. "12-05" from "2012-05-03"
 	strcat(stFile, "/"); // append the folder delimiter
 	strncat(stFile, stDt + 8, 2); // append e.g. "03" from "2012-05-03"
 	strcat(stFile, ".TXT"); // complete the filename
+*/	
+	
+	stFile[0] = stDt[2];
+	stFile[1] = stDt[3];
+	stFile[2] = stDt[4];
+	stFile[3] = stDt[5];
+	stFile[4] = stDt[6];
+	stFile[5] = '/';
+	stFile[6] = stDt[8];
+	stFile[7] = stDt[9];
+	stFile[8] = '.';
+	stFile[9] = 'T';
+	stFile[10] = 'X';
+	stFile[11] = 'T';
+	stFile[12] = '\0';
+
+//	outputStringToBothUARTs("\n\r attempting to open file: \"");
+//	outputStringToBothUARTs(stFile);
+//	outputStringToBothUARTs("\"\n\r");
 	
 	FIL logFile;
 	

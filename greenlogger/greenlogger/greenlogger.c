@@ -154,7 +154,7 @@ int main(void)
  
 	while (1) { // main program loop
 		
-		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
+//		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
 		
 		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");

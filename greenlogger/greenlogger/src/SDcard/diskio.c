@@ -44,6 +44,103 @@ extern volatile adcData cellVoltageReading;
 static
 BYTE CardType;			// Card type flags
 
+void dateToFullFilepath (char* stDt, char* stFile) {
+	
+/*
+	strncpy(stFile, stDt + 2, 5); // slice out e.g. "12-05" from "2012-05-03"
+	strcat(stFile, "/"); // append the folder delimiter
+	strncat(stFile, stDt + 8, 2); // append e.g. "03" from "2012-05-03"
+	strcat(stFile, ".TXT"); // complete the filename
+*/	
+	stFile[0] = stDt[2];
+	stFile[1] = stDt[3];
+	stFile[2] = stDt[4];
+	stFile[3] = stDt[5];
+	stFile[4] = stDt[6];
+	stFile[5] = '\\';
+	stFile[6] = stDt[8];
+	stFile[7] = stDt[9];
+	stFile[8] = '.';
+	stFile[9] = 'T';
+	stFile[10] = 'X';
+	stFile[11] = 'T';
+	stFile[12] = '\0';
+	return;
+}
+
+/**
+ * \brief Does a data file exists for this date?
+ *
+ * This function looks for a file on the SD card
+ * corresponding to the passed string. The string
+ * is in the date format e.g. "2012-05-04" The 
+ * function returns the SD card error code,
+ * which will be "file not found" if the file
+ * does not exist.
+ *
+ * \note 
+ * 
+ */
+
+BYTE fileExistsForDate (char* stDate) {
+	char* stFilePath;
+	dateToFullFilepath(stDate, stFilePath);
+//	outputStringToBothUARTs("filepath: \"");
+//	outputStringToBothUARTs(stFilePath);
+//	outputStringToBothUARTs("\"\n\r");
+	return fileExists(stFilePath);	
+}	
+
+
+/**
+ * \brief Reports whether a file exists
+ *
+* This function looks for a file on the SD card
+ * corresponding to the passed string. The 
+ * function returns the SD card error code,
+ * which will be "file not found" if the file
+ * does not exist.
+*
+ * \note 
+ * 
+ */
+
+BYTE fileExists (char* stFileFullpath) {
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	BYTE sLen, retVal = sdOK;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely access card
+	}
+		
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+			retVal = sdInitFail;
+			goto unmountVolume;
+	}
+
+	FIL logFile;
+	
+	if(f_open(&logFile, stFileFullpath, FA_READ | FA_OPEN_EXISTING)!=FR_OK) {
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
+	}
+		
+	//Close and unmount.
+	closeFile:
+	f_close(&logFile);
+	unmountVolume:
+	f_mount(0,0);
+	return retVal;
+}
 
 /**
  * \brief Writes N characters to the SD card
@@ -531,23 +628,25 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 	strcat(stFile, ".TXT"); // complete the filename
 */	
 	
-	stFile[0] = stDt[2];
-	stFile[1] = stDt[3];
-	stFile[2] = stDt[4];
-	stFile[3] = stDt[5];
-	stFile[4] = stDt[6];
-	stFile[5] = '/';
-	stFile[6] = stDt[8];
-	stFile[7] = stDt[9];
-	stFile[8] = '.';
-	stFile[9] = 'T';
-	stFile[10] = 'X';
-	stFile[11] = 'T';
-	stFile[12] = '\0';
+//	stFile[0] = stDt[2];
+//	stFile[1] = stDt[3];
+//	stFile[2] = stDt[4];
+//	stFile[3] = stDt[5];
+//	stFile[4] = stDt[6];
+//	stFile[5] = '/';
+//	stFile[6] = stDt[8];
+//	stFile[7] = stDt[9];
+//	stFile[8] = '.';
+//	stFile[9] = 'T';
+//	stFile[10] = 'X';
+//	stFile[11] = 'T';
+//	stFile[12] = '\0';
 
 //	outputStringToBothUARTs("\n\r attempting to open file: \"");
 //	outputStringToBothUARTs(stFile);
 //	outputStringToBothUARTs("\"\n\r");
+	
+	dateToFullFilepath (stDt, stFile);
 	
 	FIL logFile;
 	

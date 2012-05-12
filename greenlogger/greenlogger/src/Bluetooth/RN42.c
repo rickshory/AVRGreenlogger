@@ -12,6 +12,7 @@
 #include "../RTC/DS1342.h"
 #include "../Accelerometer/ADXL345.h"
 #include "../TemperatureSensor/TCN75A.h"
+#include "../SDcard/diskio.h"
 #include <util/twi.h>
 
 char btCmdBuffer[commandBufferLen];
@@ -279,21 +280,15 @@ void checkForBTCommands (void) {
 } // end of checkForBTCommands
 
 void BT_dataDump(char* stOpt) {
-	char stLastDate[12] = "2011-12-21"; // system default starting date, winter solstice 2011.
+//	char stLastDate[12] = "2011-12-21"; // system default starting date, winter solstice 2011.
+	char stLastDate[12] = "2012-01-01"; //
 	// There would be no data before this unless user mistakenly set system time earlier.
 	char stTryDate[12], stCurDate[25];
 	datetime_getstring(stCurDate, &dt_CurAlarm); // get current timestamp as string
 	stCurDate[10] = '\0'; // truncate to only the date
-	outputStringToBothUARTs("\n\r current date: \"");
-	outputStringToBothUARTs(stCurDate);
-	outputStringToBothUARTs("\"\n\r");
-	
-//	// testing
-//	errSD = outputContentsOfFileForDate("2012-05-03");
-//	if (errSD) {
-//		tellFileError (errSD);
-//	}					
-//	return;
+//	outputStringToBothUARTs("\n\r current date: \"");
+//	outputStringToBothUARTs(stCurDate);
+//	outputStringToBothUARTs("\"\n\r");
 	
 	if ((stOpt[1] == '\0') || (stOpt[1] == 'A') || (stOpt[1] == 'a')) { // valid options: "A" (all), or blank
 		if (stOpt[1] == '\0') { // basic command with no parameters; default, output everything since last time
@@ -304,13 +299,22 @@ void BT_dataDump(char* stOpt) {
 		do {
 			strcpy(stLastDate, stTryDate);
 //			outputStringToBothUARTs("\n\r");
-			outputStringToBothUARTs("\n\r{\"datafor\":\"");
-			outputStringToBothUARTs(stTryDate);
-			outputStringToBothUARTs("\"}\n\r");
-			errSD = outputContentsOfFileForDate(stTryDate);
-				if (errSD) {
+			errSD = fileExistsForDate(stTryDate);
+			// somewhat redundant to test first because output fns test internally, but avoids output for nonexistent files
+			if (!errSD) {
+				outputStringToBothUARTs("\n\r{\"datafor\":\"");
+				outputStringToBothUARTs(stTryDate);
+				outputStringToBothUARTs("\"}\n\r");
+				errSD = outputContentsOfFileForDate(stTryDate);
+					if (errSD) {
+						tellFileError (errSD);
+					}					
+			} else { // tested if file exists, and some error
+ //				outputStringToBothUARTs(stTryDate);
+ //				outputStringToBothUARTs("  ");
+				if (errSD != sdFileOpenFail) // file does not exist, ignore
 					tellFileError (errSD);
-				}					
+			}
 			datetime_advanceDatestring1Day(stTryDate);
 		} while (strcmp(stTryDate, stCurDate) <= 0);
 //		outputStringToBothUARTs("\n\r");
@@ -321,11 +325,43 @@ void BT_dataDump(char* stOpt) {
 		}
 		return;
 	}
-//	if ((stOpt[1] == 'A') || (stOpt[1] == 'a')) { // output all
-//		
-//		return;
-//	}
-	// try command as a date; if not fn return value will tell user
+
+	if ((stOpt[1] == 'F') || (stOpt[1] == 'f')) { // show existing files
+		strcpy(stTryDate, stLastDate);
+		outputStringToBothUARTs("\n\rFiles exist for:\n\r");
+		do {
+			strcpy(stLastDate, stTryDate);
+			errSD = fileExistsForDate(stTryDate);
+			// somewhat redundant to test first because output fns test internally, but avoids output for nonexistent files
+			if (!errSD) {
+				outputStringToBothUARTs(stTryDate);
+				outputStringToBothUARTs("\n\r");
+			} else { // tested if file exists, and some error
+ //				outputStringToBothUARTs(stTryDate);
+ //				outputStringToBothUARTs("  ");
+				if (errSD != sdFileOpenFail) // file does not exist, ignore
+					tellFileError (errSD);
+			}
+			datetime_advanceDatestring1Day(stTryDate);
+		} while (strcmp(stTryDate, stCurDate) <= 0);
+		outputStringToBothUARTs("\n\r{\"datadump\":\"endfilelist\"}\n\r");
+//		errSD = writeLastDumpDateToSDCard(stLastDate);
+//		if (errSD) {
+//			tellFileError (errSD);
+//		}
+		
+		return;
+	}
+
+	// try command as a date
+	if (!isValidDate(stOpt + 1)) {
+		outputStringToBothUARTs(" Not a valid date");
+		return;
+	}
+	if (!fileExistsForDate(outputStringToBothUARTs)) {
+		outputStringToBothUARTs(" No file for this date");
+		return;
+	}
 	outputStringToBothUARTs("\n\r{\"datadump\":\"begin\"}\n\r");
 	outputStringToBothUARTs("\n\r{\"datafor\":\"");
 	outputStringToBothUARTs(stOpt + 1);
@@ -334,10 +370,10 @@ void BT_dataDump(char* stOpt) {
 	outputStringToBothUARTs("\n\r{\"datadump\":\"end\"}\n\r");
 	if (errSD) {
 		tellFileError (errSD);
-	} else { // if it was a valid date, and we dumped that data
-		errSD = writeLastDumpDateToSDCard(stOpt + 1); // record this date
-		if (errSD) {
-			tellFileError (errSD);
-		}			
-	}
+	} //else { // if it was a valid date, and we dumped that data
+	errSD = writeLastDumpDateToSDCard(stOpt + 1); // record this date
+	if (errSD) {
+		tellFileError (errSD);
+	}			
+//	}
 }

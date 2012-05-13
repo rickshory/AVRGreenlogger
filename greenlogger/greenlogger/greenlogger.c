@@ -177,7 +177,9 @@ int main(void)
 		}
 		
 		if (BT_connected()) {
-			keepBluetoothPowered(120); // keep the try-BT flag active briefly
+			// keep resetting this, so BT power will stay on for 2 minutes after connection lost
+			// to allow easy reconnection
+			keepBluetoothPowered(120);
 		} else { // not connected
 			if (btFlags & (1<<btWasConnected)) { // connection lost
 				; // action(s) when connection lost
@@ -272,7 +274,7 @@ int main(void)
 				outputStringToBothUARTs(str);
 			}
 			if (!temperature_GetReading(&temperatureReading)) {
-					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
+					len = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
 					outputStringToBothUARTs(str);
 			} else
 				outputStringToBothUARTs("\t-");
@@ -349,7 +351,7 @@ int main(void)
 				}
 				// log temperature
 				if (!temperatureReading.verification)
-					len = sprintf(str, "\t%d", (temperatureReading.tmprHiByte));
+					len = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
 				else
 					len = sprintf(str, "\t");
 				strcat(strLog, str);

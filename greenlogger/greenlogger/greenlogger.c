@@ -165,9 +165,10 @@ int main(void)
 			motionFlags &= ~(1<<tapDetected);
 		}
 		if (stateFlags1 & (1<<isRoused)) { // if roused
-			if (irradFlags & (1<<isDark))
-				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
 			irradFlags &= ~(1<<isDark); // clear the Dark flag
+			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+//			if (irradFlags & (1<<isDark))
+//				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
 		}
 		
 		if (!(timeFlags & (1<<nextAlarmSet))) {

@@ -32,6 +32,7 @@ extern char strHdr[64];
 extern int len, err;
 extern volatile accelAxisData accelData;
 extern volatile int8_t timeZoneOffset;
+extern unsigned long darkCutoffIR, darkCutOffBB;
 
 /**
  * \brief turns on power to the RN-42 Bluetooth module

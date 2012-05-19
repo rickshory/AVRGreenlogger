@@ -58,6 +58,8 @@ volatile int8_t timeZoneOffset = 0; // globally available
 volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
+unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
+unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
 unsigned long lngTmp1, lngTmp2;
 
 /**
@@ -74,7 +76,7 @@ int main(void)
 	uint8_t ct, swDnUp, swBbIr;
 	uint8_t errSD, cnt, r;
 	uint16_t cntout = 0;
-	stayRoused(20); // initial, keep system roused for 20 seconds for diagnostic output
+	stayRoused(180); // initial, keep system roused for 3 minutes for diagnostic output
 	strJSON[0] = '\0'; // "erase" the string
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
 	DDRD &= ~(1<<5); // make the Bluetooth connection monitor pin an input
@@ -151,7 +153,8 @@ int main(void)
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
 //	enableRTCInterrupt();
 //	machineState = Idle;
- 
+
+	keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 	while (1) { // main program loop
 		
 //		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
@@ -310,9 +313,9 @@ int main(void)
 //						len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
 						len = sprintf(str, "\t%lu", lngTmp1);
 						if ((ct == 0) || (ct == 3)) { // broadband
-							lngTmp2 = (unsigned long)IRRADIANCE_THRESHOLD_DARK_BB;
+							lngTmp2 = darkCutOffBB;
 						} else { // infrared
-							lngTmp2 = (unsigned long)IRRADIANCE_THRESHOLD_DARK_IR;
+							lngTmp2 = darkCutoffIR;
 						}
 						if (lngTmp1 < lngTmp2) {
 							switch (ct) {
@@ -368,11 +371,12 @@ int main(void)
 				} else {
 					outputStringToBothUARTs(" Data written to SD card \n\r\n\r");
 				}
-				// if all sensors are less than thresholds, or missing
+				// if all sensors are less than thresholds, or missing; and system not in Roused state
 				if ((irradFlags & (1<<isDarkBBDn)) && 
 				     (irradFlags & (1<<isDarkIRDn)) && 
 					 (irradFlags & (1<<isDarkBBUp)) && 
-					 (irradFlags & (1<<isDarkIRUp))) {
+					 (irradFlags & (1<<isDarkIRUp)) && 
+					 (!(stateFlags1 & (1<<isRoused)))) {
 					// flag that it is dark
 					irradFlags |= (1<<isDark);
 				} else { // or not

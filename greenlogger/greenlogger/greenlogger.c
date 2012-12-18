@@ -58,6 +58,7 @@ volatile int8_t timeZoneOffset = 0; // globally available
 volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
+uint16_t previousADCCellVoltageReading = 0;
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
 unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
 unsigned long lngTmp1, lngTmp2;
@@ -236,7 +237,8 @@ int main(void)
 			;
 //		setSDCardPowerControl();
 			// monitor cell voltage, to decide whether there is enough power to proceed
-
+			// remember previous voltage; very first read on intialize, so should be meaningful
+			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 						
 			datetime_getstring(datetime_string, &dt_CurAlarm);
@@ -380,12 +382,23 @@ int main(void)
 					// flag that it is dark
 					irradFlags |= (1<<isDark);
 				} else { // or not
-					irradFlags &= ~(1<<isDark);
+					// try new algorithm:
+					if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_THRESHOLD_SD_CARD) { // if cell is high
+						irradFlags &= ~(1<<isDark); // always leave the Dark state
+					} else { // if cell voltage is low, only leave the Dark state
+						// if cell has charged somewhat since last reading
+						// this should eliminate early morning drain, when data will not be good anyway
+						if (cellVoltageReading.adcWholeWord > previousADCCellVoltageReading) {
+							irradFlags &= ~(1<<isDark);
+						}						
+					}
 				}				
 			}
 			// let main loop restore Idle state, after assuring timer interrupts are re-established
 			break; // if did everything, break here
 		} // end of getting data readings
+		
+		// previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 		
 		turnSDCardPowerOff();
 		

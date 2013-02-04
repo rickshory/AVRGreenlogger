@@ -62,7 +62,6 @@ Vin = (ADC * Vref) / 1024
 before entering other sleep modes than Idle mode and ADC Noise Reduction mode,
 write zero to ADEN to avoid excessive power consumption
 
- REFS0
 */
 
 uint8_t readCellVoltage (volatile adcData *cellV) {
@@ -72,6 +71,9 @@ uint8_t readCellVoltage (volatile adcData *cellV) {
 	// set initial conditions; conversion-complete interrupt will fill in these values
 	cellV->adcWholeWord = 0;
 	cellV->adcMultiplier = 0; // currently, flags that we have no conversion yet
+	
+	// Write a logic zero to the PRADC bit in the Power Reduction register to enable the ADC clock
+    PRR0 &= ~(1<<PRADC); 
 	
 	// Set prescale by ADPS bits in ADCSRA.
 	// using 8MHz CPU clock:
@@ -167,6 +169,8 @@ uint8_t readCellVoltage (volatile adcData *cellV) {
 	ADCSRA &= ~(1<<ADEN);
 	// done, clear SE to prevent SLEEP by accident
 	SMCR &= ~(1<<SE);
+	// Write a logic one to the PRADC bit in the Power Reduction register to turn off the ADC clock
+    PRR0 |= (1<<PRADC); 
 	
 	return cellV->adcHiByte; // for testing
 }

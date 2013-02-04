@@ -14,7 +14,7 @@
 extern volatile dateTime dt_RTC;
 extern volatile int8_t timeZoneOffset;
 
-extern volatile uint8_t stateFlags1, irradFlags;
+extern volatile uint8_t stateFlags1, irradFlags, timeFlags;
 extern int len;
 extern char str[128];
 
@@ -500,6 +500,7 @@ uint8_t rtc_setupNextAlarm(dateTime *pDt) {
 				datetime_copy(&dt, pDt);
 				pDt->houroffset = timeZoneOffset;
 				enableRTCInterrupt();
+				timeFlags |= (1<<nextAlarmSet); // flag that the next alarm is correctly set
 				return 0;
 			}
 		}
@@ -632,7 +633,7 @@ void datetime_advanceIntervalShort(dateTime *t) {
  *
  * This function takes a pointer to a dateTime struct,
  *  and advances the time by the long interval, currently
- *  1 hour. It advances to even hour boundaries boundaries
+ *  1 hour. It advances to whole hour boundaries
  *  (1:00, 2:00, 3:00, ...) so it may actually advance by
  *  less than an hour total.
  */

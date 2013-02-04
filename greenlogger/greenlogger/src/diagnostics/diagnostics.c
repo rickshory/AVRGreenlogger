@@ -19,6 +19,14 @@ static volatile uint8_t Timer1, Timer2;		// 100Hz decrement timers
 
 void setupDiagnostics (void)
 {
+	// may not need following lines
+//	PRR0 &= ~(1<<PRTIM0); // assure timer0 module power is on (clear Power Reduction bit)
+//	PRR0 &= ~(1<<PRTIM1); // assure timer1 module power is on (clear Power Reduction bit)
+//	PRR0 &= ~(1<<PRTIM2); // assure timer2 module power is on (clear Power Reduction bit)
+	// may not need following unless bit is explicitly set elsewhere
+	PRR1 &= ~(1<<PRTIM3); // assure timer3 module power is on (clear Power Reduction bit)
+	
+//	PRR1
     ioinit(); //Setup IO pins and defaults
 	setupTimer3();
 }

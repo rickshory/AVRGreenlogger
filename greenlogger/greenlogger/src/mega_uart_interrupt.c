@@ -130,6 +130,8 @@ void uart0_init(void)
 	UCSR0A |= (1 << U2X0);
 #endif
 
+	PRR0 &= ~(1<<PRUSART0); // assure uart0 module power is on (clear Power Reduction bit)
+
 	// enable RX and TX and set interrupts on rx complete
 	UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
 
@@ -163,6 +165,8 @@ void uart1_init(void)
 #if USE_2X
 	UCSR1A |= (1 << U2X1);
 #endif
+
+	PRR0 &= ~(1<<PRUSART1); // assure uart1 module power is on (clear Power Reduction bit)
 
 	// enable RX and TX and set interrupts on rx complete
 	UCSR1B = (1 << RXEN1) | (1 << TXEN1) | (1 << RXCIE1);

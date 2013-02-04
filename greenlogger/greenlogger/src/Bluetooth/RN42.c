@@ -176,7 +176,8 @@ void checkForBTCommands (void) {
 					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART1(strHdr);
-					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+					timeFlags &= ~(1<<nextAlarmSet); // flag that next alarm may not be correctly set
+//					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 					// cache timezone offset in persistent storage on SD card
 					timeZoneOffset = dt_tmp.houroffset;
 					errSD = writeTimezoneToSDCard();

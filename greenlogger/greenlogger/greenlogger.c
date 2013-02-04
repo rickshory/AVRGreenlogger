@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief code for NDVI (greenness) logger, base on AVR ATmega1284P
+ * \brief code for NDVI (greenness) logger, based on AVR ATmega1284P
  *
- * Copyright (C) 2011 Rick Shory, based in part on source code that is:
+ * Copyright (C) 2011 - 2013 Rick Shory, based in part on source code that is:
  * Copyright (C) 2011 Atmel Corporation. All rights reserved.
  *
  **
@@ -77,9 +77,8 @@ int main(void)
 	uint8_t ct, swDnUp, swBbIr;
 	uint8_t errSD, cnt, r;
 	uint16_t cntout = 0;
-	stayRoused(180); // initial, keep system roused for 3 minutes for diagnostic output
-	strJSON[0] = '\0'; // "erase" the string
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
+	PRR0 = 0b11111111; // set all bits of Power Reduction register, will enable modules as needed
 	DDRD &= ~(1<<5); // make the Bluetooth connection monitor pin an input
 	PORTD &= ~(1<<5); // disable internal pull-up resistor
 	DDRD |= (1<<4); // make Bluetooth power control an output
@@ -87,31 +86,16 @@ int main(void)
 
 	BT_power_off();
 	BT_baud_9600();
-	
-	cli();
-	setupDiagnostics();
+	// coming out of reset, first thing test the NiMH cell to see how well charged it is
+	intTmp1 = readCellVoltage(&cellVoltageReading);
+	// do initialization that is absolutely necessary and/or consumes no significant power
+	strJSON[0] = '\0'; // "erase" the string
 	commandBuffer[0] = '\0';
 	commandBufferPtr = commandBuffer; // "empty" the command buffer
 	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup
-	uart0_init();
-	uart1_init();
-	sei();
+	I2C_Init(); // enable I2C, needed to read RTC chip
+	stateFlags1 |= (1<<isI2CInitialized); // flag that I2C module has been initialized
 	
-	outputStringToUART0("\r\n  UART0 Initialized\r\n");
-//	outputStringToUART1("\r\n  UART1 Initialized\r\n");
-	intTmp1 = readCellVoltage(&cellVoltageReading);
-    outputStringToUART0("\r\n  enter I2C_Init\r\n");
-	I2C_Init(); // enable I2C 
-	outputStringToUART0("\r\n  I2C_Init completed\r\n");
-	
-	r = initializeADXL345();
-	if (r) {
-		len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
-		outputStringToUART0(str);
-	} else {
-		outputStringToUART0("\r\n ADXL345 initialized\r\n");
-	}
-		
 	intTmp1 = rtc_readTime(&dt_RTC);
 	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
 	datetime_getstring(datetime_string, &dt_RTC);
@@ -119,32 +103,17 @@ int main(void)
 	strcat(strJSON, "\",\"to\":\"");
 	
 	if (dt_RTC.year) { // 0 on power up, otherwise must have been set
-		rtcStatus = rtcTimeManuallySet;
+		rtcStatus = rtcTimeRetained;
 		strcat(strJSON, datetime_string);
 		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
-		errSD = readTimezoneFromSDCard();
-		if (errSD) {
-			tellFileError (errSD);
-		} else {
-			len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
-			outputStringToBothUARTs(str);
-
-//			outputStringToBothUARTs(" Timezone read from SD card \n\r\n\r");
-			dt_RTC.houroffset = timeZoneOffset;
-			dt_CurAlarm.houroffset = timeZoneOffset;
-		}
 	} else {
 		rtc_setdefault();
 		if (!rtc_setTime(&dt_RTC)) {
 			rtcStatus = rtcTimeSetToDefault;
-			outputStringToUART0("\n\r time set to default ");
-			datetime_getstring(datetime_string, &dt_RTC);
-			outputStringToUART0(datetime_string);
-			outputStringToUART0("\n\r\n\r");
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"default\"}}\r\n");
 		} else {
-			outputStringToUART0("\n\r could not set Real Time Clock \n\r");
+			rtcStatus = rtcTimeSetError;
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
 		}
@@ -152,94 +121,186 @@ int main(void)
 	stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
 	
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
-//	enableRTCInterrupt();
-//	machineState = Idle;
+	// default, till we see if we have enough power:
+	irradFlags |= (1<<isDark); // set the Dark flag to force long RTC interrupt intervals
+	
+	// if cell voltage is low, skip the rest and go on to setting next RTC alarm and then sleep
+	if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
+		// if cell voltage is high enough for normal operation:
+		
+	
+	} // cell voltage high enough for full operation
+	
+		
+/*
+			datetime_getstring(datetime_string, &dt_CurAlarm);
+			outputStringToBothUARTs(datetime_string);
+			
+			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
+				len = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+				outputStringToBothUARTs(str);
+				break;
+			}
+*/						
 
-	keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
+
 	while (1) { // main program loop
 		
-//		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
+		if (!(stateFlags1 & (1<<fullyPowered))) { // if battery had not previously reached full power
+			// test if it is high enough now
+			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
+				// initialize modules that take more power, and complete tasks that were waiting on these modules
+				cli();
+				setupDiagnostics();
+				uart0_init();
+				uart1_init();
+				sei();
+
+				outputStringToUART0("\r\n  UART0 Initialized\r\n");
+			//	outputStringToUART1("\r\n  UART1 Initialized\r\n");
+
+			//	outputStringToUART0("\r\n  enter I2C_Init\r\n");
+			//	I2C_Init(); // enable I2C 
+				if (stateFlags1 & (1<<isI2CInitialized)) {
+					outputStringToUART0("\r\n  I2C_Init completed\r\n");
+				}			
+	
+				r = initializeADXL345();
+				if (r) {
+					len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
+					outputStringToUART0(str);
+				} else {
+					outputStringToUART0("\r\n ADXL345 initialized\r\n");
+				}
 		
-		if (motionFlags & (1<<tapDetected)) {
-			outputStringToUART0("\n\r Tap detected \n\r\n\r");
-			if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
-				stayRoused(120);
-				keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
+				if (rtcStatus == rtcTimeRetained) {
+					errSD = readTimezoneFromSDCard();
+					if (errSD) {
+						tellFileError (errSD);
+					} else {
+						len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
+						outputStringToBothUARTs(str);
+			//			outputStringToBothUARTs(" Timezone read from SD card \n\r\n\r");
+						dt_RTC.houroffset = timeZoneOffset;
+						dt_CurAlarm.houroffset = timeZoneOffset;
+					}
+				} // rtcTimeRetained
+		
+				if (rtcStatus == rtcTimeSetToDefault) {
+					outputStringToUART0("\n\r time set to default ");
+					datetime_getstring(datetime_string, &dt_RTC);
+					outputStringToUART0(datetime_string);
+					outputStringToUART0("\n\r\n\r");
+				}
+		
+				stayRoused(180); // initial, keep system roused for 3 minutes for diagnostic output
+				keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
+				
+				// flag that we have done this initialization once
+				// don't need to do it again till next reset
+				stateFlags1 |= (1<<fullyPowered); 
+			} // end if  > CELL_VOLTAGE_GOOD_FOR_STARTUP
+		} // end if not fullyPowered
+		
+		if (stateFlags1 & (1<<fullyPowered)) { // do only if cell fully charged, at least previously
+			if (motionFlags & (1<<tapDetected)) {
+				outputStringToUART0("\n\r Tap detected \n\r\n\r");
+				if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
+					stayRoused(120);
+					keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
+				} else {
+					stayRoused(30); // 30 seconds
+				}
+				motionFlags &= ~(1<<tapDetected);
 			}
-			motionFlags &= ~(1<<tapDetected);
-		}
-		if (stateFlags1 & (1<<isRoused)) { // if roused
-			irradFlags &= ~(1<<isDark); // clear the Dark flag
-			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
-//			if (irradFlags & (1<<isDark))
-//				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
-		}
-		
-		if (!(timeFlags & (1<<nextAlarmSet))) {
-//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
-			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-			timeFlags |= (1<<nextAlarmSet);
-		}
-		
-		if (BT_connected()) {
-			// keep resetting this, so BT power will stay on for 2 minutes after connection lost
-			// to allow easy reconnection
-			keepBluetoothPowered(120);
-		} else { // not connected
-			if (btFlags & (1<<btWasConnected)) { // connection lost
-				; // action(s) when connection lost
+			if (stateFlags1 & (1<<isRoused)) { // if roused
+				irradFlags &= ~(1<<isDark); // clear the Dark flag
+				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
 			}
-			btFlags &= ~(1<<btWasConnected); // clear the flag
-			
-		}		
+		
+		
+			if (BT_connected()) {
+				// keep resetting this, so BT power will stay on for 2 minutes after connection lost
+				// to allow easy reconnection
+				keepBluetoothPowered(120);
+			} else { // not connected
+				if (btFlags & (1<<btWasConnected)) { // connection lost
+					; // action(s) when connection lost
+				}
+				btFlags &= ~(1<<btWasConnected); // clear the flag
+			}		
+		} // end if fullyPowered	 
+		
 
 		machineState = Idle; // beginning, or done with everything; return to Idle state
 
-		while (machineState == Idle) { // RTC interrupt will break out of this
-			intTmp1 =  clearAnyADXL345TapInterrupt();
-			if (intTmp1) {
-				len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
-				outputStringToUART0(str);
-			}
-			enableAccelInterrupt();
-			checkForBTCommands();
-			checkForCommands();
+		while (machineState == Idle) { // external RTC or Tap interrupts will break out of this
+			if (stateFlags1 & (1<<fullyPowered)) { // do only if cell fully charged, at least previously
+				intTmp1 =  clearAnyADXL345TapInterrupt();
+				if (intTmp1) {
+					len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
+					outputStringToUART0(str);
+				}
+				enableAccelInterrupt();
 
-		if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
-			// go to sleep
-			PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
-			// SE bit in SMCR must be written to logic one and a SLEEP
-			//  instruction must be executed.
+				if (stateFlags1 & (1<<isRoused)) {
+					checkForBTCommands();
+					checkForCommands();
+				} 
+			} // end if fullyPowered
 
-			// When the SM2..0 bits are written to 010, the SLEEP instruction makes the MCU enter
-			// Power-down mode
+			if (!(stateFlags1 & (1<<isRoused))) { // No longer roused, go to sleep; may add other conditions
+				if (!(timeFlags & (1<<nextAlarmSet))) {
+			//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
+					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm); // fn internally sets the nextAlarmSet bit
+				}
+				// go to sleep
+				PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
+				// SE bit in SMCR must be written to logic one and a SLEEP
+				//  instruction must be executed.
+
+				// When the SM2..0 bits are written to 010, the SLEEP instruction makes the MCU enter
+				// Power-down mode
 	
-			// SM2 = bit 3
-			// SM1 = bit 2
-			// SM0 = bit 1
-			// SE = bit 0
-			// don't set SE yet
-			SMCR = 0b00000100;
-			// set SE (sleep enable)
-			SMCR |= (1<<SE);
-			// go intoPower-down mode SLEEP
-			asm("sleep");
+				// SM2 = bit 3
+				// SM1 = bit 2
+				// SM0 = bit 1
+				// SE = bit 0
+				// don't set SE yet
+				SMCR = 0b00000100;
+				// set SE (sleep enable)
+				SMCR |= (1<<SE);
+				// go into Power-down mode SLEEP
+				asm("sleep");
 			
-		}
+			}
 
 		} // end of (machState == Idle)
-		// when (machState != Idle) execution passes on from this point
+		// when (machState != Idle) execution passes on from this point; either RTC or Tap interrupt will do this
+		// monitor cell voltage, to decide whether there is enough power to proceed
+		// remember previous voltage; first read soon after reset, so should always be meaningful
+		previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
+		intTmp1 = readCellVoltage(&cellVoltageReading);
+		
+		if (motionFlags & (1<<tapDetected)) { // interrupt that woke from sleep was Tap
+			; // may put commands here
+		}
 		// when RTCC occurs, changes machineState to GettingTimestamp
-		timeFlags &= ~(1<<nextAlarmSet);
 //		stayRoused(3);
 
-		while (1) { // various tests may break early
-			;
-//		setSDCardPowerControl();
-			// monitor cell voltage, to decide whether there is enough power to proceed
-			// remember previous voltage; very first read on intialize, so should be meaningful
-			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
-			intTmp1 = readCellVoltage(&cellVoltageReading);
+		while (timeFlags & (1<<alarmDetected)) { // interrupt that woke from sleep was RTC alarm
+			// use while loop to allow various tests to break out
+			// get data readings
+			timeFlags &= ~(1<<nextAlarmSet); // flag that alarm is no longer correctly set
+			if (!(stateFlags1 & (1<<fullyPowered))) { // don't do anything unless previously achieved full power
+				break;
+			}				
+			
+			
+			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) {
+				// no need to do anything, since can't even output diagnostics
+				irradFlags |= (1<<isDark); // treat as if dark
+			}				
 						
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToBothUARTs(datetime_string);
@@ -398,61 +459,21 @@ int main(void)
 			break; // if did everything, break here
 		} // end of getting data readings
 		
-		// previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
-		
-		turnSDCardPowerOff();
-		
-		if (!BT_connected()) { // timeout diagnostics if no Bluetooth connection
-			if (stateFlags1 & (1<<isRoused)) {
-				len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
-				outputStringToUART0(str);
+		if (stateFlags1 & (1<<fullyPowered)) {
+			turnSDCardPowerOff();
+			if (!BT_connected()) { // timeout diagnostics if no Bluetooth connection
+				if (stateFlags1 & (1<<isRoused)) {
+					len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
+					outputStringToUART0(str);
+				}
+				if (BT_powered()) {
+					len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
+					outputStringToUART0(str);
+				}	
 			}
-			if (BT_powered()) {
-				len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
-				outputStringToUART0(str);
-			}
-			
-		}
-
-			
-/*
-
-//    if (flags1.sleepBetweenReadings) { // go to sleep
-
-        if (!stateFlags.isRoused) { // go to sleep
-            outputStringToUSART("\r\n   system timout, going to sleep\r\n");
-            assureSDCardIsOff();
-            while (*USART1_outputbuffer_head != *USART1_outputbuffer_tail) ; // allow any output to finish
-            // if following cause lockup, fix
-            _U1MD = 1; // disable UART0 module 1
-            if (secsSince1Jan2000 > timeToTurnOffBT)
-                BT_PWR_CTL = 0; // turn off power to Bluetooth module, low disables booster module
-            //
-            //_I2C2MD = 1; // disable I2C module 2
-           Sleep();
-           __asm__ ("nop");
-        }
-  
-     } // end of (machState == Idle)
- // when (machState != Idle) execution passes on from this point
-
- // when RTCC occurs, changes machState to GettingTimestamp
-    while (1) { // various tests may break early, 
-        setSDCardPowerControl();
-        // monitor cell voltage, to decide whether there is enough power to proceed
-        }
-        if (stateFlags.isRoused) { 
-            // if roused, and Bluetooth is on, flag to keep BT on awhile after normal rouse timeout
-            // createTimestamp sets secsSince1Jan2000
-            timeToTurnOffBT = secsSince1Jan2000 + SECS_BT_HOLDS_POWER_AFTER_SLEEP;
-        }
-
-*/
-
-		}	
-
-
-}
+		} // end if fully powered		
+	}	// end of main program loop
+} // end of function main
 
 /**
  * \brief Send a string out UART0
@@ -571,12 +592,8 @@ void checkForCommands (void) {
 					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART0(strHdr);
-					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-
-					// 
-/*
-                   startTimer1ToRunThisManySeconds(30); // keep system Roused
-*/
+					timeFlags &= ~(1<<nextAlarmSet); // flag that next alarm may not be correctly set
+//					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
                     break;
                 }
 				

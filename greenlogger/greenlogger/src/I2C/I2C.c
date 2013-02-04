@@ -49,7 +49,7 @@ void I2C_Init (void)
 //	DDRC &= 0b11111100; // force to be inputs
 //	PORTC |= 0b00000011; // enable pull-ups
 	
-	PRR0 &= ~(1<<PRTWI); // assure module power is on (clear Power Reduction bit)
+	PRR0 &= ~(1<<PRTWI); // assure I2C module power is on (clear Power Reduction bit)
 		
 }
 	// the following functions use these bits:

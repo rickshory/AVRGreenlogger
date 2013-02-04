@@ -15,7 +15,7 @@
 extern volatile uint8_t machineState;
 extern volatile uint16_t rouseCountdown;
 extern volatile uint16_t btCountdown;
-extern volatile char stateFlags1, motionFlags;
+extern volatile char stateFlags1, motionFlags, timeFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -76,9 +76,9 @@ void disableAccelInterrupt(void)
 // is triggered by accelerometer
 ISR(PCINT1_vect)
 {
-	motionFlags |= (1<<tapDetected); // flag it
 	disableAccelInterrupt();
-	stayRoused(30); // 30 seconds
+	motionFlags |= (1<<tapDetected); // flag it
+	machineState = WakedFromSleep;
 }
 
 /**
@@ -108,6 +108,8 @@ void enableRTCInterrupt(void)
 	PCIFR |= (1<<PCIF0); // explicitly clear the interrupt flag, in case a spurious change occurred; writing a 1 clears
 	// Pin Change Interrupt 0 triggers on a change on any of PCINT0 to PCINT7 pins (if unmasked)
 	PCICR |= (1<<PCIE0); // enable Pin Change Interrupt 0
+	timeFlags &= ~(1<<alarmDetected);  // clear the flag that said the RTC alarm had occurred
+
 }
 
 void disableRTCInterrupt(void)
@@ -120,5 +122,6 @@ void disableRTCInterrupt(void)
 ISR(PCINT0_vect)
 {
 	disableRTCInterrupt();
-	machineState = GettingTimestamp;
+	timeFlags |= (1<<alarmDetected); // flag it
+	machineState = WakedFromSleep;
 }

@@ -101,7 +101,7 @@ enum timeFlagsBits
 {
 	nextAlarmSet, // next alarm has been correctly set
 	timeToLogData, // flag that it is time to log data to SD card
-	tfBit2, // unused
+	alarmDetected, // the RTC Alarm has caused an interrupt
 	tfBit3, // unused
 	tfBit4, // unused
 	tfBit5, // unused

@@ -157,9 +157,7 @@ int main(void)
 
 	keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 	while (1) { // main program loop
-		
-//		keepBluetoothPowered(120); // for testing, immediately turn Bluetooth power on
-		
+				
 		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");
 			if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
@@ -205,31 +203,37 @@ int main(void)
 			checkForBTCommands();
 			checkForCommands();
 
-		if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
-			// go to sleep
-			PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
-			// SE bit in SMCR must be written to logic one and a SLEEP
-			//  instruction must be executed.
+			if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
+				// go to sleep
+				PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
+				// SE bit in SMCR must be written to logic one and a SLEEP
+				//  instruction must be executed.
 
-			// When the SM2..0 bits are written to 010, the SLEEP instruction makes the MCU enter
-			// Power-down mode
+				// When the SM2..0 bits are written to 010, the SLEEP instruction makes the MCU enter
+				// Power-down mode
 	
-			// SM2 = bit 3
-			// SM1 = bit 2
-			// SM0 = bit 1
-			// SE = bit 0
-			// don't set SE yet
-			SMCR = 0b00000100;
-			// set SE (sleep enable)
-			SMCR |= (1<<SE);
-			// go intoPower-down mode SLEEP
-			asm("sleep");
+				// SM2 = bit 3
+				// SM1 = bit 2
+				// SM0 = bit 1
+				// SE = bit 0
+				// don't set SE yet
+				SMCR = 0b00000100;
+				// set SE (sleep enable)
+				SMCR |= (1<<SE);
+				// go intoPower-down mode SLEEP
+				asm("sleep");
 			
-		}
+			}
 
 		} // end of (machState == Idle)
-		// when (machState != Idle) execution passes on from this point
-		// when RTCC occurs, changes machineState to WakedFromSleep
+			// when (machState != Idle) execution passes on from this point
+			// when RTCC alarm or Accelerometer tap occurs, changes machineState to WakedFromSleep
+		
+		if (motionFlags & (1<<tapDetected)) { // if it was a tap, go into Roused state
+			stayRoused(30); // 30 seconds
+		}
+			
+		
 		timeFlags &= ~(1<<nextAlarmSet);
 //		stayRoused(3);
 

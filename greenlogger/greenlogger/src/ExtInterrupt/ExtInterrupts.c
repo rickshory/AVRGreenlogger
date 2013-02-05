@@ -15,7 +15,7 @@
 extern volatile uint8_t machineState;
 extern volatile uint16_t rouseCountdown;
 extern volatile uint16_t btCountdown;
-extern volatile char stateFlags1, motionFlags;
+extern volatile char stateFlags1, motionFlags, timeFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -78,7 +78,7 @@ ISR(PCINT1_vect)
 {
 	motionFlags |= (1<<tapDetected); // flag it
 	disableAccelInterrupt();
-	stayRoused(30); // 30 seconds
+	machineState = WakedFromSleep;
 }
 
 /**
@@ -119,6 +119,7 @@ void disableRTCInterrupt(void)
 // is triggered by Real Time Clock
 ISR(PCINT0_vect)
 {
+	timeFlags |= (1<<alarmDetected); // flag it
 	disableRTCInterrupt();
 	machineState = WakedFromSleep;
 }

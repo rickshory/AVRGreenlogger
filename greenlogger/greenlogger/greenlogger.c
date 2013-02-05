@@ -237,8 +237,8 @@ int main(void)
 		timeFlags &= ~(1<<nextAlarmSet);
 //		stayRoused(3);
 
-		while (1) { // various tests may break early
-			;
+		while (timeFlags & (1<<alarmDetected)) { // interrupt that woke from sleep was RTC alarm
+			// use while loop to allow various tests to break out
 //		setSDCardPowerControl();
 			// monitor cell voltage, to decide whether there is enough power to proceed
 			// remember previous voltage; very first read on intialize, so should be meaningful

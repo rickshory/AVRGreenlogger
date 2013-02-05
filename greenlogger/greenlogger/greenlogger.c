@@ -229,7 +229,7 @@ int main(void)
 
 		} // end of (machState == Idle)
 		// when (machState != Idle) execution passes on from this point
-		// when RTCC occurs, changes machineState to GettingTimestamp
+		// when RTCC occurs, changes machineState to WakedFromSleep
 		timeFlags &= ~(1<<nextAlarmSet);
 //		stayRoused(3);
 
@@ -410,48 +410,9 @@ int main(void)
 			if (BT_powered()) {
 				len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
 				outputStringToUART0(str);
-			}
-			
+			}	
 		}
-
-			
-/*
-
-//    if (flags1.sleepBetweenReadings) { // go to sleep
-
-        if (!stateFlags.isRoused) { // go to sleep
-            outputStringToUSART("\r\n   system timout, going to sleep\r\n");
-            assureSDCardIsOff();
-            while (*USART1_outputbuffer_head != *USART1_outputbuffer_tail) ; // allow any output to finish
-            // if following cause lockup, fix
-            _U1MD = 1; // disable UART0 module 1
-            if (secsSince1Jan2000 > timeToTurnOffBT)
-                BT_PWR_CTL = 0; // turn off power to Bluetooth module, low disables booster module
-            //
-            //_I2C2MD = 1; // disable I2C module 2
-           Sleep();
-           __asm__ ("nop");
-        }
-  
-     } // end of (machState == Idle)
- // when (machState != Idle) execution passes on from this point
-
- // when RTCC occurs, changes machState to GettingTimestamp
-    while (1) { // various tests may break early, 
-        setSDCardPowerControl();
-        // monitor cell voltage, to decide whether there is enough power to proceed
-        }
-        if (stateFlags.isRoused) { 
-            // if roused, and Bluetooth is on, flag to keep BT on awhile after normal rouse timeout
-            // createTimestamp sets secsSince1Jan2000
-            timeToTurnOffBT = secsSince1Jan2000 + SECS_BT_HOLDS_POWER_AFTER_SLEEP;
-        }
-
-*/
-
-		}	
-
-
+	}	
 }
 
 /**

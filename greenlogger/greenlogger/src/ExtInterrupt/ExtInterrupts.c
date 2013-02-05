@@ -120,5 +120,5 @@ void disableRTCInterrupt(void)
 ISR(PCINT0_vect)
 {
 	disableRTCInterrupt();
-	machineState = GettingTimestamp;
+	machineState = WakedFromSleep;
 }

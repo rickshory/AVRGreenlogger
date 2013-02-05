@@ -17,9 +17,14 @@
 
 #define commandBufferLen 30
 
+// ADC reading * 2.5 = mV
+#define CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS 520 // corresponds to 1300mV, sufficient for high drain functions like GPS
+#define CELL_VOLTAGE_GOOD_FOR_STARTUP 480 // corresponds to 1200mV, sufficient for startup sequence using Bluetooth
 #define CELL_VOLTAGE_THRESHOLD_SD_CARD 456 // corresponds to 1140mV, where the NiMH cell voltage just starts to droop
 #define CELL_VOLTAGE_THRESHOLD_READ_DATA 427 // corresponds to 1067mV where cell voltage is just about to plummet
 #define CELL_VOLTAGE_THRESHOLD_UART 404 // corresponds to 1010mV where cell voltage is just above cutoff
+#define CELL_VOLTAGE_CRITICALLY_LOW 400 // corresponds to 1000mV, safely above the 800mV to 920mV hysteresis range where
+// the boost regulator goes on and off
 
 // temporarily set artificially high, for testing
 //#define DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR 500 // infrared readings below this are considered "darkness"
@@ -33,6 +38,7 @@ enum machStates
 {
  Asleep = 0, 
  Idle,  // done with work but not yet allowed to go to sleep
+ WakedFromSleep, // first test on wake from sleep
  GettingTimestamp, // first step towards acquiring data
  ReadingSensors, // in the process of acquiring sensor data
  WritingData, // in the process of writing acquired data

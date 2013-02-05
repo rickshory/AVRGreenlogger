@@ -78,7 +78,12 @@ int main(void)
 	uint8_t errSD, cnt, r;
 	uint16_t cntout = 0;
 //	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
-	PRR0 = 0b11111111; // set all bits of Power Reduction register, will enable modules as needed
+	// for testing, do not use power reduction
+	PRR0 = 0;
+	PRR1 = 0;
+//	PRR0 = 0b11111111; // set all bits of Power Reduction registers, will enable modules as needed
+//	PRR1 = 0b11111111;
+	
 	DDRD &= ~(1<<5); // make the Bluetooth connection monitor pin an input
 	PORTD &= ~(1<<5); // disable internal pull-up resistor
 	DDRD |= (1<<4); // make Bluetooth power control an output
@@ -123,32 +128,17 @@ int main(void)
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
 	// default, till we see if we have enough power:
 	irradFlags |= (1<<isDark); // set the Dark flag to force long RTC interrupt intervals
-	
-	// if cell voltage is low, skip the rest and go on to setting next RTC alarm and then sleep
-	if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
-		// if cell voltage is high enough for normal operation:
-		
-	
-	} // cell voltage high enough for full operation
-	
-		
-/*
-			datetime_getstring(datetime_string, &dt_CurAlarm);
-			outputStringToBothUARTs(datetime_string);
-			
-			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
-				len = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
-				outputStringToBothUARTs(str);
-				break;
-			}
-*/						
-
 
 	while (1) { // main program loop
-		
+		// do following initialization once, if/when cell voltage is high enough
 		if (!(stateFlags1 & (1<<fullyPowered))) { // if battery had not previously reached full power
 			// test if it is high enough now
 			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
+				
+				// flag that we have done this one-time initialization
+				// don't need to do it again till next reset
+				stateFlags1 |= (1<<fullyPowered); 
+
 				// initialize modules that take more power, and complete tasks that were waiting on these modules
 				cli();
 				setupDiagnostics();
@@ -195,10 +185,6 @@ int main(void)
 		
 				stayRoused(180); // initial, keep system roused for 3 minutes for diagnostic output
 				keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
-				
-				// flag that we have done this initialization once
-				// don't need to do it again till next reset
-				stateFlags1 |= (1<<fullyPowered); 
 			} // end if  > CELL_VOLTAGE_GOOD_FOR_STARTUP
 		} // end if not fullyPowered
 		

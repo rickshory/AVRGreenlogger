@@ -231,6 +231,7 @@ int main(void)
 		
 		if (motionFlags & (1<<tapDetected)) { // if it was a tap, go into Roused state
 			stayRoused(30); // 30 seconds
+			motionFlags &= ~(1<<tapDetected); // clear the flag
 		}
 			
 		

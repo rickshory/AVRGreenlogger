@@ -135,11 +135,9 @@ int main(void)
 			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
 		}
 	}
-	stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
-	
+	stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write	
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
-//	enableRTCInterrupt();
-//	machineState = Idle;
+	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
 
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,
@@ -195,12 +193,6 @@ int main(void)
 	//				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
 			}
 		
-			if (!(timeFlags & (1<<nextAlarmSet))) {
-	//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
-				intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-				timeFlags |= (1<<nextAlarmSet);
-			}
-		
 			if (BT_connected()) {
 				// keep resetting this, so BT power will stay on for 2 minutes after connection lost
 				// to allow easy reconnection
@@ -213,11 +205,10 @@ int main(void)
 			}		
 		} // end of this full power segment
 		
-
 		machineState = Idle; // beginning, or done with everything; return to Idle state
 
 		while (machineState == Idle) { // RTC interrupt will break out of this
-			if (stateFlags1 & (1<<reachedFullPower)) { // another only-full-power segment
+			if (stateFlags1 & (1<<reachedFullPower)) { // another full-power-only segment
 				intTmp1 =  clearAnyADXL345TapInterrupt();
 				if (intTmp1) {
 					len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
@@ -227,6 +218,12 @@ int main(void)
 				checkForBTCommands();
 				checkForCommands();
 			} // end of this full-power segment
+			
+			if (!(timeFlags & (1<<nextAlarmSet))) {
+	//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
+				intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+				timeFlags |= (1<<nextAlarmSet);
+			}
 
 			if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
 				// go to sleep

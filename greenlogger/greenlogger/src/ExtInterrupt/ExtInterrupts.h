@@ -9,8 +9,8 @@
 #ifndef EXTINTERRUPTS_H_
 #define EXTINTERRUPTS_H_
 
-void stayRoused(int8_t sec);
-void keepBluetoothPowered(int8_t sec);
+void stayRoused(uint8_t sec);
+void keepBluetoothPowered(uint8_t sec);
 
 
 

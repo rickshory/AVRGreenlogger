@@ -19,7 +19,7 @@ extern volatile char stateFlags1, motionFlags, timeFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
-void stayRoused(int8_t sec)
+void stayRoused(uint8_t sec)
 {
 	cli(); // temporarily disable interrupts to prevent Timer3 from
 		// changing the count partway through
@@ -30,7 +30,7 @@ void stayRoused(int8_t sec)
 	sei();
 }
 
-void keepBluetoothPowered(int8_t sec)
+void keepBluetoothPowered(uint8_t sec)
 {
 	cli(); // temporarily disable interrupts to prevent Timer3 from
 		// changing the count partway through

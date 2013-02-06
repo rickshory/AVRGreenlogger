@@ -65,6 +65,8 @@ enum errI2C
 enum stateRTC
 {
 	rtcTimeNotSet = 0, // RTC time has not been set in any way, running from power-up default
+	rtcTimeSetFailed, // failure to set RTC
+	rtcTimeRetained, // RTC found to have valid time on uC reset
 	rtcTimeSetToDefault, // RTC date/time has been set to the default, winter solstice 2011
 	rtcTimeManuallySet, // RTC date/time was manually set by command line; change noted in log
 	rtcHasGPSTime // RTC has a valid date/time acquired from the GPS; the global "dt_LatestGPS"

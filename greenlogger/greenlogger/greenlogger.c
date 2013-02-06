@@ -118,8 +118,9 @@ int main(void)
 	strcat(strJSON, datetime_string);
 	strcat(strJSON, "\",\"to\":\"");
 	
-	if (dt_RTC.year) { // 0 on power up, otherwise must have been set
-		rtcStatus = rtcTimeManuallySet;
+	if (dt_RTC.year) { // 0 on power up, otherwise must already have been set
+		outputStringToBothUARTs("\n\r time retained through uC reset\n\r\n\r");
+		rtcStatus = rtcTimeRetained;
 		strcat(strJSON, datetime_string);
 		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
 		errSD = readTimezoneFromSDCard();
@@ -128,23 +129,22 @@ int main(void)
 		} else {
 			len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
 			outputStringToBothUARTs(str);
-
-//			outputStringToBothUARTs(" Timezone read from SD card \n\r\n\r");
 			dt_RTC.houroffset = timeZoneOffset;
 			dt_CurAlarm.houroffset = timeZoneOffset;
 		}
-	} else {
+	} else { // RTC year = 0 on power up, clock needs to be set
 		rtc_setdefault();
 		if (!rtc_setTime(&dt_RTC)) {
 			rtcStatus = rtcTimeSetToDefault;
-			outputStringToUART0("\n\r time set to default ");
+			outputStringToBothUARTs("\n\r time set to default ");
 			datetime_getstring(datetime_string, &dt_RTC);
-			outputStringToUART0(datetime_string);
-			outputStringToUART0("\n\r\n\r");
+			outputStringToBothUARTs(datetime_string);
+			outputStringToBothUARTs("\n\r\n\r");
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"default\"}}\r\n");
 		} else {
-			outputStringToUART0("\n\r could not set Real Time Clock \n\r");
+			rtcStatus = rtcTimeSetFailed;
+			outputStringToBothUARTs("\n\r could not set Real Time Clock \n\r");
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
 		}
@@ -155,14 +155,14 @@ int main(void)
 //	enableRTCInterrupt();
 //	machineState = Idle;
 
-	keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,
 		// sufficient to run initializations and modules that take more power
 		if (!(stateFlags1 & (1<<reachedFullPower))) { 
 			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
+				stateFlags1 |= (1<<reachedFullPower); // flag, so this loop does not happen again till next reset
+	            keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
-				stateFlags1 |= (1<<reachedFullPower);
 			}
 		}
 				

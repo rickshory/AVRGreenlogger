@@ -88,29 +88,16 @@ int main(void)
 	BT_power_off();
 	BT_baud_9600();
 	
-	cli();
-	setupDiagnostics();
-	commandBuffer[0] = '\0';
-	commandBufferPtr = commandBuffer; // "empty" the command buffer
+	commandBuffer[0] = '\0'; // "empty" the command buffer
+	commandBufferPtr = commandBuffer;
 	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup
-	uart0_init();
-	uart1_init();
-	sei();
-	
-	outputStringToUART0("\r\n  UART0 Initialized\r\n");
-//	outputStringToUART1("\r\n  UART1 Initialized\r\n");
+
 	intTmp1 = readCellVoltage(&cellVoltageReading);
-    outputStringToUART0("\r\n  enter I2C_Init\r\n");
-	I2C_Init(); // enable I2C 
-	outputStringToUART0("\r\n  I2C_Init completed\r\n");
 	
-	r = initializeADXL345();
-	if (r) {
-		len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
-		outputStringToUART0(str);
-	} else {
-		outputStringToUART0("\r\n ADXL345 initialized\r\n");
-	}
+	
+	
+	I2C_Init(); // enable I2C 
+//	outputStringToUART0("\r\n  I2C_Init completed\r\n");
 		
 	intTmp1 = rtc_readTime(&dt_RTC);
 	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
@@ -145,6 +132,25 @@ int main(void)
 		if (!(stateFlags1 & (1<<reachedFullPower))) { 
 			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
 				stateFlags1 |= (1<<reachedFullPower); // flag, so this loop does not happen again till next reset
+
+				cli();
+				setupDiagnostics();
+				uart0_init();
+				uart1_init();
+				sei();
+	
+				outputStringToUART0("\r\n  UART0 Initialized\r\n");
+			//	outputStringToUART1("\r\n  UART1 Initialized\r\n");
+				outputStringToUART0("\r\n  enter I2C_Init\r\n");
+				
+				r = initializeADXL345();
+				if (r) {
+					len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
+					outputStringToUART0(str);
+				} else {
+					outputStringToUART0("\r\n ADXL345 initialized\r\n");
+				}
+				
 				switch (rtcStatus) {
 					
 					case rtcTimeRetained:

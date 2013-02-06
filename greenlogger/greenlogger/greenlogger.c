@@ -77,9 +77,7 @@ int main(void)
 	uint8_t ct, swDnUp, swBbIr;
 	uint8_t errSD, cnt, r;
 	uint16_t cntout = 0;
-	stayRoused(180); // initial, keep system roused for 3 minutes for diagnostic output
 	strJSON[0] = '\0'; // "erase" the string
-//	stateFlags1 &= ~((1<<timeHasBeenSet) | (1<<timerHasBeenSynchronized));
 	DDRD &= ~(1<<5); // make the Bluetooth connection monitor pin an input
 	PORTD &= ~(1<<5); // disable internal pull-up resistor
 	DDRD |= (1<<4); // make Bluetooth power control an output
@@ -184,6 +182,7 @@ int main(void)
 						break;
 					
 				}
+				stayRoused(180); // initial, keep system roused for 3 minutes for diagnostic output
 	            keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 			}

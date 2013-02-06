@@ -121,6 +121,12 @@ int main(void)
 	stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write	
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
 	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
+	
+	cli();
+	setupDiagnostics(); // need heartbeat timer to correctly turn SD power off (may work around this)
+	// also may help with power control tracking while testing dead battery re-charge
+	sei();
+	turnSDCardPowerOff();
 
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,
@@ -128,9 +134,16 @@ int main(void)
 		if (!(stateFlags1 & (1<<reachedFullPower))) { 
 			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
 				stateFlags1 |= (1<<reachedFullPower); // flag, so this loop does not happen again till next reset
-
+				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
+					// probably, somebody has just popped a fresh battery in, and wants to set up this device
+					stayRoused(180); // keep system roused for 3 minutes for diagnostic output
+				} else {
+					// probably, battery has slowly charged from dead, and nobody is here watching
+					// long diagnostics would just waste power for no good reason
+					stayRoused(3); // only briefly, 3 seconds, then go into low power mode
+				}
 				cli();
-				setupDiagnostics();
+//				setupDiagnostics();
 				uart0_init();
 				initFlags |= (1<<initUART0);
 				uart1_init();
@@ -182,11 +195,15 @@ int main(void)
 						break;
 					
 				}
-				stayRoused(180); // initial, keep system roused for 3 minutes for diagnostic output
-	            keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
+				
 				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
-			}
-		}
+				
+				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
+					// if it's likely someone is setting up this device with a fresh battery
+					keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
+				}
+			} // end test CELL_VOLTAGE_GOOD_FOR_STARTUP
+		} // end test reachedFullPower flag
 		
 		if (stateFlags1 & (1<<reachedFullPower)) { // only run this after cell has charged to full power and modules initialized
 			if (motionFlags & (1<<tapDetected)) {

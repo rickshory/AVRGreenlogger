@@ -79,7 +79,7 @@ enum stateFlags1Bits
 	writeJSONMsg, // there is a JSON message to log
 	writeDataHeaders, // flag to write column headers to SD card
 	//  done on init, reset, time change, and midnight rollover
-	sfBit5, // unused
+	reachedFullPower, // cell charging achieved high enough voltage to allow high-power modules, initializations
 	sfBit6, // unused
 	sfBit7 // unused
  };

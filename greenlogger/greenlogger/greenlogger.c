@@ -157,6 +157,14 @@ int main(void)
 
 	keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 	while (1) { // main program loop
+		// code that will only run once when/if cell voltage first goes above threshold,
+		// sufficient to run initializations and modules that take more power
+		if (!(stateFlags1 & (1<<reachedFullPower))) { 
+			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
+				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
+				stateFlags1 |= (1<<reachedFullPower);
+			}
+		}
 				
 		if (motionFlags & (1<<tapDetected)) {
 			outputStringToUART0("\n\r Tap detected \n\r\n\r");

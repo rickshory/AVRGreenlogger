@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief code for NDVI (greenness) logger, base on AVR ATmega1284P
+ * \brief code for NDVI (greenness) logger, based on AVR ATmega1284P
  *
- * Copyright (C) 2011 Rick Shory, based in part on source code that is:
+ * Copyright (C) 2011 - 2013 Rick Shory, based in part on source code that is:
  * Copyright (C) 2011 Atmel Corporation. All rights reserved.
  *
  **

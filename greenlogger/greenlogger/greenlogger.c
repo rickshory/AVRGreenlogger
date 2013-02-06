@@ -119,32 +119,18 @@ int main(void)
 	strcat(strJSON, "\",\"to\":\"");
 	
 	if (dt_RTC.year) { // 0 on power up, otherwise must already have been set
-		outputStringToBothUARTs("\n\r time retained through uC reset\n\r\n\r");
 		rtcStatus = rtcTimeRetained;
 		strcat(strJSON, datetime_string);
 		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
-		errSD = readTimezoneFromSDCard();
-		if (errSD) {
-			tellFileError (errSD);
-		} else {
-			len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
-			outputStringToBothUARTs(str);
-			dt_RTC.houroffset = timeZoneOffset;
-			dt_CurAlarm.houroffset = timeZoneOffset;
-		}
 	} else { // RTC year = 0 on power up, clock needs to be set
 		rtc_setdefault();
 		if (!rtc_setTime(&dt_RTC)) {
 			rtcStatus = rtcTimeSetToDefault;
-			outputStringToBothUARTs("\n\r time set to default ");
 			datetime_getstring(datetime_string, &dt_RTC);
-			outputStringToBothUARTs(datetime_string);
-			outputStringToBothUARTs("\n\r\n\r");
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"default\"}}\r\n");
 		} else {
 			rtcStatus = rtcTimeSetFailed;
-			outputStringToBothUARTs("\n\r could not set Real Time Clock \n\r");
 			strcat(strJSON, datetime_string);
 			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
 		}
@@ -161,6 +147,33 @@ int main(void)
 		if (!(stateFlags1 & (1<<reachedFullPower))) { 
 			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
 				stateFlags1 |= (1<<reachedFullPower); // flag, so this loop does not happen again till next reset
+				switch (rtcStatus) {
+					
+					case rtcTimeRetained:
+						outputStringToBothUARTs("\n\r time retained through uC reset\n\r");
+						errSD = readTimezoneFromSDCard();
+						if (errSD) {
+							tellFileError (errSD);
+						} else {
+							len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
+							outputStringToBothUARTs(str);
+							dt_RTC.houroffset = timeZoneOffset;
+							dt_CurAlarm.houroffset = timeZoneOffset;
+						}
+						break;
+						
+					case rtcTimeSetToDefault:
+						outputStringToBothUARTs("\n\r time set to default, now elapsed to ");
+						datetime_getstring(datetime_string, &dt_RTC);
+						outputStringToBothUARTs(datetime_string);
+						outputStringToBothUARTs("\n\r\n\r");
+						break;	
+					
+					case rtcTimeSetFailed:
+						outputStringToBothUARTs("\n\r could not set Real Time Clock \n\r");
+						break;
+					
+				}
 	            keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 			}

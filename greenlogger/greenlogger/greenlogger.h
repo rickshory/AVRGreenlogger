@@ -86,6 +86,19 @@ enum stateFlags1Bits
 	sfBit7 // unused
  };
 
+enum initFlagsBits
+{
+	initI2C, // I2C has been initialized
+	initUART0, // UART0 has been initialized
+	initUART1, // UART1 has been initialized
+	initAccelerometer, // Accelerometer has been initialized
+	sf2Bit4, // unused
+	sf2Bit5, // unused
+	sf2Bit6, // unused
+	sf2Bit7 // unused
+ };
+
+
 enum btFlagsBits
 {
 	btWasConnected, // track transitions between connected to not connected

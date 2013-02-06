@@ -178,51 +178,55 @@ int main(void)
 				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 			}
 		}
-				
-		if (motionFlags & (1<<tapDetected)) {
-			outputStringToUART0("\n\r Tap detected \n\r\n\r");
-			if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
-				stayRoused(120);
-				keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
-			}
-			motionFlags &= ~(1<<tapDetected);
-		}
-		if (stateFlags1 & (1<<isRoused)) { // if roused
-			irradFlags &= ~(1<<isDark); // clear the Dark flag
-			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
-//			if (irradFlags & (1<<isDark))
-//				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
-		}
 		
-		if (!(timeFlags & (1<<nextAlarmSet))) {
-//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
-			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-			timeFlags |= (1<<nextAlarmSet);
-		}
-		
-		if (BT_connected()) {
-			// keep resetting this, so BT power will stay on for 2 minutes after connection lost
-			// to allow easy reconnection
-			keepBluetoothPowered(120);
-		} else { // not connected
-			if (btFlags & (1<<btWasConnected)) { // connection lost
-				; // action(s) when connection lost
+		if (stateFlags1 & (1<<reachedFullPower)) { // only run this after cell has charged to full power and modules initialized
+			if (motionFlags & (1<<tapDetected)) {
+				outputStringToUART0("\n\r Tap detected \n\r\n\r");
+				if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
+					stayRoused(120);
+					keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
+				}
+				motionFlags &= ~(1<<tapDetected);
 			}
-			btFlags &= ~(1<<btWasConnected); // clear the flag
-			
-		}		
+			if (stateFlags1 & (1<<isRoused)) { // if roused
+				irradFlags &= ~(1<<isDark); // clear the Dark flag
+				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+	//			if (irradFlags & (1<<isDark))
+	//				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+			}
+		
+			if (!(timeFlags & (1<<nextAlarmSet))) {
+	//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
+				intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+				timeFlags |= (1<<nextAlarmSet);
+			}
+		
+			if (BT_connected()) {
+				// keep resetting this, so BT power will stay on for 2 minutes after connection lost
+				// to allow easy reconnection
+				keepBluetoothPowered(120);
+			} else { // not connected
+				if (btFlags & (1<<btWasConnected)) { // connection lost
+					; // action(s) when connection lost
+				}
+				btFlags &= ~(1<<btWasConnected); // clear the flag
+			}		
+		} // end of this full power segment
+		
 
 		machineState = Idle; // beginning, or done with everything; return to Idle state
 
 		while (machineState == Idle) { // RTC interrupt will break out of this
-			intTmp1 =  clearAnyADXL345TapInterrupt();
-			if (intTmp1) {
-				len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
-				outputStringToUART0(str);
-			}
-			enableAccelInterrupt();
-			checkForBTCommands();
-			checkForCommands();
+			if (stateFlags1 & (1<<reachedFullPower)) { // another only-full-power segment
+				intTmp1 =  clearAnyADXL345TapInterrupt();
+				if (intTmp1) {
+					len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
+					outputStringToUART0(str);
+				}
+				enableAccelInterrupt();
+				checkForBTCommands();
+				checkForCommands();
+			} // end of this full-power segment
 
 			if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
 				// go to sleep
@@ -243,7 +247,6 @@ int main(void)
 				SMCR |= (1<<SE);
 				// go intoPower-down mode SLEEP
 				asm("sleep");
-			
 			}
 
 		} // end of (machState == Idle)

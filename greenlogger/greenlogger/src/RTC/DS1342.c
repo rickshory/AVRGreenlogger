@@ -523,7 +523,9 @@ void rtc_setdefault(void)
 	dt_RTC.houroffset = -8;
 	timeZoneOffset = dt_RTC.houroffset; // also set global
 	dt_RTC.hour = 21;
-	dt_RTC.minute = 30;
+//	dt_RTC.minute = 30;	
+	dt_RTC.minute = 59; // for testing dead battery re-charging by solar cells, 
+	// when sufficient charge achieved, initialization loop will run one minute later on hour rollover
 	dt_RTC.second = 0;
 }
 

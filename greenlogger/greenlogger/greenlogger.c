@@ -94,8 +94,6 @@ int main(void)
 
 	intTmp1 = readCellVoltage(&cellVoltageReading);
 	
-	
-	
 	I2C_Init(); // enable I2C 
 //	outputStringToUART0("\r\n  I2C_Init completed\r\n");
 		
@@ -256,23 +254,32 @@ int main(void)
 			// when (machState != Idle) execution passes on from this point
 			// when RTCC alarm or Accelerometer tap occurs, changes machineState to WakedFromSleep
 		
+		// Tap interrupt will not be active until first time initialization, so
+		//  following flag should not be settable till then anyway
+		//  but put internal check in case code rearranged
 		if (motionFlags & (1<<tapDetected)) { // if it was a tap, go into Roused state
-			stayRoused(30); // 30 seconds
+			if (stateFlags1 & (1<<reachedFullPower)) { // only if had achieved full power and initialized
+				stayRoused(30); // 30 seconds
+			}
 			motionFlags &= ~(1<<tapDetected); // clear the flag
 		}
 			
-		
-		timeFlags &= ~(1<<nextAlarmSet);
-//		stayRoused(3);
+		timeFlags &= ~(1<<nextAlarmSet); // flag that current alarm is no longer valid
 
 		while (timeFlags & (1<<alarmDetected)) { // interrupt that woke from sleep was RTC alarm
-			// use while loop to allow various tests to break out
-//		setSDCardPowerControl();
+			// use 'while' loop to allow various tests to break out
 			// monitor cell voltage, to decide whether there is enough power to proceed
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
-						
+			if (!(stateFlags1 & (1<<reachedFullPower))) { // if not achieved full power and initialized, skip this data acquisition loop
+				// for testing, set to 10-second interval, so don't have to wait an hour to see if battery charging worked
+				irradFlags &= ~(1<<isDark); // remove this line when done testing
+				break; // will test reachedFullPower at top of main program loop
+			}
+			
+			
+			
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToBothUARTs(datetime_string);
 			
@@ -428,24 +435,24 @@ int main(void)
 			}
 			// let main loop restore Idle state, after assuring timer interrupts are re-established
 			break; // if did everything, break here
-		} // end of getting data readings
-		
-		// previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
-		
+		} // end of data acquisition segment
+				
 		turnSDCardPowerOff();
 		
-		if (!BT_connected()) { // timeout diagnostics if no Bluetooth connection
-			if (stateFlags1 & (1<<isRoused)) {
-				len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
-				outputStringToUART0(str);
+		if (stateFlags1 & (1<<reachedFullPower)) { // another full-power-only segment
+			if (!BT_connected()) { // timeout diagnostics if no Bluetooth connection
+				if (stateFlags1 & (1<<isRoused)) {
+					len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
+					outputStringToUART0(str);
+				}
+				if (BT_powered()) {
+					len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
+					outputStringToUART0(str);
+				}	
 			}
-			if (BT_powered()) {
-				len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
-				outputStringToUART0(str);
-			}	
-		}
-	}	
-}
+		} // end of this full-power-only segment
+	} // end of main program loop
+} // end of fn main
 
 /**
  * \brief Send a string out UART0

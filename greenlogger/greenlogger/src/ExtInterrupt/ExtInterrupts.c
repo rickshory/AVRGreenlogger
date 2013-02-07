@@ -15,7 +15,7 @@
 extern volatile uint8_t machineState;
 extern volatile uint16_t rouseCountdown;
 extern volatile uint16_t btCountdown;
-extern volatile char stateFlags1, motionFlags, timeFlags;
+extern volatile char stateFlags1, motionFlags, timeFlags, btFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -30,6 +30,15 @@ void stayRoused(uint8_t sec)
 	sei();
 }
 
+void endRouse(void) {
+	cli(); // temporarily disable interrupts to prevent Timer3 from
+		// changing the count partway through
+	rouseCountdown = 0;
+	stateFlags1 &= ~(1<<isRoused);
+	sei();
+	
+}
+
 void keepBluetoothPowered(uint8_t sec)
 {
 	cli(); // temporarily disable interrupts to prevent Timer3 from
@@ -39,7 +48,16 @@ void keepBluetoothPowered(uint8_t sec)
 	}
 //	BT_power_on();
 	PORTD |= (1<<4); // Bluetooth power on
-	
+	sei();
+}
+
+void shutDownBluetooth(void) {
+	cli(); // temporarily disable interrupts to prevent Timer3 from
+		// changing the count partway through
+	btCountdown = 0;
+//	BT_power_on();
+	PORTD &= ~(1<<4); // set low; turn Bluetooth power off
+	btFlags &= ~(1<<btWasConnected); // clear the flag, so will not re-try
 	sei();
 }
 

@@ -201,6 +201,18 @@ int main(void)
 			} // end test CELL_VOLTAGE_GOOD_FOR_STARTUP
 		} // end test reachedFullPower flag
 		
+		// end of segment that runs only once, when Full Power first achieved
+		
+		// beginning of loop that runs repeatedly
+		if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_CRITICALLY_LOW) { // power too low, shut everything down
+			shutDownBluetooth();
+			endRouse();
+			motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
+			irradFlags |= (1<<isDark); // behave as if in the Dark
+			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+		}
+		
+		// tests of normal operation
 		if (stateFlags1 & (1<<reachedFullPower)) { // only run this after cell has charged to full power and modules initialized
 			if (motionFlags & (1<<tapDetected)) {
 				outputStringToUART0("\n\r Tap detected \n\r\n\r");

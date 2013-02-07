@@ -10,8 +10,9 @@
 #define EXTINTERRUPTS_H_
 
 void stayRoused(uint8_t sec);
+void endRouse(void);
 void keepBluetoothPowered(uint8_t sec);
-
+void shutDownBluetooth(void);
 
 
 

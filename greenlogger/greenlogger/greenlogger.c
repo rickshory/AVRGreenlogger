@@ -59,7 +59,7 @@ volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
 uint16_t previousADCCellVoltageReading = 0;
-uint16_t refDarkVoltageReading = 0;
+uint16_t refDarkVoltage = 0;
 
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
 unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
@@ -376,50 +376,30 @@ int main(void)
             // or the once-per-hour wakeup while dark
 				timeFlags |= (1<<timeToLogData);
 				if (irradFlags & (1<<isDark)) { // store the voltage reading at this point
-					refDarkVoltageReading = cellVoltageReading.adcWholeWord; 
+					refDarkVoltage = cellVoltageReading.adcWholeWord; 
 				}
 				
 			//	outputStringToUART0("\n\r Time to log data \n\r");
 			} else {
 				timeFlags &= ~(1<<timeToLogData);
 			//	outputStringToUART0("\n\r Not time to log data \n\r");
-			}			
-
-			if (timeFlags & (1<<timeToLogData)) {
-//				outputStringToUART0("\n\r Entered log data routine \n\r");
-				// log irradiance
-				strcpy(strLog, "\n\r");
-				strcat(strLog, datetime_string);
-				irradFlags &= ~((1<<isDarkBBDn) | (1<<isDarkIRDn) | (1<<isDarkBBUp) | (1<<isDarkIRUp)); // default clear
-				for (ct = 0; ct < 4; ct++) { // write irradiance readings
-					if (!(irrReadings[ct].validation)) {
-						lngTmp1 = (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier);
+			}
+			
+			// begin to build log string while testing, even if we end up not logging data
+			strcpy(strLog, "\n\r");
+			strcat(strLog, datetime_string);
+			irradFlags &= ~((1<<isDarkBBDn) | (1<<isDarkIRDn) | (1<<isDarkBBUp) | (1<<isDarkIRUp)); // default clear
+			for (ct = 0; ct < 4; ct++) { // generate irradiance readings
+				if (!(irrReadings[ct].validation)) {
+					lngTmp1 = (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier);
 //						len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
-						len = sprintf(str, "\t%lu", lngTmp1);
-						if ((ct == 0) || (ct == 3)) { // broadband
-							lngTmp2 = darkCutOffBB;
-						} else { // infrared
-							lngTmp2 = darkCutoffIR;
-						}
-						if (lngTmp1 < lngTmp2) {
-							switch (ct) {
-								case 0:
-									irradFlags |= (1<<isDarkBBDn);
-									break;
-								case 1:
-									irradFlags |= (1<<isDarkIRDn);
-									break;
-								case 2:
-									irradFlags |= (1<<isDarkBBUp);
-									break;
-								case 3:
-									irradFlags |= (1<<isDarkIRUp);
-									break;
-							}
-						}
-					} else { // no valid data for this reading
-						len = sprintf(str, "\t");
-						// treat invalid readings as if dark
+					len = sprintf(str, "\t%lu", lngTmp1);
+					if ((ct == 0) || (ct == 3)) { // broadband
+						lngTmp2 = darkCutOffBB;
+					} else { // infrared
+						lngTmp2 = darkCutoffIR;
+					}
+					if (lngTmp1 < lngTmp2) {
 						switch (ct) {
 							case 0:
 								irradFlags |= (1<<isDarkBBDn);
@@ -435,8 +415,31 @@ int main(void)
 								break;
 						}
 					}
-					strcat(strLog, str);
+				} else { // no valid data for this reading
+					len = sprintf(str, "\t");
+					// treat invalid readings as if dark
+					switch (ct) {
+						case 0:
+							irradFlags |= (1<<isDarkBBDn);
+							break;
+						case 1:
+							irradFlags |= (1<<isDarkIRDn);
+							break;
+						case 2:
+							irradFlags |= (1<<isDarkBBUp);
+							break;
+						case 3:
+							irradFlags |= (1<<isDarkIRUp);
+							break;
+					}
 				}
+				strcat(strLog, str);
+			} // end of irradiance sensor validity testing
+
+			if (timeFlags & (1<<timeToLogData)) {
+//				outputStringToUART0("\n\r Entered log data routine \n\r");
+				// (previously built irradiance part of log string)
+				
 				// log temperature
 				if (!temperatureReading.verification)
 					len = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
@@ -454,28 +457,32 @@ int main(void)
 				} else {
 					outputStringToBothUARTs(" Data written to SD card \n\r\n\r");
 				}
-				// if all sensors are less than thresholds, or missing; and system not in Roused state
-				if ((irradFlags & (1<<isDarkBBDn)) && 
-				     (irradFlags & (1<<isDarkIRDn)) && 
-					 (irradFlags & (1<<isDarkBBUp)) && 
-					 (irradFlags & (1<<isDarkIRUp)) && 
-					 (!(stateFlags1 & (1<<isRoused)))) {
-					// flag that it is dark
-					irradFlags |= (1<<isDark);
-				} else { // or not
-					// try new algorithm:
-					if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_THRESHOLD_SD_CARD) { // if cell is high
-						irradFlags &= ~(1<<isDark); // always leave the Dark state
-					} else { // if cell voltage is low, only leave the Dark state
-						// if cell has charged somewhat since last reading
-						// this should eliminate early morning drain, when data will not be good anyway
-						// require a small increase in cell voltage to ignore random jitter
-						if (cellVoltageReading.adcWholeWord > (refDarkVoltageReading + 3)) {
-							irradFlags &= ~(1<<isDark);
-						}						
-					}
-				}				
-			}
+			} // end of test if time to log data
+			
+			// test if dark or not dark
+			// if all sensors are less than thresholds, or missing; and system not in Roused state
+			if ((irradFlags & (1<<isDarkBBDn)) && 
+				    (irradFlags & (1<<isDarkIRDn)) && 
+					(irradFlags & (1<<isDarkBBUp)) && 
+					(irradFlags & (1<<isDarkIRUp)) && 
+					(!(stateFlags1 & (1<<isRoused)))) {
+				// flag that it is dark
+				irradFlags |= (1<<isDark);
+			} else { // or not
+				// try new algorithm:
+				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_THRESHOLD_SD_CARD) { // if cell is high
+					irradFlags &= ~(1<<isDark); // always leave the Dark state
+				} else { // if cell voltage is low, only leave the Dark state
+					// if cell has charged somewhat since last reading
+					// this should eliminate early morning drain, when data will not be good anyway
+					// require a small increase in cell voltage to ignore random jitter
+					if (cellVoltageReading.adcWholeWord > (refDarkVoltage + 3)) {
+						irradFlags &= ~(1<<isDark);
+					}						
+				}
+			} // end of testing for dark or not dark		
+
+
 			// let main loop restore Idle state, after assuring timer interrupts are re-established
 			break; // if did everything, break here
 		} // end of data acquisition segment
@@ -504,6 +511,7 @@ void checkCriticalPower(void){
 		motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
 		irradFlags |= (1<<isDark); // behave as if in the Dark
 		timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+		refDarkVoltage = CELL_VOLTAGE_CRITICALLY_LOW; // allow testing that cell is recharging
 	}
 }
 

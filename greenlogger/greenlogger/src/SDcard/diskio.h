@@ -137,6 +137,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n);
 BYTE writeStringInFileToSDCard (char* stParam, char* stFile);
 BYTE readStringFromFileFromSDCard (char* stParam, char* stFile);
 
+void syncTimeZone (void);
 BYTE writeTimezoneToSDCard (void);
 BYTE readTimezoneFromSDCard (void);
 BYTE writeLastDumpDateToSDCard (char* stDate);

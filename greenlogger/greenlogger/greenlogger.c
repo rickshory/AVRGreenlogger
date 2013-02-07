@@ -174,19 +174,6 @@ int main(void)
 					
 					case rtcTimeRetained:
 						outputStringToBothUARTs("\n\r time retained through uC reset\n\r");
-						errSD = readTimezoneFromSDCard(); // if successful, internally sets timeZoneRead flag
-						if (errSD) {
-							tellFileError (errSD);
-						} else {
-							len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
-							outputStringToBothUARTs(str);
-							dt_RTC.houroffset = timeZoneOffset;
-							dt_CurAlarm.houroffset = timeZoneOffset;
-							if (timeFlags & (1<<timeZoneRead)) {
-								timeFlags |= (1<<timeZoneWritten); // if it was read, it was previously written
-							}
-							
-						}
 						break;
 						
 					case rtcTimeSetToDefault:
@@ -194,15 +181,6 @@ int main(void)
 						datetime_getstring(datetime_string, &dt_RTC);
 						outputStringToBothUARTs(datetime_string);
 						outputStringToBothUARTs("\n\r\n\r");
-						errSD = writeTimezoneToSDCard(); // if successful, internally sets timeZoneWritten flag
-						if (errSD) {
-							tellFileError (errSD);
-						} else {
-							if (timeFlags & (1<<timeZoneWritten)) { // if successfully wrote, in effect has been read
-								timeFlags |= (1<<timeZoneRead);
-							}
-							outputStringToBothUARTs(" Timezone written to SD card \n\r\n\r");
-						}
 						break;	
 					
 					case rtcTimeSetFailed:
@@ -210,6 +188,9 @@ int main(void)
 						break;
 					
 				}
+				
+				// attempt to read/write the time zone; will retry later if e.g. power too low
+				syncTimeZone();
 				
 				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 				
@@ -332,6 +313,11 @@ int main(void)
 				outputStringToBothUARTs(str);
 				break;
 			}
+			
+			// attempt to assure time zone is synchronized
+			syncTimeZone(); // internally tests if work is already done
+			
+			// read sensors
 			for (ct = 0; ct < 4; ct++) {
 				switch (ct)
 				{
@@ -620,6 +606,9 @@ void checkForCommands (void) {
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART0(strHdr);
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+					timeZoneOffset = dt_tmp.houroffset;
+					timeFlags &= ~(1<<timeZoneWritten); // flag that time zone needs to be written
+					syncTimeZone(); // attempt to write the time zone; will retry later if e.g. power too low
 
 					// 
 /*

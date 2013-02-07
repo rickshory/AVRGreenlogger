@@ -26,13 +26,14 @@
 static volatile
 DSTATUS Stat = STA_NOINIT;	// Disk status
 
-extern volatile uint8_t stateFlags1, timeFlags;
+extern volatile uint8_t stateFlags1, timeFlags, rtcStatus;
 extern volatile uint8_t stateFlags2;
 
 extern char str[128]; // generic space for strings to be output
 extern char strJSON[256]; // string for JSON data
 extern char strHdr[64];
 
+extern volatile dateTime dt_RTC;
 extern volatile dateTime dt_CurAlarm;
 extern volatile int8_t timeZoneOffset;
 
@@ -378,6 +379,49 @@ BYTE readStringFromFileFromSDCard (char* stParam, char* stFile) {
 	return retVal;
 }
 
+/**
+ * \brief Manages the global Timezone Offset
+ *
+ * This function assures the globally maintained variable
+ * 'timeZoneOffset' is correctly read from or written to
+ * the SD card.
+ *  Internally tests that value is read or written.
+ * May take multiple attempts, as the 
+ * NiMH cell may not have sufficient power on the first
+ * try.
+*
+ * \note 
+ * 
+ */
+
+void syncTimeZone (void) {
+	BYTE errSD;
+	int len;
+	if (rtcStatus == rtcTimeRetained) { // get timezone from SD card
+		if (!(timeFlags & (1<<timeZoneRead))) { // if not already done
+			errSD = readTimezoneFromSDCard(); // if successful, internally sets timeZoneRead flag
+			if (errSD) {
+				tellFileError (errSD);
+			} else {
+				len = sprintf(str, " Timezone read from SD card: %d\n\r\n\r", timeZoneOffset);
+				outputStringToBothUARTs(str);
+				dt_RTC.houroffset = timeZoneOffset;
+				dt_CurAlarm.houroffset = timeZoneOffset;							
+			}
+		}
+	}
+	if ((rtcStatus == rtcTimeSetToDefault) || (rtcStatus == rtcTimeManuallySet) || (rtcStatus == rtcHasGPSTime)) {
+		// put timezone to SD card
+		if (!(timeFlags & (1<<timeZoneWritten))) { // if not already done
+			errSD = writeTimezoneToSDCard(); // if successful, internally sets timeZoneWritten flag
+			if (errSD) {
+				tellFileError (errSD);
+			} else {
+				outputStringToBothUARTs(" Timezone written to SD card \n\r\n\r");
+			}
+		}
+	}
+}
 
 /**
  * \brief Writes the global Timezone Offset to the SD card

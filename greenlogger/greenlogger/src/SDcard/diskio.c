@@ -26,7 +26,7 @@
 static volatile
 DSTATUS Stat = STA_NOINIT;	// Disk status
 
-extern volatile uint8_t stateFlags1;
+extern volatile uint8_t stateFlags1, timeFlags;
 extern volatile uint8_t stateFlags2;
 
 extern char str[128]; // generic space for strings to be output
@@ -449,6 +449,7 @@ BYTE writeTimezoneToSDCard (void) {
 	
 //	bytesWritten = f_printf(&logFile, "%d\n", timeZoneOffset);
 	bytesWritten =  f_puts(stTZ, &logFile);
+	timeFlags |= (1<<timeZoneWritten);
 	
 //	sLen = sprintf(str, "\n\r timezone characters written to file : %d\n\r", bytesWritten);
 //	outputStringToBothUARTs(str);
@@ -523,6 +524,7 @@ BYTE readTimezoneFromSDCard (void) {
 	outputStringToUART0("\n\r\n\r");
 
 	timeZoneOffset = atoi(stTZ);
+	timeFlags |= (1<<timeZoneRead);
 	
 	//Close and unmount.
 	closeFile:

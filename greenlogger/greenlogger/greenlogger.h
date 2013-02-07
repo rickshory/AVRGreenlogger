@@ -117,8 +117,8 @@ enum timeFlagsBits
 	nextAlarmSet, // next alarm has been correctly set
 	timeToLogData, // flag that it is time to log data to SD card
 	alarmDetected, // the RTC Alarm has caused an interrupt
-	tfBit3, // unused
-	tfBit4, // unused
+	timeZoneWritten, // time zone has been written to the SD card
+	timeZoneRead, // time zone has been read from the SD card
 	tfBit5, // unused
 	tfBit6, // unused
 	tfBit7 // unused

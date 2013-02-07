@@ -179,10 +179,13 @@ void checkForBTCommands (void) {
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 					// cache timezone offset in persistent storage on SD card
 					timeZoneOffset = dt_tmp.houroffset;
-					errSD = writeTimezoneToSDCard();
+					errSD = writeTimezoneToSDCard(); // if successful, internally sets timeZoneWritten flag
 					if (errSD) {
 						tellFileError (errSD);
 					} else {
+						if (timeFlags & (1<<timeZoneWritten)) { // if successfully wrote, in effect has been read
+							timeFlags |= (1<<timeZoneRead);
+						}
 						outputStringToBothUARTs(" Timezone written to SD card \n\r\n\r");
 					}
 					break;

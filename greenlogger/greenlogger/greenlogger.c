@@ -59,6 +59,8 @@ volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
 uint16_t previousADCCellVoltageReading = 0;
+uint16_t refDarkVoltageReading = 0;
+
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
 unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
 unsigned long lngTmp1, lngTmp2;
@@ -172,7 +174,7 @@ int main(void)
 					
 					case rtcTimeRetained:
 						outputStringToBothUARTs("\n\r time retained through uC reset\n\r");
-						errSD = readTimezoneFromSDCard();
+						errSD = readTimezoneFromSDCard(); // if successful, internally sets timeZoneRead flag
 						if (errSD) {
 							tellFileError (errSD);
 						} else {
@@ -180,6 +182,10 @@ int main(void)
 							outputStringToBothUARTs(str);
 							dt_RTC.houroffset = timeZoneOffset;
 							dt_CurAlarm.houroffset = timeZoneOffset;
+							if (timeFlags & (1<<timeZoneRead)) {
+								timeFlags |= (1<<timeZoneWritten); // if it was read, it was previously written
+							}
+							
 						}
 						break;
 						
@@ -188,6 +194,15 @@ int main(void)
 						datetime_getstring(datetime_string, &dt_RTC);
 						outputStringToBothUARTs(datetime_string);
 						outputStringToBothUARTs("\n\r\n\r");
+						errSD = writeTimezoneToSDCard(); // if successful, internally sets timeZoneWritten flag
+						if (errSD) {
+							tellFileError (errSD);
+						} else {
+							if (timeFlags & (1<<timeZoneWritten)) { // if successfully wrote, in effect has been read
+								timeFlags |= (1<<timeZoneRead);
+							}
+							outputStringToBothUARTs(" Timezone written to SD card \n\r\n\r");
+						}
 						break;	
 					
 					case rtcTimeSetFailed:
@@ -199,7 +214,7 @@ int main(void)
 				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 				
 				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
-					// if it's likely someone is setting up this device with a fresh battery
+					// it's likely someone is setting up this device with a fresh battery
 					keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 				}
 			} // end test CELL_VOLTAGE_GOOD_FOR_STARTUP
@@ -365,6 +380,10 @@ int main(void)
             // if an even number of minutes, and zero seconds
             // or the once-per-hour wakeup while dark
 				timeFlags |= (1<<timeToLogData);
+				if (irradFlags & (1<<isDark)) { // store the voltage reading at this point
+					refDarkVoltageReading = cellVoltageReading.adcWholeWord; 
+				}
+				
 			//	outputStringToUART0("\n\r Time to log data \n\r");
 			} else {
 				timeFlags &= ~(1<<timeToLogData);
@@ -437,7 +456,6 @@ int main(void)
 				errSD = writeCharsToSDCard(strLog, len);
 				if (errSD) {
 					tellFileError (errSD);
-//                stateFlags_2.isDataWriteTime = 0; // prevent trying to write anything later
 				} else {
 					outputStringToBothUARTs(" Data written to SD card \n\r\n\r");
 				}
@@ -456,7 +474,8 @@ int main(void)
 					} else { // if cell voltage is low, only leave the Dark state
 						// if cell has charged somewhat since last reading
 						// this should eliminate early morning drain, when data will not be good anyway
-						if (cellVoltageReading.adcWholeWord > previousADCCellVoltageReading) {
+						// require a small increase in cell voltage to ignore random jitter
+						if (cellVoltageReading.adcWholeWord > (refDarkVoltageReading + 3)) {
 							irradFlags &= ~(1<<isDark);
 						}						
 					}

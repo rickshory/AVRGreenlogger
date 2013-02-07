@@ -204,14 +204,7 @@ int main(void)
 		// end of segment that runs only once, when Full Power first achieved
 		
 		// beginning of loop that runs repeatedly
-		if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_CRITICALLY_LOW) { // power too low, shut everything down
-			shutDownBluetooth();
-			endRouse();
-			motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
-			irradFlags |= (1<<isDark); // behave as if in the Dark
-			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
-		}
-		
+		checkCriticalPower();
 		// tests of normal operation
 		if (stateFlags1 & (1<<reachedFullPower)) { // only run this after cell has charged to full power and modules initialized
 			if (motionFlags & (1<<tapDetected)) {
@@ -244,6 +237,8 @@ int main(void)
 		machineState = Idle; // beginning, or done with everything; return to Idle state
 
 		while (machineState == Idle) { // RTC interrupt will break out of this
+			checkCriticalPower();
+		
 			if (stateFlags1 & (1<<reachedFullPower)) { // another full-power-only segment
 				intTmp1 =  clearAnyADXL345TapInterrupt();
 				if (intTmp1) {
@@ -285,6 +280,8 @@ int main(void)
 		} // end of (machState == Idle)
 			// when (machState != Idle) execution passes on from this point
 			// when RTCC alarm or Accelerometer tap occurs, changes machineState to WakedFromSleep
+			
+		checkCriticalPower();
 		
 		// Tap interrupt will not be active until first time initialization, so
 		//  following flag should not be settable till then anyway
@@ -499,6 +496,16 @@ int main(void)
 		} // end of this full-power-only segment
 	} // end of main program loop
 } // end of fn main
+
+void checkCriticalPower(void){
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_CRITICALLY_LOW) { // power too low, shut everything down
+		shutDownBluetooth();
+		endRouse();
+		motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
+		irradFlags |= (1<<isDark); // behave as if in the Dark
+		timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+	}
+}
 
 /**
  * \brief Send a string out UART0

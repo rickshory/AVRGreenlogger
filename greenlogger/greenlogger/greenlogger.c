@@ -124,11 +124,39 @@ int main(void)
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
 	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
 	
-	cli();
-	setupDiagnostics(); // need heartbeat timer to correctly turn SD power off (may work around this)
-	// also may help with power control tracking while testing dead battery re-charge
-	sei();
-	turnSDCardPowerOff();
+//	cli();
+//	setupDiagnostics(); // need heartbeat timer to correctly turn SD power off (may work around this)
+//	// also may help with power control tracking while testing dead battery re-charge
+//	sei();
+//	turnSDCardPowerOff();
+
+	// force SD card power off, and pins in lowest power modes
+
+	if (!(PRR0 & (1<<PRSPI))) // is SPI power on (Pwr Save bit clear)?
+	{
+		if (SPCR & (1<<SPE)) // is SPI enabled?
+		{
+			SPCR &= ~(1<<SPE); // disable SPI
+		}
+		PRR0 |= (1<<PRSPI); // turn off power to SPI module, stop its clock
+	}		
+	DESELECT();
+
+    DDR_SPI &= ~((1<<DD_MOSI)|(1<<DD_SCK)); // change SPI output lines MOSI and SCK into inputs
+	// pins might source current momentarily
+	 // set port bits to 0, disable any internal pull-ups; tri-state the pins
+	SPI_PORT &= ~((1<<SPI_MOSI_BIT)|(1<<SPI_SCK_BIT)|(1<<SPI_MISO_BIT)); // MISO was already an input
+	
+	SD_CS_DD &= ~(1<<SD_CS_BIT); // change SS to an input, momentarily sources current through internal pull-up
+	SD_CS_PORT &= ~(1<<SD_CS_BIT); // set port bit to zero, tri-state the input
+
+	SD_PWR_DD |= (1<<SD_PWR_BIT);          // Turns on PWR pin as output 
+	SD_PWR_PORT |= (1<<SD_PWR_BIT);   // Drive PWR pin high; this will turn FET off
+	SD_PWR_DD &= ~(1<<SD_PWR_BIT);          // change PWR pin to an input
+	// internal pull-up momentarily pulls high, along with external pull-up
+	SD_PWR_PORT &= ~(1<<SD_PWR_BIT);   // tri-state the pin; external pull-up keeps FET off
+	
+//	Stat |= STA_NOINIT;      // Set STA_NOINIT
 
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,
@@ -145,7 +173,7 @@ int main(void)
 					stayRoused(3); // only briefly, 3 seconds, then go into low power mode
 				}
 				cli();
-//				setupDiagnostics();
+				setupDiagnostics();
 				uart0_init();
 				initFlags |= (1<<initUART0);
 				uart1_init();
@@ -204,8 +232,8 @@ int main(void)
 		// end of segment that runs only once, when Full Power first achieved
 		
 		// beginning of loop that runs repeatedly
-		checkCriticalPower();
 		// tests of normal operation
+		checkCriticalPower();
 		if (stateFlags1 & (1<<reachedFullPower)) { // only run this after cell has charged to full power and modules initialized
 			if (motionFlags & (1<<tapDetected)) {
 				outputStringToUART0("\n\r Tap detected \n\r\n\r");
@@ -504,14 +532,28 @@ int main(void)
 	} // end of main program loop
 } // end of fn main
 
+/**
+ * \brief Check if power is critically low
+ *
+ * Shut down all possible modules if cell voltage is too low
+ * Expects a reading of the cell voltage in global
+ *  cellVoltageReading.adcWholeWord
+ *
+ * \
+ *  
+ */
+
 void checkCriticalPower(void){
+//	return; // for testing, disable this fn
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_CRITICALLY_LOW) { // power too low, shut everything down
-		shutDownBluetooth();
-		endRouse();
-		motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
-		irradFlags |= (1<<isDark); // behave as if in the Dark
-		timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
-		refDarkVoltage = CELL_VOLTAGE_CRITICALLY_LOW; // allow testing that cell is recharging
+		if (stateFlags1 & (1<<reachedFullPower)) { // skip till initialized, or can prevent climbing out of reset
+			shutDownBluetooth();
+			endRouse();
+			motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
+			irradFlags |= (1<<isDark); // behave as if in the Dark
+			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+			refDarkVoltage = CELL_VOLTAGE_CRITICALLY_LOW; // allow testing that cell is recharging
+		}
 	}
 }
 

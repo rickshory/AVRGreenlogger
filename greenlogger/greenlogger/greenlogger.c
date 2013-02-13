@@ -347,6 +347,27 @@ int main(void)
 				break;
 			}
 			
+			// see if it's time to log data
+			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags & (1<<isDark))) {
+            // if an even number of minutes, and zero seconds
+            // or the once-per-hour wakeup while dark
+				timeFlags |= (1<<timeToLogData);
+				if (irradFlags & (1<<isDark)) { // store the voltage reading at this point
+					refDarkVoltage = cellVoltageReading.adcWholeWord; 
+				}
+				
+			//	outputStringToUART0("\n\r Time to log data \n\r");
+			} else {
+				timeFlags &= ~(1<<timeToLogData);
+			//	outputStringToUART0("\n\r Not time to log data \n\r");
+			}
+			
+			// if not time to log data, and not roused
+			if ((!(timeFlags & (1<<timeToLogData))) && (!((stateFlags1 & (1<<isRoused))))) {
+				// won't do anything with results anyway, don't bother reading sensors, save power
+				break; 
+			}
+
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToBothUARTs(datetime_string);
 			
@@ -403,20 +424,6 @@ int main(void)
 			len = sprintf(str, "\t%lu", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 			outputStringToBothUARTs(str);
 			outputStringToBothUARTs("\r\n");
-
-			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags & (1<<isDark))) {
-            // if an even number of minutes, and zero seconds
-            // or the once-per-hour wakeup while dark
-				timeFlags |= (1<<timeToLogData);
-				if (irradFlags & (1<<isDark)) { // store the voltage reading at this point
-					refDarkVoltage = cellVoltageReading.adcWholeWord; 
-				}
-				
-			//	outputStringToUART0("\n\r Time to log data \n\r");
-			} else {
-				timeFlags &= ~(1<<timeToLogData);
-			//	outputStringToUART0("\n\r Not time to log data \n\r");
-			}
 			
 			// begin to build log string while testing, even if we end up not logging data
 			strcpy(strLog, "\n\r");

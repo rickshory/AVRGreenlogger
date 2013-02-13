@@ -158,6 +158,59 @@ int main(void)
 	
 //	Stat |= STA_NOINIT;      // Set STA_NOINIT
 
+	// try allowing the following on first power-up, even if cell is barely charged
+	
+	cli();
+	setupDiagnostics();
+	uart0_init();
+	initFlags |= (1<<initUART0);
+	uart1_init();
+	initFlags |= (1<<initUART1);
+	sei();
+				
+	if (initFlags & (1<<initI2C)) 
+		outputStringToUART0("\r\n  I2C_Init completed\r\n");
+				
+	if (initFlags & (1<<initUART0)) 
+		outputStringToUART0("\r\n  UART0 Initialized\r\n");
+					
+	if (initFlags & (1<<initUART1))
+		outputStringToUART1("\r\n  UART1 Initialized\r\n");
+				
+	r = initializeADXL345();
+	if (r) {
+		len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
+		outputStringToUART0(str);
+	} else {
+		initFlags |= (1<<initAccelerometer);
+		outputStringToUART0("\r\n ADXL345 initialized\r\n");
+	}
+				
+	switch (rtcStatus) {
+					
+		case rtcTimeRetained:
+			outputStringToBothUARTs("\n\r time retained through uC reset\n\r");
+			break;
+						
+		case rtcTimeSetToDefault:
+			outputStringToBothUARTs("\n\r time set to default, now elapsed to ");
+			datetime_getstring(datetime_string, &dt_RTC);
+			outputStringToBothUARTs(datetime_string);
+			outputStringToBothUARTs("\n\r\n\r");
+			break;	
+					
+		case rtcTimeSetFailed:
+			outputStringToBothUARTs("\n\r could not set Real Time Clock \n\r");
+			break;
+					
+	}
+				
+	// attempt to read/write the time zone; will retry later if e.g. power too low
+	syncTimeZone();
+				
+	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
+				
+
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,
 		// sufficient to run initializations and modules that take more power
@@ -172,56 +225,6 @@ int main(void)
 					// long diagnostics would just waste power for no good reason
 					stayRoused(3); // only briefly, 3 seconds, then go into low power mode
 				}
-				cli();
-				setupDiagnostics();
-				uart0_init();
-				initFlags |= (1<<initUART0);
-				uart1_init();
-				initFlags |= (1<<initUART1);
-				sei();
-				
-				if (initFlags & (1<<initI2C)) 
-					outputStringToUART0("\r\n  I2C_Init completed\r\n");
-				
-				if (initFlags & (1<<initUART0)) 
-					outputStringToUART0("\r\n  UART0 Initialized\r\n");
-					
-				if (initFlags & (1<<initUART1))
-					outputStringToUART1("\r\n  UART1 Initialized\r\n");
-				
-				r = initializeADXL345();
-				if (r) {
-					len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
-					outputStringToUART0(str);
-				} else {
-					initFlags |= (1<<initAccelerometer);
-					outputStringToUART0("\r\n ADXL345 initialized\r\n");
-				}
-				
-				switch (rtcStatus) {
-					
-					case rtcTimeRetained:
-						outputStringToBothUARTs("\n\r time retained through uC reset\n\r");
-						break;
-						
-					case rtcTimeSetToDefault:
-						outputStringToBothUARTs("\n\r time set to default, now elapsed to ");
-						datetime_getstring(datetime_string, &dt_RTC);
-						outputStringToBothUARTs(datetime_string);
-						outputStringToBothUARTs("\n\r\n\r");
-						break;	
-					
-					case rtcTimeSetFailed:
-						outputStringToBothUARTs("\n\r could not set Real Time Clock \n\r");
-						break;
-					
-				}
-				
-				// attempt to read/write the time zone; will retry later if e.g. power too low
-				syncTimeZone();
-				
-				outputStringToBothUARTs("\n\r Power good \n\r\n\r");
-				
 				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
 					// it's likely someone is setting up this device with a fresh battery
 					keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
@@ -267,16 +270,16 @@ int main(void)
 		while (machineState == Idle) { // RTC interrupt will break out of this
 			checkCriticalPower();
 		
-			if (stateFlags1 & (1<<reachedFullPower)) { // another full-power-only segment
-				intTmp1 =  clearAnyADXL345TapInterrupt();
-				if (intTmp1) {
-					len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
-					outputStringToUART0(str);
-				}
-				enableAccelInterrupt();
-				checkForBTCommands();
-				checkForCommands();
-			} // end of this full-power segment
+//			if (stateFlags1 & (1<<reachedFullPower)) { // another full-power-only segment
+			intTmp1 =  clearAnyADXL345TapInterrupt();
+			if (intTmp1) {
+				len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
+				outputStringToUART0(str);
+			}
+			enableAccelInterrupt();
+			checkForBTCommands();
+			checkForCommands();
+//			} // end of this full-power segment
 			
 			if (!(timeFlags & (1<<nextAlarmSet))) {
 	//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
@@ -317,6 +320,8 @@ int main(void)
 		if (motionFlags & (1<<tapDetected)) { // if it was a tap, go into Roused state
 			if (stateFlags1 & (1<<reachedFullPower)) { // only if had achieved full power and initialized
 				stayRoused(30); // 30 seconds
+			} else {
+				stayRoused(3); // 3 seconds
 			}
 			motionFlags &= ~(1<<tapDetected); // clear the flag
 		}

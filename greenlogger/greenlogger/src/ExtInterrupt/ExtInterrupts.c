@@ -27,6 +27,7 @@ void stayRoused(uint16_t dSec)
 		rouseCountdown = dSec;
 	}
 	stateFlags1 |= (1<<isRoused);
+	PORTA |= (0b00000100); // set pilot light on
 	sei();
 }
 
@@ -35,6 +36,7 @@ void endRouse(void) {
 		// changing the count partway through
 	rouseCountdown = 0;
 	stateFlags1 &= ~(1<<isRoused);
+	PORTA &= ~(0b00000100); // force pilot light off
 	sei();
 	
 }

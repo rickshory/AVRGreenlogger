@@ -365,7 +365,7 @@ int main(void)
 			// if not time to log data, and not roused
 			if ((!(timeFlags & (1<<timeToLogData))) && (!((stateFlags1 & (1<<isRoused))))) {
 				// won't do anything with results anyway, don't bother reading sensors, save power
-				stayRoused(20); // rouse for 0.2 second to flash the pilot light
+				stayRoused(50); // rouse for 0.5 second to flash the pilot light
 				break; 
 			}
 

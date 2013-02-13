@@ -19,12 +19,12 @@ extern volatile char stateFlags1, motionFlags, timeFlags, btFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
-void stayRoused(uint8_t sec)
+void stayRoused(uint16_t dSec)
 {
 	cli(); // temporarily disable interrupts to prevent Timer3 from
 		// changing the count partway through
-	if ((100 * sec) > rouseCountdown) { // never trim the rouse interval, only extend it
-		rouseCountdown = 100 * sec;
+	if ((dSec) > rouseCountdown) { // never trim the rouse interval, only extend it
+		rouseCountdown = dSec;
 	}
 	stateFlags1 |= (1<<isRoused);
 	sei();

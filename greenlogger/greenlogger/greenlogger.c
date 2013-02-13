@@ -219,11 +219,11 @@ int main(void)
 				stateFlags1 |= (1<<reachedFullPower); // flag, so this loop does not happen again till next reset
 				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
 					// probably, somebody has just popped a fresh battery in, and wants to set up this device
-					stayRoused(180); // keep system roused for 3 minutes for diagnostic output
+					stayRoused(18000); // keep system roused for 3 minutes (180 sec) for diagnostic output
 				} else {
 					// probably, battery has slowly charged from dead, and nobody is here watching
 					// long diagnostics would just waste power for no good reason
-					stayRoused(3); // only briefly, 3 seconds, then go into low power mode
+					stayRoused(300); // only briefly, 3 seconds, then go into low power mode
 				}
 				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
 					// it's likely someone is setting up this device with a fresh battery
@@ -241,7 +241,7 @@ int main(void)
 			if (motionFlags & (1<<tapDetected)) {
 				outputStringToUART0("\n\r Tap detected \n\r\n\r");
 				if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
-					stayRoused(120);
+					stayRoused(12000); // 2 minutes (120 seconds)
 					keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
 				}
 				motionFlags &= ~(1<<tapDetected);
@@ -319,9 +319,9 @@ int main(void)
 		//  but put internal check in case code rearranged
 		if (motionFlags & (1<<tapDetected)) { // if it was a tap, go into Roused state
 			if (stateFlags1 & (1<<reachedFullPower)) { // only if had achieved full power and initialized
-				stayRoused(30); // 30 seconds
+				stayRoused(3000); // 30 seconds
 			} else {
-				stayRoused(3); // 3 seconds
+				stayRoused(300); // 3 seconds
 			}
 			motionFlags &= ~(1<<tapDetected); // clear the flag
 		}
@@ -365,7 +365,7 @@ int main(void)
 			// if not time to log data, and not roused
 			if ((!(timeFlags & (1<<timeToLogData))) && (!((stateFlags1 & (1<<isRoused))))) {
 				// won't do anything with results anyway, don't bother reading sensors, save power
-				stayRoused(1); // rouse for 1 second to flash the pilot light
+				stayRoused(20); // rouse for 0.2 second to flash the pilot light
 				break; 
 			}
 

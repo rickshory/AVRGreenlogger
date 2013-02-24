@@ -62,6 +62,7 @@ uint8_t rtc_setAlarm1 (dateTime *t);
 uint8_t rtc_readAlarm1 (dateTime *t);
 uint8_t rtc_enableAlarm1 (void);
 uint8_t rtc_setupNextAlarm(dateTime *pDt);
+uint8_t rtc_enableSqWave (void);
 
 uint8_t isValidDateTime(char* p);
 uint8_t isValidDate(char* p);

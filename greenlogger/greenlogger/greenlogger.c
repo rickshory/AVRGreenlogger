@@ -209,6 +209,11 @@ int main(void)
 	syncTimeZone();
 				
 	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
+	
+	// try to adjust the uC clock frequency
+	// first step, measure the uC clock, relative to the RTC, which latter should be very accurate
+	
+	
 				
 
 	while (1) { // main program loop

@@ -212,9 +212,22 @@ int main(void)
 	
 	// try to adjust the uC clock frequency
 	// first step, measure the uC clock, relative to the RTC, which latter should be very accurate
+	// eventually put this in a more reasonable place, but for now right here before main loop
+	
+	// go into uC clock adjust mode
+	outputStringToUART0("\r\n going into uC adjust mode\r\n");
+	timeFlags &= ~(1<<nextAlarmSet); // clear flag
+	disableRTCInterrupt();
+	intTmp1 = rtc_enableSqWave();
+	// PRTIM1 make sure power reduction register bit if off so timers run
 	
 	
-				
+	// go back into normal timekeeping mode
+	outputStringToUART0("\r\n returning to timekeeping mode\r\n");
+	if (!(timeFlags & (1<<nextAlarmSet))) {
+		intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+		timeFlags |= (1<<nextAlarmSet);
+	}
 
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,

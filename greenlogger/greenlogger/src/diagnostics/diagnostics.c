@@ -20,7 +20,7 @@ static volatile uint8_t Timer1, Timer2;		// 100Hz decrement timers
 void setupDiagnostics (void)
 {
     ioinit(); //Setup IO pins and defaults
-	setupTimer3();
+	setupTimer3_10ms();
 }
 
 void ioinit (void)
@@ -34,10 +34,63 @@ void ioinit (void)
 	PORTA = 0b00000100; // timer3 interrupts will toggle this pilot light blinkey
 }
 
+/*! Sets up Timer3 for 1-shot timing event
+//! 
+*/
+void setupTimer3_1shot( void )
+{	
+	// not using Timer3 interrupt, just let it free-count and we will read it later
+	sei();
+	// TIMSK3 – Timer/Counter3 Interrupt Mask Register
+	// 7 –
+	// 6 –
+	// 5 ICIE3, input capture enable
+	// 4 –
+	// 3 –
+	// 2 OCIE3B, Timer/Counter3, Output Compare B Match Interrupt Enable
+	// 1 OCIE3A, Timer/Counter3, Output Compare A Match Interrupt Enable
+	// 0 TOIE3, Timer/Counter3, Overflow Interrupt Enable
+	TIMSK3 = 0b00000000;
+	
+	//Set up the timer
+	// TCCR3A - Timer/Counter 3 Control Register A
+	// 7 COM3A1; COM3xm (x=A,B m=0,1) all = 0, don't drive any pins
+	// 6 COM3A0
+	// 5 COM3B1
+	// 4 COM3B0
+	// 3 - 
+	// 2 - 
+	// 1 WGM31; WGM30m (m=1,0,3,2), Timer/Counter Mode
+	// 0 WGM30
+	TCCR3A = 0b00000000;
+	// TCCR3B - Timer/Counter 3 Control Register B
+	// 7 ICNC3 = 0; don't use noise canceler
+	// 6 ICES3 = 0; input capture falling edge (input capture is disabled in this design)
+	// 5 - 
+	// 4 WGM33 (see above)
+	// 3 WGM32 = 0; don't Clear Timer on Compare (CTC)
+	// 2 CS32 
+	// 1 CS31
+	// 0 CS30
+	TCCR3B = 0b00000001;	//bits 2:0  	101 counter uses clk/1024
+							//		100 counter uses clk/256
+							//		011 counter uses clk/64
+							//		010 counter uses clk/8
+							//		001 counter uses clk/1
+	// TCCR3C – Timer/Counter 3 Control Register C
+	// TCCR3C = 0b00000000; // default 0, not used in this design
+	
+	OCR3A = 0;
+	TCNT3 = 0;
+	
+}
+
+
+
 /*! Sets up Timer3 for periodic interrupt of 10ms
 //! 
 */
-void setupTimer3( void )
+void setupTimer3_10ms( void )
 {	
 	// Enables the Timer3 interrupt when OCR3A equals TCNT3
 	sei();

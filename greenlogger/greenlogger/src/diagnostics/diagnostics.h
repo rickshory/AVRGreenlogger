@@ -16,7 +16,8 @@
 //======================
 void setupDiagnostics (void);
 void ioinit(void);      //Initializes IO
-void setupTimer3( void );
+void setupTimer3_10ms( void );
+void setupTimer3_1shot( void );
 //void delay_ms(uint16_t x); //General purpose delay
 //======================
 

@@ -207,7 +207,17 @@ int main(void)
 				
 	// attempt to read/write the time zone; will retry later if e.g. power too low
 	syncTimeZone();
-				
+
+	
+	stateFlags1 |= (1<<isRoused); // force on for testing, enable UART output
+//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
+	outputStringToUART0("\r\n  test\r\n");
+//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
+	outputStringToUART0("\r\n  test\r\n");
+//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
+	outputStringToUART0("\r\n  test\r\n");
+//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
+
 	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 	
 	// try to adjust the uC clock frequency

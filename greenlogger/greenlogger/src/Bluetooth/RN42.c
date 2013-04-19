@@ -20,6 +20,7 @@ char *btCmdBufferPtr;
 uint8_t errSD;
 
 extern volatile uint8_t machineState;
+extern volatile uint16_t timer3val;
 extern char commandBuffer[commandBufferLen];
 extern char *commandBufferPtr;
 extern char str[128]; // generic space for strings to be output
@@ -177,7 +178,7 @@ void checkForBTCommands (void) {
 					cyPerSec = TCNT3;
 					// Restore global interrupt flag
 					SREG = sreg;
-					len = sprintf(str, "\r\n %d\r\n", cyPerSec);
+					len = sprintf(str, "\r\n %d\r\n", timer3val);
 					outputStringToUART1(str);
 /*
 */						

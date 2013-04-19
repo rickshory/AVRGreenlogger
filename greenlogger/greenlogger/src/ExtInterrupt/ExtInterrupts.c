@@ -13,6 +13,7 @@
 #include "../Bluetooth/RN42.h"
 
 extern volatile uint8_t machineState;
+extern volatile uint16_t timer3val;
 extern volatile uint16_t rouseCountdown;
 extern volatile uint16_t btCountdown;
 extern volatile char stateFlags1, motionFlags, timeFlags, btFlags;
@@ -139,6 +140,7 @@ void disableRTCInterrupt(void)
 // is triggered by Real Time Clock
 ISR(PCINT0_vect)
 {
+	timer3val = TCNT3;
 	timeFlags |= (1<<alarmDetected); // flag it
 	disableRTCInterrupt();
 	machineState = WakedFromSleep;

@@ -34,6 +34,7 @@ volatile uint8_t iTmp;
 volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sleep
 volatile uint16_t btCountdown = 0; // timer for trying Bluetooth connection
+volatile uint16_t timer3val;
 
 volatile
 uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */

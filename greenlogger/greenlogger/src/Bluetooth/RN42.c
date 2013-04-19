@@ -145,6 +145,25 @@ void checkForBTCommands (void) {
 			btFlags &= ~(1<<btSerialBeingInput); // flag that input is complete; allow string output
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
+                case 'O': case 'o': { // experiment with oscillator control
+					uint16_t cyPerSec;
+					// go into uC clock adjust mode
+					outputStringToUART1("\r\n going into uC adjust mode\r\n");
+					timeFlags &= ~(1<<nextAlarmSet); // clear flag
+					disableRTCInterrupt();
+					intTmp1 = rtc_enableSqWave();
+					// PRTIM1 make sure power reduction register bit if off so timers run
+	
+	
+					// go back into normal timekeeping mode
+					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
+					if (!(timeFlags & (1<<nextAlarmSet))) {
+						intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+						timeFlags |= (1<<nextAlarmSet);
+					}
+                    break;
+                }
+
 				case 'T': case 't': { // set time
 					// get info from btCmdBuffer before any UART output, 
 					// because in some configurations any Tx feeds back to Rx

@@ -866,44 +866,14 @@ void checkForCommands (void) {
 //
 						//break;
 					//}						
-//
-                //case 'T': case 't':
-					//{ // experimenting with time functions
-						//outputStringToUART0("\n\r about to set time \n\r");
-						//if (!rtc_setTime(&dt_RTC)) {
-							//outputStringToUART0("\n\r time set \n\r");
-						//}
-						//outputStringToUART0("\n\r about to read time \n\r");
-						//if (!rtc_readTime(&dt_tmp)) {
-////							dt_tmp.second = 22;
-////							len = sprintf(str, "\n\r Seconds: %d \n\r", dt_tmp.second);
-////							outputStringToUART0(str);
-////							dt_tmp.year = 55;
-							//datetime_getstring(str, &dt_tmp);
-							//outputStringToUART0(str);
-						//} else {
-							//outputStringToUART0("Error reading time");
-						//}
-						//break;
-					//}						
+//				
 //
                 case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)
                     outputStringToUART0("\r\n output file data\r\n");
                     break;
                 }
-/*
-                case 'O': { // toggle to use SD card, or ignore it
-                    if (flags1.useSDcard) {
-                        flags1.useSDcard = 0;
-                        outputStringToUART0("\r\n Will now ignore SD card\r\n");
-                    } else {
-                        flags1.useSDcard = 1;
-                        outputStringToUART0("\r\n Will now write to SD card\r\n");
-                    }
-                    break;
-                }
- */
+
                 // put other commands here
                 default: 
 				{ // if no valid command, echo back the input

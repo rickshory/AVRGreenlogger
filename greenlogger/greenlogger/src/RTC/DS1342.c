@@ -552,7 +552,14 @@ uint8_t rtc_enableSqWave (void) {
 					// Bit 2: Interrupt Control (INTCN) = 1, Alarm 1 interrupt output on INTA
 					// Bit 1: Alarm 2 Interrupt Enable (A2IE) = 0, disabled
 					// Bit 0: Alarm 1 Interrupt Enable (A1IE) = 1, enabled
-					r = I2C_Write(0b00000101); // write DS1337_CONTROL					
+					r = I2C_Write(0b00000101); // write DS1337_CONTROL
+					
+					// DS1337_CONTROL_STATUS, 0x0f
+					// Bit 7: Oscillator Stop Flag (OSF) = 0, clear, don't care
+					// Bits 6 to 2: No Function
+					// Bit 1: Alarm 2 Flag (A2F) = 0, clear, A2IE is disabled
+					// Bit 0: Alarm 1 Flag (A1F) = 0, clear, A1IE is enabled, Alarm 1 will set
+					r = I2C_Write(0b00000000); // write DS1337_CONTROL_STATUS
 #endif
 #ifdef RTC_CHIP_IS_DS1342
 					// DS1342_CONTROL, 0x0e
@@ -564,17 +571,7 @@ uint8_t rtc_enableSqWave (void) {
 					// Bit 1: Alarm 2 Interrupt Enable (A2IE) = 0, disabled but overridden anyway by INTCN = 0
 					// Bit 0: Alarm 1 Interrupt Enable (A1IE) = 0, enabled but overridden anyway by INTCN = 0
 					r = I2C_Write(0b00011000); // write DS1342_CONTROL
-#endif
-					
-#ifdef RTC_CHIP_IS_DS1337	// may not be relevant in this function
-					// DS1337_CONTROL_STATUS, 0x0f
-					// Bit 7: Oscillator Stop Flag (OSF) = 0, clear, don't care
-					// Bits 6 to 2: No Function
-					// Bit 1: Alarm 2 Flag (A2F) = 0, clear, A2IE is disabled
-					// Bit 0: Alarm 1 Flag (A1F) = 0, clear, A1IE is enabled, Alarm 1 will set
-					r = I2C_Write(0b00000000); // write DS1337_CONTROL_STATUS
-#endif					
-#ifdef RTC_CHIP_IS_DS1342
+
 					// DS1342_CONTROL_STATUS, 0x0f
 					// Bit 7: Oscillator Stop Flag (OSF) = 0, clear, don't care
 					// Bit 6: Disable Oscillator Stop Flag (DOSF) = 1, disable OSF, save power

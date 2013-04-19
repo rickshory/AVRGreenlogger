@@ -153,9 +153,11 @@ void checkForBTCommands (void) {
 					disableRTCInterrupt();
 					intTmp1 = rtc_enableSqWave();
 					// PRTIM1 make sure power reduction register bit if off so timers run
+					enableRTCInterrupt();
 	
 	
 					// go back into normal timekeeping mode
+					disableRTCInterrupt();
 					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
 					if (!(timeFlags & (1<<nextAlarmSet))) {
 						intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);

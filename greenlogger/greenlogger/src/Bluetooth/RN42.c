@@ -19,6 +19,7 @@ char btCmdBuffer[commandBufferLen];
 char *btCmdBufferPtr;
 uint8_t errSD;
 
+extern volatile uint8_t machineState;
 extern char commandBuffer[commandBufferLen];
 extern char *commandBufferPtr;
 extern char str[128]; // generic space for strings to be output
@@ -146,6 +147,7 @@ void checkForBTCommands (void) {
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
                 case 'O': case 'o': { // experiment with oscillator control
+					uint8_t sreg;
 					uint16_t cyPerSec;
 					// go into uC clock adjust mode
 					outputStringToUART1("\r\n going into uC adjust mode\r\n");
@@ -153,10 +155,35 @@ void checkForBTCommands (void) {
 					disableRTCInterrupt();
 					intTmp1 = rtc_enableSqWave();
 					// PRTIM1 make sure power reduction register bit if off so timers run
+					
+					machineState = Idle; // flag to wait
 					enableRTCInterrupt();
-	
+					while (machineState == Idle) { // RTC Interrupt will break out of this
+						;
+					}
+					setupTimer3_1shot(); // zeroes Timer3
+					machineState = Idle; // flag to wait
+					// RTC interrupt disables itself
+					enableRTCInterrupt();
+					while (machineState == Idle) { // RTC Interrupt will break out of this
+						;
+					}
+					// read Timer3
+					// Save global interrupt flag
+					sreg = SREG;
+					// Disable interrupts
+					cli();
+					// Read TCNTn into cyPerSec
+					cyPerSec = TCNT3;
+					// Restore global interrupt flag
+					SREG = sreg;
+					len = sprintf(str, "\r\n %d\r\n", cyPerSec);
+					outputStringToUART1(str);
+/*
+*/						
 	
 					// go back into normal timekeeping mode
+					setupTimer3_10ms();
 					disableRTCInterrupt();
 					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
 					if (!(timeFlags & (1<<nextAlarmSet))) {

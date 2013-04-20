@@ -140,7 +140,7 @@ void disableRTCInterrupt(void)
 // is triggered by Real Time Clock
 ISR(PCINT0_vect)
 {
-	timer3val = TCNT3;
+//	timer3val = TCNT3;
 	timeFlags |= (1<<alarmDetected); // flag it
 	disableRTCInterrupt();
 	machineState = WakedFromSleep;

@@ -178,7 +178,7 @@ void checkForBTCommands (void) {
 					cyPerSec = TCNT3;
 					// Restore global interrupt flag
 					SREG = sreg;
-					len = sprintf(str, "\r\n %d\r\n", timer3val);
+					len = sprintf(str, "\r\n %d\r\n", cyPerSec);
 					outputStringToUART1(str);
 /*
 */						

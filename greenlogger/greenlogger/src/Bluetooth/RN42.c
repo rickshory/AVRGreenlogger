@@ -111,6 +111,64 @@ inline bool BT_powered(void)
 }
 
 /**
+ * \brief measure RTC square wave
+ *
+ * Count how many cycles of the main oscillator occur for one half of the RTC square wave output
+ * Used for calibrating the main oscillator
+ * \
+ *  
+ */
+uint16_t cyPerRTCSqWave(void) {
+	uint8_t sreg;
+	twoByteData cyPerSec;
+	// go into uC clock adjust mode
+//	outputStringToUART1("\r\n going into uC adjust mode\r\n");
+	timeFlags &= ~(1<<nextAlarmSet); // clear flag
+	disableRTCInterrupt();
+	intTmp1 = rtc_enableSqWave();
+	// PRTIM1 make sure power reduction register bit if off so timers run
+					
+	machineState = Idle; // flag to wait
+	enableRTCInterrupt();
+	while (machineState == Idle) { // RTC Interrupt will break out of this
+		;
+	}
+	setupTimer3_1shot(); // zeroes Timer3
+	machineState = Idle; // flag to wait
+	// RTC interrupt disables itself
+	enableRTCInterrupt();
+	while (machineState == Idle) { // RTC Interrupt will break out of this
+		;
+	}
+	// read Timer3
+	// Save global interrupt flag
+	sreg = SREG;
+	// Disable interrupts
+	cli();
+	// Read TCNTn into cyPerSec
+	cyPerSec.loByte = TCNT3L;
+	cyPerSec.hiByte = TCNT3H;
+	// Restore global interrupt flag
+	SREG = sreg;
+	cyPerSec.wholeWord += 15; // assume 15 cycles of latency
+//	len = sprintf(str, "Cycle count from RTC: %d\r\n", (uint16_t)cyPerSec.wholeWord);
+//	outputStringToUART1(str);
+//	len = sprintf(str, "calibration byte: %d\r\n", OSCCAL);
+//	outputStringToUART1(str);				
+	
+	// go back into normal timekeeping mode
+	setupTimer3_10ms();
+	disableRTCInterrupt();
+//	outputStringToUART1("\r\n returning to timekeeping mode\r\n");
+	if (!(timeFlags & (1<<nextAlarmSet))) {
+		intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+		timeFlags |= (1<<nextAlarmSet);
+	}
+	return (uint16_t)cyPerSec.wholeWord;
+}
+
+
+/**
  * \brief Check UART1 (Bluetooth) for commands
  *
  * Check the UART1 receive buffer for commands.
@@ -148,49 +206,13 @@ void checkForBTCommands (void) {
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
                 case 'O': case 'o': { // experiment with oscillator control
-					uint8_t sreg;
-					uint16_t cyPerSec;
 					// go into uC clock adjust mode
 					outputStringToUART1("\r\n going into uC adjust mode\r\n");
-					timeFlags &= ~(1<<nextAlarmSet); // clear flag
-					disableRTCInterrupt();
-					intTmp1 = rtc_enableSqWave();
-					// PRTIM1 make sure power reduction register bit if off so timers run
-					
-					machineState = Idle; // flag to wait
-					enableRTCInterrupt();
-					while (machineState == Idle) { // RTC Interrupt will break out of this
-						;
-					}
-					setupTimer3_1shot(); // zeroes Timer3
-					machineState = Idle; // flag to wait
-					// RTC interrupt disables itself
-					enableRTCInterrupt();
-					while (machineState == Idle) { // RTC Interrupt will break out of this
-						;
-					}
-					// read Timer3
-					// Save global interrupt flag
-					sreg = SREG;
-					// Disable interrupts
-					cli();
-					// Read TCNTn into cyPerSec
-					cyPerSec = TCNT3;
-					// Restore global interrupt flag
-					SREG = sreg;
-					len = sprintf(str, "\r\n %d\r\n", cyPerSec);
+					len = sprintf(str, "Cycle count from RTC: %d\r\n", cyPerRTCSqWave());
 					outputStringToUART1(str);
-/*
-*/						
-	
-					// go back into normal timekeeping mode
-					setupTimer3_10ms();
-					disableRTCInterrupt();
+					len = sprintf(str, "calibration byte: %d\r\n", OSCCAL);
+					outputStringToUART1(str);
 					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
-					if (!(timeFlags & (1<<nextAlarmSet))) {
-						intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-						timeFlags |= (1<<nextAlarmSet);
-					}
                     break;
                 }
 

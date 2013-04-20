@@ -19,6 +19,18 @@ extern inline bool BT_connected(void);
 extern inline bool BT_powered(void);
 void checkForBTCommands (void);
 void BT_dataDump(char* stOpt);
+uint16_t cyPerRTCSqWave(void);
 
+// union allows writing in Lo and Hi bytes of ADC, and reading out whole word
+typedef struct {
+    union {
+        struct {
+            uint8_t loByte, hiByte; // this is the correct endian-ness
+        };
+        struct  {
+            uint16_t wholeWord;
+        };
+    };
+} twoByteData;
 
 #endif /* RN41_H_ */

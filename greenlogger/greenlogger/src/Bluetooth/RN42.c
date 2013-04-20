@@ -206,12 +206,37 @@ void checkForBTCommands (void) {
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
                 case 'O': case 'o': { // experiment with oscillator control
+					uint16_t ct1, ct2, ct3;
+					uint8_t os1, os2, os3;
 					// go into uC clock adjust mode
 					outputStringToUART1("\r\n going into uC adjust mode\r\n");
-					len = sprintf(str, "Cycle count from RTC: %d\r\n", cyPerRTCSqWave());
+					ct1 = cyPerRTCSqWave(); // get starting cycle count
+					ct1 = cyPerRTCSqWave(); // twice, to avoid 1st time glitch
+					os1 = OSCCAL; // remember OSCCAL
+					OSCCAL = 0x7F; // temporarily change OSCCAL
+					ct2 = cyPerRTCSqWave(); // check new cycle count
+					ct2 = cyPerRTCSqWave(); // twice, to avoid 1st time glitch
+					os2 = OSCCAL; // verify OSCCAL changed
+					OSCCAL = os1; // put OSCCAL back
+					ct3 = cyPerRTCSqWave(); // see if cycle count changed back
+					ct3 = cyPerRTCSqWave(); // twice, to avoid 1st time glitch
+					os3 = OSCCAL; // verify OSCCAL changed
+					
+					len = sprintf(str, "original cycle count from RTC: %d\r\n", ct1);
 					outputStringToUART1(str);
-					len = sprintf(str, "calibration byte: %d\r\n", OSCCAL);
+					len = sprintf(str, "original calibration byte: %d\r\n", os1);
 					outputStringToUART1(str);
+
+					len = sprintf(str, "cycle count from RTC after setting OSCCAL=127: %d\r\n", ct2);
+					outputStringToUART1(str);
+					len = sprintf(str, "verify OSCCAL changed: %d\r\n", os2);
+					outputStringToUART1(str);
+
+					len = sprintf(str, "RTC count after changing OSCCAL back: %d\r\n", ct3);
+					outputStringToUART1(str);
+					len = sprintf(str, "verify OSCCAL changed back: %d\r\n", os3);
+					outputStringToUART1(str);
+
 					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
                     break;
                 }

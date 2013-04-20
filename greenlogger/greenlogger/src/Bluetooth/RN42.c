@@ -210,6 +210,9 @@ void checkForBTCommands (void) {
 					uint8_t os1, os2, os3;
 					// go into uC clock adjust mode
 					outputStringToUART1("\r\n going into uC adjust mode\r\n");
+					len = sprintf(str, "baud register UBBR1: %d\r\n", UBRR1);
+					outputStringToUART1(str);
+					
 					ct1 = cyPerRTCSqWave(); // get starting cycle count
 					ct1 = cyPerRTCSqWave(); // twice, to avoid 1st time glitch
 					os1 = OSCCAL; // remember OSCCAL

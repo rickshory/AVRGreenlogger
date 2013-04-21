@@ -134,7 +134,7 @@ uint16_t cyPerRTCSqWave(void) {
 		;
 	}
 	setupTimer3_1shot(); // zeroes Timer3
-	for (i=0; i<20; i++) {
+	for (i=0; i<128; i++) { // count osc cycles for 64 full RTC square wave cycles
 		machineState = Idle; // flag to wait
 		// RTC interrupt disables itself
 		enableRTCInterrupt();
@@ -214,22 +214,22 @@ void checkForBTCommands (void) {
 					ct0c = cyPerRTCSqWave();
 					os0 = OSCCAL; // remember OSCCAL
 					
-					OSCCAL = 0x7F; // set OSCCAL to high end of lower range
-					for (i=0; i<50; i++) {
+				//	OSCCAL = 0x7F; // set OSCCAL to high end of lower range
+					for (i=0; i<100; i++) {
+						OSCCAL-=1; // adjust down
 						os[i] = OSCCAL;
 						cta[i] = cyPerRTCSqWave(); // take three readings
 						ctb[i] = cyPerRTCSqWave();
 						ctc[i] = cyPerRTCSqWave();
-						OSCCAL-=1; // adjust down
 					}
 					
 					OSCCAL = os0; // restore
 					
-					len = sprintf(str, "original OSCCAL\t%d\t cycle counts\t%d\t%d\t%d\r\n", os0, ct0a, ct0b, ct0c);
+					len = sprintf(str, "original OSCCAL\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os0, (unsigned long)ct0a, (unsigned long)ct0b, (unsigned long)ct0c);
 					outputStringToUART1(str);
 					
-					for (i=0; i<50; i++) {
-						len = sprintf(str, "OSCCAL set to\t%d\t cycle counts\t%d\t%d\t%d\r\n", os[i], cta[i], ctb[i], ctc[i]);
+					for (i=0; i<100; i++) {
+						len = sprintf(str, "OSCCAL set to\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os[i], (unsigned long)cta[i], (unsigned long)ctb[i], (unsigned long)ctc[i]);
 						outputStringToUART1(str);
 					}
 

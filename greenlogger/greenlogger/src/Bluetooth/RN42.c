@@ -205,10 +205,12 @@ void checkForBTCommands (void) {
 					uint16_t ct0a, ct0b, ct0c, cta[100], ctb[100], ctc[100];
 					uint8_t i, os0, os[100];
 					// go into uC clock adjust mode
+
 					outputStringToUART1("\r\n going into uC adjust mode\r\n");
 					len = sprintf(str, "baud register UBBR1: %d\r\n", UBRR1);
 					outputStringToUART1(str);
 					
+/*
 					ct0a = cyPerRTCSqWave(); // get starting cycle count, 3 samples
 					ct0b = cyPerRTCSqWave(); 
 					ct0c = cyPerRTCSqWave();
@@ -232,42 +234,18 @@ void checkForBTCommands (void) {
 						len = sprintf(str, "OSCCAL set to\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os[i], (unsigned long)cta[i], (unsigned long)ctb[i], (unsigned long)ctc[i]);
 						outputStringToUART1(str);
 					}
-
-/*
+*/
 
 					// try tuning uC osc down to 7.3728 MHz
-					do {
+					OSCCAL = 0x7F; // set OSCCAL to high end of lower range
+					while ((unsigned long)cyPerRTCSqWave() > 28800) {
 						OSCCAL--;
-						ct2 = cyPerRTCSqWave(); // check new cycle count
-						ct2 = cyPerRTCSqWave(); // twice, to avoid 1st time glitch
-					} while (ct2 > 225);
-					UBRR1 = 47; // sets 9600 baud when osc=7.3728 MHz
-					os2 = OSCCAL;
-					
-					os2 = OSCCAL; // verify OSCCAL changed
-					OSCCAL = os1; // put OSCCAL back
-					ct3 = cyPerRTCSqWave(); // see if cycle count changed back
-					ct3 = cyPerRTCSqWave(); // twice, to avoid 1st time glitch
-					os3 = OSCCAL; // verify OSCCAL changed
+					}
+					UBRR1 = 47; // sets 9600 baud when osc=7.3728 MHz					
 					
 					// see if we still get any sense out of the uart
-					len = sprintf(str, "original cycle count from RTC: %d\r\n", ct1);
+					len = sprintf(str, "OSCCAL\t%d\r\n", OSCCAL);
 					outputStringToUART1(str);
-					len = sprintf(str, "original calibration byte: %d\r\n", os1);
-					outputStringToUART1(str);
-
-					len = sprintf(str, "cycle count from RTC after tuning: %d\r\n", ct2);
-					outputStringToUART1(str);
-					len = sprintf(str, "new OSCCAL: %d\r\n", os2);
-					outputStringToUART1(str);
-*/
-
-/*
-					len = sprintf(str, "RTC count after changing OSCCAL back: %d\r\n", ct3);
-					outputStringToUART1(str);
-					len = sprintf(str, "verify OSCCAL changed back: %d\r\n", os3);
-					outputStringToUART1(str);
-*/
 
 					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
                     break;

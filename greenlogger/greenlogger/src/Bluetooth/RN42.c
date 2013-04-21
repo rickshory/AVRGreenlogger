@@ -119,7 +119,7 @@ inline bool BT_powered(void)
  *  
  */
 uint16_t cyPerRTCSqWave(void) {
-	uint8_t sreg;
+	uint8_t i, sreg;
 	twoByteData cyPerSec;
 	// go into uC clock adjust mode
 //	outputStringToUART1("\r\n going into uC adjust mode\r\n");
@@ -134,11 +134,13 @@ uint16_t cyPerRTCSqWave(void) {
 		;
 	}
 	setupTimer3_1shot(); // zeroes Timer3
-	machineState = Idle; // flag to wait
-	// RTC interrupt disables itself
-	enableRTCInterrupt();
-	while (machineState == Idle) { // RTC Interrupt will break out of this
-		;
+	for (i=0; i<20; i++) {
+		machineState = Idle; // flag to wait
+		// RTC interrupt disables itself
+		enableRTCInterrupt();
+		while (machineState == Idle) { // RTC Interrupt will break out of this
+			;
+		}
 	}
 	// read Timer3
 	// Save global interrupt flag
@@ -149,13 +151,7 @@ uint16_t cyPerRTCSqWave(void) {
 	cyPerSec.loByte = TCNT3L;
 	cyPerSec.hiByte = TCNT3H;
 	// Restore global interrupt flag
-	SREG = sreg;
-	cyPerSec.wholeWord += 15; // assume 15 cycles of latency
-//	len = sprintf(str, "Cycle count from RTC: %d\r\n", (uint16_t)cyPerSec.wholeWord);
-//	outputStringToUART1(str);
-//	len = sprintf(str, "calibration byte: %d\r\n", OSCCAL);
-//	outputStringToUART1(str);				
-	
+	SREG = sreg;	
 	// go back into normal timekeeping mode
 	setupTimer3_10ms();
 	disableRTCInterrupt();
@@ -206,8 +202,8 @@ void checkForBTCommands (void) {
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
                 case 'O': case 'o': { // experiment with oscillator control
-					uint16_t ct0a, ct0b, ct0c, cta[10], ctb[10], ctc[10];
-					uint8_t i, os0, os[10];
+					uint16_t ct0a, ct0b, ct0c, cta[100], ctb[100], ctc[100];
+					uint8_t i, os0, os[100];
 					// go into uC clock adjust mode
 					outputStringToUART1("\r\n going into uC adjust mode\r\n");
 					len = sprintf(str, "baud register UBBR1: %d\r\n", UBRR1);
@@ -219,21 +215,21 @@ void checkForBTCommands (void) {
 					os0 = OSCCAL; // remember OSCCAL
 					
 					OSCCAL = 0x7F; // set OSCCAL to high end of lower range
-					for (i=0; i<10; i++) {
+					for (i=0; i<50; i++) {
 						os[i] = OSCCAL;
 						cta[i] = cyPerRTCSqWave(); // take three readings
 						ctb[i] = cyPerRTCSqWave();
 						ctc[i] = cyPerRTCSqWave();
-						OSCCAL-=4; // adjust down
+						OSCCAL-=1; // adjust down
 					}
 					
 					OSCCAL = os0; // restore
 					
-					len = sprintf(str, "original OSCCAL=%d, cycle counts=%d, %d, %d\r\n", os0, ct0a, ct0b, ct0c);
+					len = sprintf(str, "original OSCCAL\t%d\t cycle counts\t%d\t%d\t%d\r\n", os0, ct0a, ct0b, ct0c);
 					outputStringToUART1(str);
 					
-					for (i=0; i<10; i++) {
-						len = sprintf(str, "OSCCAL set to %d, cycle counts=%d, %d, %d\r\n", os[i], cta[i], ctb[i], ctc[i]);
+					for (i=0; i<50; i++) {
+						len = sprintf(str, "OSCCAL set to\t%d\t cycle counts\t%d\t%d\t%d\r\n", os[i], cta[i], ctb[i], ctc[i]);
 						outputStringToUART1(str);
 					}
 

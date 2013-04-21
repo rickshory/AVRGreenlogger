@@ -33,6 +33,8 @@
 #define DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR 50 // infrared readings below this are considered "darkness"
 #define DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB 100 // broadband readings below this are considered "darkness"
 
+#define RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ 28800 // target count when summing 64 full cycles of the RTC square wave
+// for tuning main oscillator to 7.3728 MHz
 
 enum machStates
 {

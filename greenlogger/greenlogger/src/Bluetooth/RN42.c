@@ -202,8 +202,9 @@ void checkForBTCommands (void) {
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
                 case 'O': case 'o': { // experiment with oscillator control
-					uint16_t ct0a, ct0b, ct0c, cta[100], ctb[100], ctc[100];
-					uint8_t i, os0, os[100];
+					uint16_t cyCt, cyCtNxtUp;
+//					uint16_t ct0a, ct0b, ct0c, cta[100], ctb[100], ctc[100];
+//					uint8_t i, os0, os[100];
 					// go into uC clock adjust mode
 
 					outputStringToUART1("\r\n going into uC adjust mode\r\n");
@@ -237,14 +238,21 @@ void checkForBTCommands (void) {
 */
 
 					// try tuning uC osc down to 7.3728 MHz
-					OSCCAL = 0x7F; // set OSCCAL to high end of lower range
-					while ((unsigned long)cyPerRTCSqWave() > 28800) {
+					OSCCAL = 0x7F; // set OSCCAL (oscillator calibration byte) to high end of lower range
+					cyCt = cyPerRTCSqWave();
+					do  { 
+						cyCtNxtUp = cyCt;
 						OSCCAL--;
+						cyCt = cyPerRTCSqWave();
+					} while ((unsigned long)cyCt > RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ);
+					// we are just below the ideal number, if the next higher count was closer ...					
+					if ((unsigned long)(RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ - (unsigned long)cyCt) > (unsigned long)((unsigned long)cyCtNxtUp - RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ)) {
+						OSCCAL++; // ... tweak OSCCAL up one
 					}
 					UBRR1 = 47; // sets 9600 baud when osc=7.3728 MHz					
 					
 					// see if we still get any sense out of the uart
-					len = sprintf(str, "OSCCAL\t%d\r\n", OSCCAL);
+					len = sprintf(str, "OSCCAL\t%d\tCT_below\t%lu\tCT_above\t%lu\r\n", OSCCAL, (unsigned long)cyCt, (unsigned long)cyCtNxtUp);
 					outputStringToUART1(str);
 
 					outputStringToUART1("\r\n returning to timekeeping mode\r\n");

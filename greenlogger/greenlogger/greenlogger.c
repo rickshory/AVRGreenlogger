@@ -160,6 +160,23 @@ int main(void)
 	
 //	Stat |= STA_NOINIT;      // Set STA_NOINIT
 
+	// tune uC osc down to 7.3728 MHz, implement 115200 baud
+	{
+		uint16_t cyCt, cyCtNxtUp;
+		OSCCAL = 0x7F; // set OSCCAL (oscillator calibration byte) to high end of lower range
+		cyCt = cyPerRTCSqWave();
+		do  { 
+			cyCtNxtUp = cyCt;
+			OSCCAL--;
+			cyCt = cyPerRTCSqWave();
+		} while ((unsigned long)cyCt > RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ);
+		// we are just below the ideal number; if the next higher count was closer ...					
+		if ((unsigned long)(RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ - (unsigned long)cyCt) > (unsigned long)((unsigned long)cyCtNxtUp - RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ)) {
+			OSCCAL++; // ... tweak OSCCAL up one
+		}
+	}
+//
+
 	// try allowing the following on first power-up, even if cell is barely charged
 	
 	cli();

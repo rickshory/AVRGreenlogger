@@ -87,7 +87,8 @@ int main(void)
 	DDRD |= (1<<7); // make Bluetooth baud rate control an output
 
 	BT_power_off();
-	BT_baud_9600();
+//	BT_baud_9600();
+	BT_baud_115k();
 	
 	
 	commandBuffer[0] = '\0'; // "empty" the command buffer

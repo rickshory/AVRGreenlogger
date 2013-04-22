@@ -201,6 +201,7 @@ void checkForBTCommands (void) {
 			btFlags &= ~(1<<btSerialBeingInput); // flag that input is complete; allow string output
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
+/*
                 case 'O': case 'o': { // experiment with oscillator control
 					uint16_t cyCt, cyCtNxtUp;
 //					uint16_t ct0a, ct0b, ct0c, cta[100], ctb[100], ctc[100];
@@ -211,7 +212,6 @@ void checkForBTCommands (void) {
 					len = sprintf(str, "baud register UBBR1: %d\r\n", UBRR1);
 					outputStringToUART1(str);
 					
-/*
 					ct0a = cyPerRTCSqWave(); // get starting cycle count, 3 samples
 					ct0b = cyPerRTCSqWave(); 
 					ct0c = cyPerRTCSqWave();
@@ -235,7 +235,6 @@ void checkForBTCommands (void) {
 						len = sprintf(str, "OSCCAL set to\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os[i], (unsigned long)cta[i], (unsigned long)ctb[i], (unsigned long)ctc[i]);
 						outputStringToUART1(str);
 					}
-*/
 
 					// try tuning uC osc down to 7.3728 MHz
 					OSCCAL = 0x7F; // set OSCCAL (oscillator calibration byte) to high end of lower range
@@ -262,6 +261,7 @@ void checkForBTCommands (void) {
 					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
                     break;
                 }
+*/
 
 				case 'T': case 't': { // set time
 					// get info from btCmdBuffer before any UART output, 

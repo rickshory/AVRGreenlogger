@@ -17,6 +17,8 @@
 
 #define commandBufferLen 30
 
+#define versionString "\r\n Ver 3.00\t 2013-04-22\r\n "
+
 // ADC reading * 2.5 = mV
 #define CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS 520 // corresponds to 1300mV, sufficient for high drain functions like GPS
 #define CELL_VOLTAGE_GOOD_FOR_STARTUP 480 // corresponds to 1200mV, sufficient for startup sequence using Bluetooth

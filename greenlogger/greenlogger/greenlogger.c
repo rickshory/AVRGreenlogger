@@ -702,6 +702,11 @@ void checkForCommands (void) {
 			stayRoused(120); // keep system roused
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
+				
+				 case 'V': case 'v': { // show firmware version
+					 outputStringToBothUARTs(versionString);
+					 break;
+				 }					 
 
                 case 'T': case 't': { // set time
 					// get info from commandBuffer before any UART output, 
@@ -822,7 +827,7 @@ void checkForCommands (void) {
 					outputStringToUART0("\r\n SD card power turned off\r\n");
                     break;
                 }
-
+/*
                 case '^':
 				{ // force B3 high
                     outputStringToUART0("\r\n forcing B3 high\r\n");
@@ -840,6 +845,7 @@ void checkForCommands (void) {
 					outputStringToUART0("\r\n B3 forced low \r\n");
                     break;
                 }
+*/
 				case 'A': case 'a':
 					{
 						findADXL345();

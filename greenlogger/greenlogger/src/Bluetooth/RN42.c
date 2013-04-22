@@ -200,6 +200,11 @@ void checkForBTCommands (void) {
 			*btCmdBufferPtr++ = '\0'; // null terminate
 			btFlags &= ~(1<<btSerialBeingInput); // flag that input is complete; allow string output
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
+				
+				 case 'V': case 'v': { // show firmware version
+					 outputStringToBothUARTs(versionString);
+					 break;
+				 }
 
 /*
                 case 'O': case 'o': { // experiment with oscillator control

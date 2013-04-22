@@ -89,6 +89,7 @@ int main(void)
 	BT_power_off();
 	BT_baud_9600();
 	
+	
 	commandBuffer[0] = '\0'; // "empty" the command buffer
 	commandBufferPtr = commandBuffer;
 	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup

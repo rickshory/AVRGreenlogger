@@ -37,6 +37,17 @@
 #include <avr/interrupt.h>
 //! @}
 
+#define BAUD_9600_1X_OSC_7372800HZ 47 // 0% error
+#define BAUD_9600_2X_OSC_7372800HZ 95 // 0% error
+#define BAUD_115200_1X_OSC_7372800HZ 3 // 0% error
+#define BAUD_115200_2X_OSC_7372800HZ 7 // 0% error
+
+#define BAUD_9600_1X_OSC_8MHZ 51 // 0.16% error
+#define BAUD_9600_2X_OSC_8MHZ 103 // 0.16% error
+#define BAUD_115200_1X_OSC_8MHZ 3 //  not recommended 8.51% error
+#define BAUD_115200_2X_OSC_8MHZ 8 // not recommended -3.55% error
+
+
 #include "ring_buffer.h"
 
 // buffers for use with the ring buffer
@@ -118,6 +129,14 @@ ISR(UART1_RX_IRQ)
  */
 void uart0_init(void)
 {
+//	UBRR0 = BAUD_9600_1X_OSC_8MHZ;
+//	UBRR0 = BAUD_9600_1X_OSC_7372800HZ;
+
+	UBRR0 = BAUD_9600_2X_OSC_8MHZ;
+//	UBRR0 = BAUD_9600_2X_OSC_7372800HZ;
+	UCSR0A |= (1 << U2X0);
+	
+/*	
 #if defined UBRR0H
 	// get the values from the setbaud tool
 	UBRR0H = UBRRH_VALUE;
@@ -129,7 +148,7 @@ void uart0_init(void)
 #if USE_2X
 	UCSR0A |= (1 << U2X0);
 #endif
-
+*/
 	// enable RX and TX and set interrupts on rx complete
 	UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
 
@@ -152,6 +171,16 @@ void uart0_init(void)
  */
 void uart1_init(void)
 {
+//	UBRR1 = BAUD_9600_1X_OSC_8MHZ;
+//	UBRR1 = BAUD_9600_1X_OSC_7372800HZ;
+//	UBRR1 = BAUD_115200_1X_OSC_7372800HZ;
+
+	UBRR1 = BAUD_9600_2X_OSC_8MHZ;
+//	UBRR1 = BAUD_9600_2X_OSC_7372800HZ;
+//	UBRR1 = BAUD_115200_2X_OSC_7372800HZ;
+	UCSR1A |= (1 << U2X1);
+
+/*
 #if defined UBRR1H
 	// get the values from the setbaud tool
 	UBRR1H = UBRRH_VALUE;
@@ -163,6 +192,7 @@ void uart1_init(void)
 #if USE_2X
 	UCSR1A |= (1 << U2X1);
 #endif
+*/
 
 	// enable RX and TX and set interrupts on rx complete
 	UCSR1B = (1 << RXEN1) | (1 << TXEN1) | (1 << RXCIE1);

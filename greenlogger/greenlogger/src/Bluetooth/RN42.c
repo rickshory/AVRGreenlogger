@@ -249,7 +249,11 @@ void checkForBTCommands (void) {
 					if ((unsigned long)(RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ - (unsigned long)cyCt) > (unsigned long)((unsigned long)cyCtNxtUp - RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ)) {
 						OSCCAL++; // ... tweak OSCCAL up one
 					}
-					UBRR1 = 47; // sets 9600 baud when osc=7.3728 MHz					
+//					UBRR1 = 47; // sets 9600 1x baud when osc=7.3728 MHz
+					UBRR1 = 95; // sets 9600 2x baud when osc=7.3728 MHz
+					UBRR0 = 95; // sets 9600 2x baud when osc=7.3728 MHz
+
+//					UBRR1 = 3; // sets 115200 baud when osc=7.3728 MHz					
 					
 					// see if we still get any sense out of the uart
 					len = sprintf(str, "OSCCAL\t%d\tCT_below\t%lu\tCT_above\t%lu\r\n", OSCCAL, (unsigned long)cyCt, (unsigned long)cyCtNxtUp);

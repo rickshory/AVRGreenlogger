@@ -705,7 +705,7 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 			retVal = sdFileReadFail;
 			goto closeFile;
 		}
-		outputStringToBothUARTs(stLine);
+		outputStringToUART1(stLine); // output to Bluetooth only
 	}
 	
 	//Close and unmount.

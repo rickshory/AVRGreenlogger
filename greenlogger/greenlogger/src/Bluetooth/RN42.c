@@ -402,19 +402,19 @@ void checkForBTCommands (void) {
 void BT_dataDump(char* stOpt) {
 //	char stBeginTryDate[12] = "2011-12-21"; // system default starting date, winter solstice 2011.
 	char stBeginTryDate[12] = "2012-01-01"; //
-	char outputOpt = 'c'; // c=output contents, f=output filedate only
 	// There would be no data before this unless user mistakenly set system time earlier.
+	char outputOpt = 'c'; // c=output contents, f=output filedate only
 	char stTryDate[12], stEndTryDate[25];
 	datetime_getstring(stEndTryDate, &dt_CurAlarm); // get current timestamp as string
 	stEndTryDate[10] = '\0'; // truncate to only the date
-//	outputStringToBothUARTs("\n\r current date: \"");
-//	outputStringToBothUARTs(stEndTryDate);
-//	outputStringToBothUARTs("\"\n\r");
+//	outputStringToUART1("\n\r current date: \"");
+//	outputStringToUART1(stEndTryDate);
+//	outputStringToUART1("\"\n\r");
 	switch (stOpt[1]) {
 		case '\0': { // "D" alone, most common option. Dump any days' data collected since previous dump.
 			errSD = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch the previous dump date
 			if (errSD) {
-				outputStringToBothUARTs("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
+				outputStringToUART1("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
 			break;
 		}
 		
@@ -434,14 +434,14 @@ void BT_dataDump(char* stOpt) {
 				stBeginTryDate[11] = '\0'; // assure terminated
 				errSD = fileExistsForDate(stBeginTryDate);
 				if (errSD != sdFileOpenFail) { // file does not exist
-					outputStringToBothUARTs("\n\r no data for ");
-					outputStringToBothUARTs(stBeginTryDate);
-					outputStringToBothUARTs(". Use \"dd\" to list dates having data.\n\r\n\r");
+					outputStringToUART1("\n\r no data for ");
+					outputStringToUART1(stBeginTryDate);
+					outputStringToUART1(". Use \"dd\" to list dates having data.\n\r\n\r");
 					return;
 				}					
 				strcpy(stEndTryDate, stBeginTryDate); // output one day only
 			} else {
-				outputStringToBothUARTs("\n\r Invalid option.\n\r\n\r");
+				outputStringToUART1("\n\r Invalid option.\n\r\n\r");
 				return;
 			}
 			break;
@@ -453,14 +453,14 @@ void BT_dataDump(char* stOpt) {
 //	if (stOpt[1] == '\0') { // "D" alone, most common option. Dump any days' data collected since previous dump.
 //		errSD = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch the previous dump date
 //		if (errSD) {
-//			outputStringToBothUARTs("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
+//			outputStringToUART1("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
 //		} else if ((stOpt[1] == 'A') || (stOpt[1] == 'a')) {
 //			; // valid, all data; but this is already the default so don't have to do anything
 //		} else {
 //			if (isValidDate(stOpt + 1)) {
 //				strncpy(stBeginTryDate,stOpt + 1, 10);
 //			} else {
-//				outputStringToBothUARTs("\n\r Invalid option.\n\r\n\r");
+//				outputStringToUART1("\n\r Invalid option.\n\r\n\r");
 //				return;
 //			}
 //		}
@@ -472,19 +472,19 @@ void BT_dataDump(char* stOpt) {
 //			errSD = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch any later date
 //		}
 	if (outputOpt == 'c')
-		outputStringToBothUARTs("\n\r{\"datadump\":\"begin\"}\n\r");
+		outputStringToUART1("\n\r{\"datadump\":\"begin\"}\n\r");
 	else
-		outputStringToBothUARTs("\n\r{\"datesHavingData\":\"begin\"}\n\r");
+		outputStringToUART1("\n\r{\"datesHavingData\":\"begin\"}\n\r");
 	strcpy(stTryDate, stBeginTryDate);
 	do { // loop like this so dump will output at least one day
-//			outputStringToBothUARTs("\n\r");
+//			outputStringToUART1("\n\r");
 		errSD = fileExistsForDate(stTryDate);
 		// somewhat redundant to test first because output fns test internally, but avoids output for nonexistent files
 		if (!errSD) {
 			if (outputOpt == 'c') { // contents
-				outputStringToBothUARTs("\n\r{\"datafor\":\"");
-				outputStringToBothUARTs(stTryDate);
-				outputStringToBothUARTs("\"}\n\r");	
+				outputStringToUART1("\n\r{\"datafor\":\"");
+				outputStringToUART1(stTryDate);
+				outputStringToUART1("\"}\n\r");	
 				errSD = outputContentsOfFileForDate(stTryDate);
 					if (errSD) {
 						tellFileError (errSD);
@@ -496,15 +496,15 @@ void BT_dataDump(char* stOpt) {
 					tellFileError (errSD);
 				}
 			} else { // list of dates only
-//				outputStringToBothUARTs("\n\r{\"datafor\":\"");
-				outputStringToBothUARTs(stTryDate);
-				outputStringToBothUARTs("\n\r");
+//				outputStringToUART1("\n\r{\"datafor\":\"");
+				outputStringToUART1(stTryDate);
+				outputStringToUART1("\n\r");
 			}
 
 
 		} else { // tested if file exists, and some error
- //				outputStringToBothUARTs(stTryDate);
- //				outputStringToBothUARTs("  ");
+ //				outputStringToUART1(stTryDate);
+ //				outputStringToUART1("  ");
 			if (errSD != sdFileOpenFail) // file does not exist, ignore
 				tellFileError (errSD);
 		}
@@ -512,15 +512,15 @@ void BT_dataDump(char* stOpt) {
 		datetime_advanceDatestring1Day(stTryDate);
 	} while (strcmp(stTryDate, stEndTryDate) <= 0);
 
-//		outputStringToBothUARTs("\n\r");
+//		outputStringToUART1("\n\r");
 	if (outputOpt == 'c') { // data file contents 
-		outputStringToBothUARTs("\n\r{\"datadump\":\"end\"}\n\r\n\r");
+		outputStringToUART1("\n\r{\"datadump\":\"end\"}\n\r\n\r");
 		errSD = writeLastDumpDateToSDCard(stBeginTryDate);
 		if (errSD) {
 			tellFileError (errSD);
 		}
 	} else { // list of dates with data, only
-		outputStringToBothUARTs("\n\r{\"datesHavingData\":\"end\"}\n\r");
+		outputStringToUART1("\n\r{\"datesHavingData\":\"end\"}\n\r");
 	}
 		
 	return;
@@ -528,23 +528,23 @@ void BT_dataDump(char* stOpt) {
 
 //	if ((stOpt[1] == 'F') || (stOpt[1] == 'f')) { // show existing files
 //		strcpy(stTryDate, stBeginTryDate);
-//		outputStringToBothUARTs("\n\rFiles exist for:\n\r");
+//		outputStringToUART1("\n\rFiles exist for:\n\r");
 //		do {
 //			strcpy(stBeginTryDate, stTryDate);
 //			errSD = fileExistsForDate(stTryDate);
 //			// somewhat redundant to test first because output fns test internally, but avoids output for nonexistent files
 //			if (!errSD) {
-//				outputStringToBothUARTs(stTryDate);
-//				outputStringToBothUARTs("\n\r");
+//				outputStringToUART1(stTryDate);
+//				outputStringToUART1("\n\r");
 //			} else { // tested if file exists, and some error
-// //				outputStringToBothUARTs(stTryDate);
-// //				outputStringToBothUARTs("  ");
+// //				outputStringToUART1(stTryDate);
+// //				outputStringToUART1("  ");
 //				if (errSD != sdFileOpenFail) // file does not exist, ignore
 //					tellFileError (errSD);
 //			}
 //			datetime_advanceDatestring1Day(stTryDate);
 //		} while (strcmp(stTryDate, stEndTryDate) <= 0);
-//		outputStringToBothUARTs("\n\r{\"datadump\":\"endfilelist\"}\n\r");
+//		outputStringToUART1("\n\r{\"datadump\":\"endfilelist\"}\n\r");
 //		errSD = writeLastDumpDateToSDCard(stBeginTryDate);
 //		if (errSD) {
 //			tellFileError (errSD);
@@ -556,19 +556,19 @@ void BT_dataDump(char* stOpt) {
 /*
 	// try command as a date
 	if (!isValidDate(stOpt + 1)) {
-		outputStringToBothUARTs(" Not a valid date");
+		outputStringToUART1(" Not a valid date");
 		return;
 	}
-	if (!fileExistsForDate(outputStringToBothUARTs)) {
-		outputStringToBothUARTs(" No file for this date");
+	if (!fileExistsForDate(outputStringToUART1)) {
+		outputStringToUART1(" No file for this date");
 		return;
 	}
-	outputStringToBothUARTs("\n\r{\"datadump\":\"begin\"}\n\r");
-	outputStringToBothUARTs("\n\r{\"datafor\":\"");
-	outputStringToBothUARTs(stOpt + 1);
-	outputStringToBothUARTs("\"}\n\r");
+	outputStringToUART1("\n\r{\"datadump\":\"begin\"}\n\r");
+	outputStringToUART1("\n\r{\"datafor\":\"");
+	outputStringToUART1(stOpt + 1);
+	outputStringToUART1("\"}\n\r");
 	errSD = outputContentsOfFileForDate(stOpt + 1);
-	outputStringToBothUARTs("\n\r{\"datadump\":\"end\"}\n\r");
+	outputStringToUART1("\n\r{\"datadump\":\"end\"}\n\r");
 	if (errSD) {
 		tellFileError (errSD);
 	} //else { // if it was a valid date, and we dumped that data

@@ -415,17 +415,19 @@ void BT_dataDump(char* stOpt) {
 			errSD = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch the previous dump date
 			if (errSD) {
 				outputStringToUART1("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
+				outputStringToUART1("\n\r ***** diagnostics, second line.\n\r\n\r");
+			}			
 			break;
-		}
+		}		
 		
-		case 'A': case 'a': { // all data, defaults are already set up
+		case 'A': case 'a': {  // all data, defaults are already set up
 			break;
-		}
+		}		
 		
 		case 'D': case 'd': { // output the list of dates that have data
 			outputOpt = 'f'; // output dates rather than content
 			break;
-		}
+		}		
 		
 		default: {
 			// see if it's a valid date
@@ -447,9 +449,10 @@ void BT_dataDump(char* stOpt) {
 			break;
 		}
 		
-		
-	}
-	
+		outputStringToUART1("\n\r *****diagnostics, ending first switch statement\n\r");
+
+	} // end switch (stOpt[1])
+	outputStringToUART1("\n\r *****diagnostics, exited first switch statement\n\r\n\r");
 //	if (stOpt[1] == '\0') { // "D" alone, most common option. Dump any days' data collected since previous dump.
 //		errSD = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch the previous dump date
 //		if (errSD) {
@@ -471,6 +474,9 @@ void BT_dataDump(char* stOpt) {
 //		if (stOpt[1] == '\0') { // basic command with no parameters; default, output everything since last time
 //			errSD = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch any later date
 //		}
+
+	outputStringToUART1("\n\r *****diagnostics, past first switch statement\n\r");
+
 	if (outputOpt == 'c')
 		outputStringToUART1("\n\r{\"datadump\":\"begin\"}\n\r");
 	else
@@ -577,5 +583,5 @@ void BT_dataDump(char* stOpt) {
 		tellFileError (errSD);
 	}			
 //	}
-*/
 }
+*/

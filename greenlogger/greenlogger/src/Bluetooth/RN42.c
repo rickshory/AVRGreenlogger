@@ -435,7 +435,8 @@ void BT_dataDump(char* stOpt) {
 				strncpy(stBeginTryDate, stOpt + 1, 10);
 				stBeginTryDate[11] = '\0'; // assure terminated
 				errSD = fileExistsForDate(stBeginTryDate);
-				if (errSD != sdFileOpenFail) { // file does not exist
+//				if (errSD != sdFileOpenFail) { // file does not exist
+				if (errSD == sdFileOpenFail) { // file does not exist
 					outputStringToUART1("\n\r no data for ");
 					outputStringToUART1(stBeginTryDate);
 					outputStringToUART1(". Use \"dd\" to list dates having data.\n\r\n\r");

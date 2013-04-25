@@ -619,7 +619,16 @@ BYTE readTimezoneFromSDCard (void) {
  *
  */
 BYTE writeLastDumpDateToSDCard (char* stDate) {
-	if (!isValidDate(stDate)) return sdInvalidDate;
+	outputStringToUART0("\n\r(inside fn 'writeLastDumpDateToSDCard') ");
+	if (!isValidDate(stDate)) {
+		outputStringToUART0("invalid date: ");
+		outputStringToUART0(stDate);
+		outputStringToUART0("\n\r\n\r");
+		return sdInvalidDate;
+	} 
+	outputStringToUART0("date string about to be written: ");
+	outputStringToUART0(stDate);
+	outputStringToUART0("\n\r\n\r");
 	return writeStringInFileToSDCard(stDate, "LASTDUMP.TXT");
 }
 

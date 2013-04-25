@@ -417,7 +417,7 @@ void BT_dataDump(char* stOpt) {
 				outputStringToUART1("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
 			}
 			
-			outputStringToUART1("\n\r");
+			outputStringToUART1("\n\r lastDump date read from SD card: ");
 			outputStringToUART1(stBeginTryDate);
 			outputStringToUART1("\n\r");
 		

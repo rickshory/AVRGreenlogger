@@ -135,7 +135,7 @@ BYTE fileExistsForDate (char* stDate);
 BYTE fileExists (char* stFileFullpath);
 BYTE writeCharsToSDCard (char* St, BYTE n);
 BYTE writeStringInFileToSDCard (char* stParam, char* stFile);
-BYTE readStringFromFileFromSDCard (char* stParam, char* stFile);
+BYTE readStringFromFileFromSDCard (char* stParam, char* stFile, BYTE stLen);
 
 void syncTimeZone (void);
 BYTE writeTimezoneToSDCard (void);

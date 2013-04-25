@@ -330,7 +330,11 @@ BYTE writeStringInFileToSDCard (char* stParam, char* stFile) {
  * \brief Reads a string from a file on the SD card
  *
  * This function reads as a single string the contents of
- * the named file on the SD card. It is primarily for
+ * the named file on the SD card.
+ * stParam = the string to read
+ * stFile = the file to read from
+ * stLen = the number of characters to read. allow for the null termination. this fn explictly adds the null termination
+ * It is primarily for
  * retrieving configuration parameters. This fn is the
  * core of other functions that fetch specific parameters.
  *
@@ -338,10 +342,13 @@ BYTE writeStringInFileToSDCard (char* stParam, char* stFile) {
  * \note 
  * 
  */
-BYTE readStringFromFileFromSDCard (char* stParam, char* stFile) {
+BYTE readStringFromFileFromSDCard (char* stParam, char* stFile, BYTE stLen) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
 	BYTE sLen, retVal = sdOK;
+	
+	uint8_t stringSize, tmpLen;
+	char stTmp[20];
 	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely read card
@@ -364,13 +371,28 @@ BYTE readStringFromFileFromSDCard (char* stParam, char* stFile) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;
 }	
-	f_gets(stParam, sizeof stParam, &logFile);
+
+	outputStringToUART0("\n\r(before read) string passed to fn: ");
+	outputStringToUART0(stParam);
+	stringSize = stLen;
+	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stLen);
+	outputStringToUART0(stTmp);
+
+	f_gets(stParam, stLen - 1, &logFile);
 	
 	if (f_error(&logFile)) {
 		retVal = sdFileReadFail;
 		goto closeFile;
 	}
-		
+	
+	stParam[stLen] = '\0';
+
+	outputStringToUART0("\n\r(after read) string passed to fn: ");
+	outputStringToUART0(stParam);
+	stringSize = stLen;
+	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stringSize);
+	outputStringToUART0(stTmp);
+
 	//Close and unmount.
 	closeFile:
 	f_close(&logFile);
@@ -618,7 +640,7 @@ BYTE writeLastDumpDateToSDCard (char* stDate) {
  *
  */
 BYTE readLastDumpDateFromSDCard (char* stDate) {
-	return readStringFromFileFromSDCard(stDate, "LASTDUMP.TXT");
+	return readStringFromFileFromSDCard(stDate, "LASTDUMP.TXT", 12);
 }
 
 

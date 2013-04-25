@@ -775,7 +775,7 @@ void datetime_advanceDatestring1Day(char* s) {
 	dateTime t;
 	strcpy(stDateTmp, s); // make a copy of the date string
 	strcat(stDateTmp, " 01:01:01 +01"); // fill out full date/time with dummy vals
-	datetime_getFromUnixString(&t, stDateTmp, 0);
+	datetime_getFromUnixString(&t, stDateTmp, 1);
 	(t.day)++;
 	datetime_normalize(&t);
 	datetime_getstring(stDateTmp, &t);

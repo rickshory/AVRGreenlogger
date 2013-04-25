@@ -227,7 +227,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		}
 		stateFlags1 &= ~(1<<writeJSONMsg); // clear flag, write only once
 		strJSON[0] = '\0'; // "erase" the string
-		if (bytesWritten < n) { // probably strJSON is corrupted; proceed next time with string and flag cleared
+		if (bytesWritten < tmpLen) { // probably strJSON is corrupted; proceed next time with string and flag cleared
 			// at least allow normal logging to resume
 			retVal = sdFileWritePartial;
 			goto closeFile;
@@ -235,17 +235,17 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	}
 	// if flagged, insert column headers
 	if (stateFlags1 & (1<<writeDataHeaders)){
-//		tmpLen = sprintf(str, "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r");
-		tmpLen = sprintf(str, strHdr);
 		stateFlags1 &= ~(1<<writeDataHeaders); // clear flag, attempt to write only once
-		if (f_write(&logFile, str, tmpLen, &bytesWritten) != FR_OK)
+//		tmpLen = sprintf(str, "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r");
+		tmpLen = strlen(strHdr);
+		if (f_write(&logFile, strHdr, tmpLen, &bytesWritten) != FR_OK) {
 			retVal = sdFileWriteFail;
 			goto closeFile;
-		if (bytesWritten < n) {
+		}
+		if (bytesWritten < tmpLen) {
 			retVal = sdFileWritePartial;
 			goto closeFile;
 		}
-			
 	}
 	
 	if (f_write(&logFile, St, n, &bytesWritten) != FR_OK) {

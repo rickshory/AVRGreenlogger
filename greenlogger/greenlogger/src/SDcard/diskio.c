@@ -673,16 +673,13 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
 	char stFile[20], stLine[128];
-	BYTE sLen, retVal = sdOK;
-	
+	BYTE sLen, retVal = sdOK, intTmp1;
+	intTmp1 = readCellVoltage(&cellVoltageReading); // on long dumps, voltage is likely to droop
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely read card
 	}
 	
 	if (!isValidDate(stDt)) {
-//		outputStringToBothUARTs("Invalid date: ");
-//		outputStringToBothUARTs(stDt);
-//		outputStringToBothUARTs("\n\r\n\r");
 		return sdInvalidDate; // not a valid calendar date, e.g. 2011-02-30; or date is malformed
 	}
 	

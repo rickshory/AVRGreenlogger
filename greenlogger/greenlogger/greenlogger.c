@@ -162,21 +162,7 @@ int main(void)
 //	Stat |= STA_NOINIT;      // Set STA_NOINIT
 
 	// tune uC osc down to 7.3728 MHz, implement 115200 baud
-	{
-		uint16_t cyCt, cyCtNxtUp;
-		OSCCAL = 0x7F; // set OSCCAL (oscillator calibration byte) to high end of lower range
-		cyCt = cyPerRTCSqWave();
-		do  { 
-			cyCtNxtUp = cyCt;
-			OSCCAL--;
-			cyCt = cyPerRTCSqWave();
-		} while ((unsigned long)cyCt > RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ);
-		// we are just below the ideal number; if the next higher count was closer ...					
-		if ((unsigned long)(RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ - (unsigned long)cyCt) > (unsigned long)((unsigned long)cyCtNxtUp - RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ)) {
-			OSCCAL++; // ... tweak OSCCAL up one
-		}
-	}
-//
+	tuneMainOsc();
 
 	// try allowing the following on first power-up, even if cell is barely charged
 	
@@ -275,6 +261,7 @@ int main(void)
 				}
 				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
 					// it's likely someone is setting up this device with a fresh battery
+					tuneMainOsc(); // re-tune, in case clock was slow on first low-power startup
 					keepBluetoothPowered(180); // start with Bluetooth power on for 3 minutes
 				}
 			} // end test CELL_VOLTAGE_GOOD_FOR_STARTUP
@@ -290,6 +277,7 @@ int main(void)
 				outputStringToUART0("\n\r Tap detected \n\r\n\r");
 				if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
 					stayRoused(12000); // 2 minutes (120 seconds)
+					tuneMainOsc(); // re-tune, in case clock was slow on first low-power startup
 					keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
 				}
 				motionFlags &= ~(1<<tapDetected);
@@ -592,6 +580,33 @@ int main(void)
 		} // end of this full-power-only segment
 	} // end of main program loop
 } // end of fn main
+
+
+/**
+ * \brief tune system oscillator to 7.3728 MHz, implement 115200 baud
+ *
+ * Adjust system oscillator from ~8MHz to 7.3728 MHz
+ * Need this frequency to generate 115200 baud with
+ *  usable accuracy
+ * Talks to RTC chip, so needs I2C working
+ * \
+ *  
+ */
+void tuneMainOsc(void)	{
+	uint16_t cyCt, cyCtNxtUp;
+	OSCCAL = 0x7F; // set OSCCAL (oscillator calibration byte) to high end of lower range
+	cyCt = cyPerRTCSqWave();
+	do  { 
+		cyCtNxtUp = cyCt;
+		OSCCAL--;
+		cyCt = cyPerRTCSqWave();
+	} while ((unsigned long)cyCt > RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ);
+	// we are just below the ideal number; if the next higher count was closer ...					
+	if ((unsigned long)(RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ - (unsigned long)cyCt) > (unsigned long)((unsigned long)cyCtNxtUp - RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ)) {
+		OSCCAL++; // ... tweak OSCCAL up one
+	}
+}
+
 
 /**
  * \brief Check if power is critically low

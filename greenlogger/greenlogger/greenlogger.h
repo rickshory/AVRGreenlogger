@@ -154,6 +154,7 @@ enum motionFlagsBits
 	mfBit7 // unused
 };
 
+void tuneMainOsc(void);
 void checkCriticalPower(void);
 void outputStringToUART0 (char* St);
 void outputStringToUART1 (char* St);

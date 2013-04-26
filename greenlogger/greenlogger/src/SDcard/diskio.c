@@ -764,7 +764,7 @@ void tellFileError (BYTE err)
    //break;
   //}
   case sdPowerTooLowForSDCard: {
-   outputStringToBothUARTs("\r\n power too low, SD write skipped\r\n");
+   outputStringToBothUARTs("\r\n power too low, SD read/write skipped\r\n");
    break;
   }
   //case NoCard: {

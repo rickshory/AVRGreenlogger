@@ -13,6 +13,7 @@
 #include "../Accelerometer/ADXL345.h"
 #include "../TemperatureSensor/TCN75A.h"
 #include "../SDcard/diskio.h"
+#include "../BattMonitor/ADconvert.h"
 #include <util/twi.h>
 
 char btCmdBuffer[commandBufferLen];
@@ -35,6 +36,7 @@ extern int len, err;
 extern volatile accelAxisData accelData;
 extern volatile int8_t timeZoneOffset;
 extern unsigned long darkCutoffIR, darkCutOffBB;
+extern volatile adcData cellVoltageReading;
 
 /**
  * \brief turns on power to the RN-42 Bluetooth module
@@ -461,6 +463,42 @@ void BT_dataDump(char* stOpt) {
 		outputStringToUART1("\n\r{\"datesHavingData\":\"begin\"}\n\r");
 	strcpy(stTryDate, stBeginTryDate);
 	do { // loop like this so dump will output at least one day
+		while (timeFlags & (1<<alarmDetected)) { // continue logging during data dump
+			// use 'while' loop to allow various tests to break out
+			timeFlags &= ~(1<<alarmDetected); // clear flag so 'while' loop will only happen once in any case
+			timeFlags &= ~(1<<nextAlarmSet); // flag that current alarm is no longer valid
+			// will use to trigger setting next alarm
+			intTmp1 = readCellVoltage(&cellVoltageReading);
+			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+				break;
+			}
+
+            // test if an even number of minutes, and zero seconds
+			if (!(!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0))) {
+				timeFlags &= ~(1<<timeToLogData);
+				outputStringToUART0("\n\r Not time to log data \n\r");
+				// maybe blink the pilot light; maybe not necessary
+				break;
+			} else {  // maybe simplify this loop after above proves reliable
+				timeFlags |= (1<<timeToLogData);
+				outputStringToUART0("\n\r Time to log data \n\r");
+			}
+			
+			// attempt to assure time zone is synchronized
+			syncTimeZone(); // internally tests if work is already done
+
+			
+
+			
+		} // end of data acquisition loop
+		
+		// set next alarm
+		if (!(timeFlags & (1<<nextAlarmSet))) {
+			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+			timeFlags |= (1<<nextAlarmSet);
+		}
+		
+		
 //			outputStringToUART1("\n\r");
 		errSD = fileExistsForDate(stTryDate);
 		// somewhat redundant to test first because output fns test internally, but avoids output for nonexistent files

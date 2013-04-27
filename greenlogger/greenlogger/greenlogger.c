@@ -366,6 +366,7 @@ int main(void)
 
 		while (timeFlags & (1<<alarmDetected)) { // interrupt that woke from sleep was RTC alarm
 			// use 'while' loop to allow various tests to break out
+			timeFlags &= ~(1<<alarmDetected); // clear flag so this will only happen once in any case
 			// monitor cell voltage, to decide whether there is enough power to proceed
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;

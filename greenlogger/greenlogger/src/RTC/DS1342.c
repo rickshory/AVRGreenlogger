@@ -11,6 +11,7 @@
 #include "../greenlogger.h"
 #include "../SDcard/ff.h"
 #include "../SDcard/diskio.h"
+#include "BattMonitor/ADconvert.h"
 #include <util/twi.h>
 
 extern volatile dateTime dt_RTC;
@@ -21,6 +22,7 @@ extern volatile uint8_t stateFlags1, irradFlags;
 extern int len;
 extern char datetime_string[25];
 extern char str[128];
+volatile extern adcData cellVoltageReading;
 
 
 /**
@@ -829,6 +831,7 @@ void datetime_advanceDatestring1stOfNextMonth(char* s) {
  */
 uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 	uint8_t fileFoundForDate = 0, fileErr = 0;
+	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
 	FILINFO* fno;        // [OUT] FILINFO structure
 	char stDateEnd[27], stDateTry[12], stFolder[6], stFullPath[14];
@@ -851,6 +854,16 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 		outputStringToUART0("\r\n\ FullPath: ");
 		outputStringToUART0(stFullPath);
 		outputStringToUART0("\r\n");
+
+		if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+			outputStringToUART0("\r\n (power too low)\r\n");
+//			return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely access card
+		}
+		
+		if(f_mount(0, &FileSystemObject)!=FR_OK) {
+			outputStringToUART0("\r\n (could not mount SD drive)\r\n");
+//			return sdMountFail;
+		}
 
 		res = f_stat(stFullPath, fno);
 		len = sprintf(str, "\n\r File stat return code: %d\n\r", res);

@@ -415,6 +415,9 @@ void BT_dataDump(char* stOpt) {
 //	outputStringToUART1("\n\r current date: \"");
 //	outputStringToUART1(stEndTryDate);
 //	outputStringToUART1("\"\n\r");
+	if (datetime_nextDateWithData(stBeginTryDate, 0)) {
+		;
+	}
 	switch (stOpt[1]) {
 		case '\0': { // "D" alone, most common option. Dump any days' data collected since previous dump.
 			errSD = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch the previous dump date

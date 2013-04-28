@@ -472,20 +472,16 @@ void BT_dataDump(char* stOpt) {
 			timeFlags &= ~(1<<alarmDetected); // clear flag so 'while' loop will only happen once in any case
 			timeFlags &= ~(1<<nextAlarmSet); // flag that current alarm is no longer valid
 			// will use to trigger setting next alarm
+
+            // test if time to log; even number of minutes, and zero seconds
+			if (!(!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0))) {
+				break;
+			}
+			
+			// check cell voltage is high enough
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 				break;
-			}
-
-            // test if an even number of minutes, and zero seconds
-			if (!(!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0))) {
-				timeFlags &= ~(1<<timeToLogData);
-				outputStringToUART0("\n\r Not time to log data \n\r");
-				// maybe blink the pilot light; maybe not necessary
-				break;
-			} else {  // maybe simplify this loop after above proves reliable
-				timeFlags |= (1<<timeToLogData);
-				outputStringToUART0("\n\r Time to log data \n\r");
 			}
 			
 			// attempt to assure time zone is synchronized
@@ -516,16 +512,6 @@ void BT_dataDump(char* stOpt) {
 				}
 				intTmp1 = getIrrReading(swDnUp, swBbIr, &irrReadings[ct]);
 
-/*
-				if (!intTmp1) {
-					len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
-				} else if (intTmp1 == errNoI2CAddressAck) { // not present or not responding
-					len = sprintf(str, "\t-");
-				} else {
-					len = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", intTmp1);
-				}						
-				outputStringToBothUARTs(str);
-*/
 			} // end of irradiance sensor 'for' loop
 			intTmp1 = temperature_GetReading(&temperatureReading);
 			// build log string
@@ -539,7 +525,7 @@ void BT_dataDump(char* stOpt) {
 					len = sprintf(str, "\t");
 				}
 				strcat(strLog, str);
-			} // end of irradiance sensor validity testing
+			} // end of prearing irradiance section
 
 			// log temperature
 			if (!temperatureReading.verification)
@@ -555,9 +541,7 @@ void BT_dataDump(char* stOpt) {
 			errSD = writeCharsToSDCard(strLog, len);
 			if (errSD) {
 				tellFileError (errSD);
-			} // else {
-//				outputStringToBothUARTs(" Data written to SD card \n\r\n\r");
-//			}
+			} 
 		
 		} // end of data acquisition loop
 		
@@ -566,7 +550,6 @@ void BT_dataDump(char* stOpt) {
 			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 			timeFlags |= (1<<nextAlarmSet);
 		}
-		
 		
 //			outputStringToUART1("\n\r");
 		errSD = fileExistsForDate(stTryDate);

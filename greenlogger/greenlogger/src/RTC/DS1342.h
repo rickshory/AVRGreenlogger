@@ -49,6 +49,8 @@ void datetime_advanceIntervalShort(dateTime *t);
 void datetime_advanceIntervalLong(dateTime *t);
 void datetime_advanceInterval(dateTime *t);
 void datetime_advanceDatestring1Day(char* s);
+void datetime_advanceDatestring1stOfNextMonth(char* s);
+uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead);
 void datetime_normalize(dateTime *t);
 void datetime_getstring(char* dtstr, dateTime *dtp);
 void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone);

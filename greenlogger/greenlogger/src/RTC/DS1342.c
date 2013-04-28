@@ -9,13 +9,17 @@
 #include "DS1342.h"
 #include "../I2C/I2C.h"
 #include "../greenlogger.h"
+#include "../SDcard/ff.h"
+#include "../SDcard/diskio.h"
 #include <util/twi.h>
 
 extern volatile dateTime dt_RTC;
 extern volatile int8_t timeZoneOffset;
+extern volatile uint8_t rtcStatus;
 
 extern volatile uint8_t stateFlags1, irradFlags;
 extern int len;
+extern char datetime_string[25];
 extern char str[128];
 
 
@@ -782,7 +786,102 @@ void datetime_advanceDatestring1Day(char* s) {
 	strncpy(s, stDateTmp, 10);
 }
 
+/**
+ * \brief sets a date string forward to 1st of following month
+ *
+ * This function updates the passed date string (in the
+ * format "2012-05-03") to the first of the following
+ * month (e.g. 2012-06-01).
+ *
+ * \note 
+ * 
+ */
+void datetime_advanceDatestring1stOfNextMonth(char* s) {
+	char stDateTmp[27];
+	dateTime t;
+	strcpy(stDateTmp, s); // make a copy of the date string
+	strcat(stDateTmp, " 01:01:01 +01"); // fill out full date/time with dummy vals
+	datetime_getFromUnixString(&t, stDateTmp, 1);
+	t.day = 1;
+	(t.month)++;
+	datetime_normalize(&t);
+	datetime_getstring(stDateTmp, &t);
+	strncpy(s, stDateTmp, 10);
+}
 
+/**
+ * \brief finds the next date that has data
+ *
+ * This function updates the passed date string (in the
+ * format "2012-05-03") to the next date
+ * that has data on the system SD card.
+ * Searches from the passed date up to the
+ * present date.
+ *
+ * If forceAhead=0, can return passed date if it has data
+ * If forceAhead=1, starts looking at date following the one passed
+ *
+ * Returns 0 if OK, 1 if no data found.
+ * Will return 1 if system date/time not set.
+ *
+ * \note 
+ * 
+ */
+uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
+	uint8_t fileFoundForDate = 0, fileErr = 0;
+	FRESULT res;         // FatFs function common result code
+	FILINFO* fno;        // [OUT] FILINFO structure
+	char stDateEnd[27], stDateTry[12], stFolder[6], stFullPath[14];
+	if ((rtcStatus == rtcTimeNotSet) || (rtcStatus == rtcTimeSetFailed) || (rtcStatus == rtcTimeSetToDefault)) {
+		return 1;
+	}
+	
+	strncpy(stDateEnd, datetime_string, 10);
+	strcpy(stDateTry, s);
+	if (forceAhead) {
+		datetime_advanceDatestring1Day(stDateTry);
+	}
+	strncpy(stFolder, stDateEnd+2, 5);
+	while ((strcmp(stDateTry, stDateEnd) <= 0) && (!(fileFoundForDate)) && (!(fileErr))) {
+		dateToFullFilepath(stDateTry, stFullPath);
+		res = f_stat(stFullPath, fno);
+		switch (res) {
+
+			case FR_OK: {
+				fileFoundForDate = 1;
+				break;
+			}
+			
+			case FR_NO_PATH: {
+				datetime_advanceDatestring1stOfNextMonth(stDateTry);
+				break;
+			}
+			
+			case FR_NO_FILE: {
+				datetime_advanceDatestring1Day(stDateTry);
+				break;
+			}
+			
+			default: {
+				fileErr = 1;
+				break;
+			}
+		} // end of switch (res)
+	} // end of while stDateTry < stDateEnd
+	if (fileErr) {
+		return 1;
+	}
+	
+	if (fileFoundForDate) {
+		strcpy(s, stDateTry);
+		return 0;
+	}
+	
+	
+//	datetime_string
+//	rtc_readTime
+
+}	
 
 /**
  * \brief assures dateTime is valid

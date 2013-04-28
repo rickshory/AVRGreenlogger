@@ -912,7 +912,7 @@ void checkForCommands (void) {
 //
                 case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)
-                    outputStringToUART0("\r\n output file data\r\n");
+                    outputStringToUART0("\r\n (data dump only works from Bluetooth)\r\n");
                     break;
                 }
 

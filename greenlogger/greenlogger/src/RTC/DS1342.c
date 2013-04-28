@@ -833,18 +833,28 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 	FILINFO* fno;        // [OUT] FILINFO structure
 	char stDateEnd[27], stDateTry[12], stFolder[6], stFullPath[14];
 	if ((rtcStatus == rtcTimeNotSet) || (rtcStatus == rtcTimeSetFailed) || (rtcStatus == rtcTimeSetToDefault)) {
+		outputStringToUART0("\n\r time not valid\n\r");
 		return 1;
 	}
 	
 	strncpy(stDateEnd, datetime_string, 10);
 	strcpy(stDateTry, s);
 	if (forceAhead) {
+		outputStringToUART0("\n\r (forceAhead set)\n\r");
 		datetime_advanceDatestring1Day(stDateTry);
 	}
 	strncpy(stFolder, stDateEnd+2, 5);
 	while ((strcmp(stDateTry, stDateEnd) <= 0) && (!(fileFoundForDate)) && (!(fileErr))) {
 		dateToFullFilepath(stDateTry, stFullPath);
+		outputStringToUART0("\r\n Date: ");
+		outputStringToUART0(stDateTry);
+		outputStringToUART0("\r\n\ FullPath: ");
+		outputStringToUART0(stFullPath);
+		outputStringToUART0("\r\n");
+
 		res = f_stat(stFullPath, fno);
+		len = sprintf(str, "\n\r File stat return code: %d\n\r", res);
+		outputStringToUART0(str);
 		switch (res) {
 
 			case FR_OK: {

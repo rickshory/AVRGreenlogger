@@ -14,6 +14,7 @@
 #include "../TemperatureSensor/TCN75A.h"
 #include "../SDcard/diskio.h"
 #include "../BattMonitor/ADconvert.h"
+#include "../LtSensor/TSL2561.h"
 #include <util/twi.h>
 
 char btCmdBuffer[commandBufferLen];
@@ -25,6 +26,7 @@ extern volatile uint16_t timer3val;
 extern char commandBuffer[commandBufferLen];
 extern char *commandBufferPtr;
 extern char str[128]; // generic space for strings to be output
+extern char strLog[64];
 extern char strJSON[256]; // string for JSON data
 extern volatile uint8_t Timer1, Timer2, intTmp1;
 extern volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
@@ -37,6 +39,7 @@ extern volatile accelAxisData accelData;
 extern volatile int8_t timeZoneOffset;
 extern unsigned long darkCutoffIR, darkCutOffBB;
 extern volatile adcData cellVoltageReading;
+extern irrData irrReadings[4];
 
 /**
  * \brief turns on power to the RN-42 Bluetooth module
@@ -464,6 +467,7 @@ void BT_dataDump(char* stOpt) {
 	strcpy(stTryDate, stBeginTryDate);
 	do { // loop like this so dump will output at least one day
 		while (timeFlags & (1<<alarmDetected)) { // continue logging during data dump
+			uint8_t ct, swDnUp, swBbIr;
 			// use 'while' loop to allow various tests to break out
 			timeFlags &= ~(1<<alarmDetected); // clear flag so 'while' loop will only happen once in any case
 			timeFlags &= ~(1<<nextAlarmSet); // flag that current alarm is no longer valid
@@ -486,10 +490,75 @@ void BT_dataDump(char* stOpt) {
 			
 			// attempt to assure time zone is synchronized
 			syncTimeZone(); // internally tests if work is already done
-
 			
+			datetime_getstring(datetime_string, &dt_CurAlarm);
 
-			
+			// read irradiance sensors
+			for (ct = 0; ct < 4; ct++) {
+				switch (ct)
+				{
+				case 0:
+					swDnUp = TSL2561_DnLooking;
+					swBbIr = TSL2561_CHANNEL_BROADBAND;
+					break;
+				case 1:
+					swDnUp = TSL2561_DnLooking;
+					swBbIr = TSL2561_CHANNEL_INFRARED;
+					break;
+				case 2:
+					swDnUp = TSL2561_UpLooking;
+					swBbIr = TSL2561_CHANNEL_BROADBAND;
+					break;
+				case 3:
+					swDnUp = TSL2561_UpLooking;
+					swBbIr = TSL2561_CHANNEL_INFRARED;
+					break;
+				}
+				intTmp1 = getIrrReading(swDnUp, swBbIr, &irrReadings[ct]);
+
+/*
+				if (!intTmp1) {
+					len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
+				} else if (intTmp1 == errNoI2CAddressAck) { // not present or not responding
+					len = sprintf(str, "\t-");
+				} else {
+					len = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", intTmp1);
+				}						
+				outputStringToBothUARTs(str);
+*/
+			} // end of irradiance sensor 'for' loop
+			intTmp1 = temperature_GetReading(&temperatureReading);
+			// build log string
+			strcpy(strLog, "\n\r");
+			strcat(strLog, datetime_string);
+			irradFlags &= ~((1<<isDarkBBDn) | (1<<isDarkIRDn) | (1<<isDarkBBUp) | (1<<isDarkIRUp)); // default clear
+			for (ct = 0; ct < 4; ct++) { // generate irradiance readings
+				if (!(irrReadings[ct].validation)) {
+					len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
+				} else { // no valid data for this reading
+					len = sprintf(str, "\t");
+				}
+				strcat(strLog, str);
+			} // end of irradiance sensor validity testing
+
+			// log temperature
+			if (!temperatureReading.verification)
+				len = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
+			else
+				len = sprintf(str, "\t");
+			strcat(strLog, str);
+			// log cell voltage
+			len = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+			strcat(strLog, str);
+				
+			len = strlen(strLog);
+			errSD = writeCharsToSDCard(strLog, len);
+			if (errSD) {
+				tellFileError (errSD);
+			} // else {
+//				outputStringToBothUARTs(" Data written to SD card \n\r\n\r");
+//			}
+		
 		} // end of data acquisition loop
 		
 		// set next alarm

@@ -830,11 +830,11 @@ void datetime_advanceDatestring1stOfNextMonth(char* s) {
  * 
  */
 uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
-	uint8_t fileFoundForDate = 0, fileErr = 0;
+	uint8_t fileFoundForDate = 0, fileErr = 0, fsRtn;
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
 	FILINFO* fno;        // [OUT] FILINFO structure
-	char stDateEnd[27], stDateTry[12], stFolder[6], stFullPath[14];
+	char stDateEnd[27], stDateTry[12], stFullPath[14];
 	if ((rtcStatus == rtcTimeNotSet) || (rtcStatus == rtcTimeSetFailed) || (rtcStatus == rtcTimeSetToDefault)) {
 		outputStringToUART0("\n\r time not valid\n\r");
 		return 1;
@@ -846,7 +846,6 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 		outputStringToUART0("\n\r (forceAhead set)\n\r");
 		datetime_advanceDatestring1Day(stDateTry);
 	}
-	strncpy(stFolder, stDateEnd+2, 5);
 	while ((strcmp(stDateTry, stDateEnd) <= 0) && (!(fileFoundForDate)) && (!(fileErr))) {
 		dateToFullFilepath(stDateTry, stFullPath);
 		outputStringToUART0("\r\n Date: ");
@@ -857,12 +856,14 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 
 		if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 			outputStringToUART0("\r\n (power too low)\r\n");
-//			return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely access card
+			fsRtn = sdPowerTooLowForSDCard; // cell voltage is below threshold to safely access card
+			break;
 		}
 		
 		if(f_mount(0, &FileSystemObject)!=FR_OK) {
 			outputStringToUART0("\r\n (could not mount SD drive)\r\n");
-//			return sdMountFail;
+			fsRtn = sdMountFail;
+			break;
 		}
 
 		res = f_stat(stFullPath, fno);
@@ -891,6 +892,9 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 			}
 		} // end of switch (res)
 	} // end of while stDateTry < stDateEnd
+	unmountVolume:
+	f_mount(0,0);
+	
 	if (fileErr) {
 		return 1;
 	}
@@ -899,11 +903,6 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 		strcpy(s, stDateTry);
 		return 0;
 	}
-	
-	
-//	datetime_string
-//	rtc_readTime
-
 }	
 
 /**

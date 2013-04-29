@@ -29,6 +29,7 @@ DSTATUS Stat = STA_NOINIT;	// Disk status
 extern volatile uint8_t stateFlags1, timeFlags, rtcStatus;
 extern volatile uint8_t stateFlags2;
 
+extern int len;
 extern char str[128]; // generic space for strings to be output
 extern char strJSON[256]; // string for JSON data
 extern char strHdr[64];
@@ -84,11 +85,15 @@ void dateToFullFilepath (char* stDt, char* stFile) {
  */
 
 BYTE fileExistsForDate (char* stDate) {
-	char* stFilePath;
+//	char* stFilePath;
+	char stFilePath[14];
+	outputStringToUART0("\r\n (in 'fileExistsForDate' fn)\r\n");
 	dateToFullFilepath(stDate, stFilePath);
-//	outputStringToBothUARTs("filepath: \"");
-//	outputStringToBothUARTs(stFilePath);
-//	outputStringToBothUARTs("\"\n\r");
+	outputStringToUART0("\r\n Date: ");
+	outputStringToUART0(stDate);
+	outputStringToUART0("\r\n\ FullPath: ");
+	outputStringToUART0(stFilePath);
+	outputStringToUART0("\r\n");
 	return fileExists(stFilePath);	
 }	
 
@@ -109,7 +114,9 @@ BYTE fileExistsForDate (char* stDate) {
 BYTE fileExists (char* stFileFullpath) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
+	FILINFO* fno;        // [OUT] FILINFO structure
 	BYTE sLen, retVal = sdOK;
+	outputStringToUART0("\n\r (in 'fileExists' fn)\n\r");
 	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely access card
@@ -118,26 +125,20 @@ BYTE fileExists (char* stFileFullpath) {
 	if(f_mount(0, &FileSystemObject)!=FR_OK) {
 		return sdMountFail;
 	}
-
-	DSTATUS driveStatus = disk_initialize(0);
-
-	if(driveStatus & STA_NOINIT ||
-		driveStatus & STA_NODISK ||
-		driveStatus & STA_PROTECT) {
-			retVal = sdInitFail;
-			goto unmountVolume;
-	}
-
-	FIL logFile;
 	
-	if(f_open(&logFile, stFileFullpath, FA_READ | FA_OPEN_EXISTING)!=FR_OK) {
-		retVal = sdFileOpenFail;
-		goto unmountVolume;
+	outputStringToUART0("\n\r (full path):");
+	outputStringToUART0(stFileFullpath);
+	outputStringToUART0("\n\r");
+
+	
+	res = f_stat(stFileFullpath, fno);
+	len = sprintf(str, "\n\r (fileExists) File stat return code: %d\n\r", res);
+		outputStringToUART0(str);
+	if (res != FR_OK) {
+		retVal = res;
 	}
 		
-	//Close and unmount.
-	closeFile:
-	f_close(&logFile);
+	//Unmount.
 	unmountVolume:
 	f_mount(0,0);
 	return retVal;
@@ -695,30 +696,6 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 			retVal = sdInitFail;
 			goto unmountVolume;
 	}
-/*
-	strncpy(stFile, stDt + 2, 5); // slice out e.g. "12-05" from "2012-05-03"
-	strcat(stFile, "/"); // append the folder delimiter
-	strncat(stFile, stDt + 8, 2); // append e.g. "03" from "2012-05-03"
-	strcat(stFile, ".TXT"); // complete the filename
-*/	
-	
-//	stFile[0] = stDt[2];
-//	stFile[1] = stDt[3];
-//	stFile[2] = stDt[4];
-//	stFile[3] = stDt[5];
-//	stFile[4] = stDt[6];
-//	stFile[5] = '/';
-//	stFile[6] = stDt[8];
-//	stFile[7] = stDt[9];
-//	stFile[8] = '.';
-//	stFile[9] = 'T';
-//	stFile[10] = 'X';
-//	stFile[11] = 'T';
-//	stFile[12] = '\0';
-
-//	outputStringToBothUARTs("\n\r attempting to open file: \"");
-//	outputStringToBothUARTs(stFile);
-//	outputStringToBothUARTs("\"\n\r");
 	
 	dateToFullFilepath (stDt, stFile);
 	
@@ -727,7 +704,7 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 	if(f_open(&logFile, stFile, FA_READ | FA_OPEN_EXISTING)!=FR_OK) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;
-}	
+	}	
 	while (f_gets(stLine, (sizeof stLine) - 1, &logFile) != NULL) {
 		if (f_error(&logFile)) {
 			retVal = sdFileReadFail;

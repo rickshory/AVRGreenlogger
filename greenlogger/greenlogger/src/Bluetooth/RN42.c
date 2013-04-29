@@ -446,8 +446,10 @@ void BT_dataDump(char* stOpt) {
 			if (isValidDate(stOpt + 1)) { // if so, dump data for this day only
 				strncpy(stBeginTryDate, stOpt + 1, 10);
 				stBeginTryDate[11] = '\0'; // assure terminated
-				errSD = fileExistsForDate(stBeginTryDate);
-				if (errSD == sdFileOpenFail) { // file does not exist
+				outputStringToUART0("\n\r (trying date):");
+				outputStringToUART0(stBeginTryDate);
+				outputStringToUART0("\n\r\n\r");
+				if (!(fileExistsForDate(stBeginTryDate))) { // file does not exist
 					outputStringToUART1("\n\r no data for ");
 					outputStringToUART1(stBeginTryDate);
 					outputStringToUART1(". Use \"dd\" to list dates having data.\n\r\n\r");
@@ -555,18 +557,18 @@ void BT_dataDump(char* stOpt) {
 		}
 		
 //			outputStringToUART1("\n\r");
-		errSD = fileExistsForDate(stTryDate);
+//		errSD = fileExistsForDate(stTryDate);
 		// somewhat redundant to test first because output fns test internally, but avoids output for nonexistent files
-		if (!errSD) {
+		if (!(fileExistsForDate(stTryDate))) {
 			if (outputOpt == 'c') { // contents
 				keepBluetoothPowered(120); // or eventually will time out
 				outputStringToUART1("\n\r{\"datafor\":\"");
 				outputStringToUART1(stTryDate);
 				outputStringToUART1("\"}\n\r");	
 				errSD = outputContentsOfFileForDate(stTryDate);
-					if (errSD) {
-						tellFileError (errSD);
-					}
+				if (errSD) {
+					tellFileError (errSD);
+				}
 				// most likely fail point is during day's output
 				// mark success of each day, so as not to repeat on recovery
 				errSD = writeLastDumpDateToSDCard(stTryDate);

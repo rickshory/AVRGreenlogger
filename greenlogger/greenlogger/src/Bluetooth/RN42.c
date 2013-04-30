@@ -405,6 +405,7 @@ void checkForBTCommands (void) {
 } // end of checkForBTCommands
 
 void BT_dataDump(char* stOpt) {
+	uint8_t errBTDump;
 //	char stBeginTryDate[12] = "2011-12-21"; // system default starting date, winter solstice 2011.
 	char stBeginTryDate[12] = "2012-01-01"; //
 	// There would be no data before this unless user mistakenly set system time earlier.
@@ -415,8 +416,11 @@ void BT_dataDump(char* stOpt) {
 //	outputStringToUART1("\n\r current date: \"");
 //	outputStringToUART1(stEndTryDate);
 //	outputStringToUART1("\"\n\r");
-	if (datetime_nextDateWithData(stBeginTryDate, 0)) {
-		;
+	// find first date that has data
+	errBTDump = datetime_nextDateWithData(stBeginTryDate, 0);
+	if (errBTDump == sdPowerTooLowForSDCard) {
+		outputStringToUART1("\n\r Power too low for SD card.\n\r\n\r");
+		return;
 	}
 	switch (stOpt[1]) {
 		case '\0': { // "D" alone, most common option. Dump any days' data collected since previous dump.

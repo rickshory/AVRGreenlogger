@@ -29,6 +29,7 @@ DSTATUS Stat = STA_NOINIT;	// Disk status
 extern volatile uint8_t stateFlags1, timeFlags, rtcStatus;
 extern volatile uint8_t stateFlags2;
 
+extern int len;
 extern char str[128]; // generic space for strings to be output
 extern char strJSON[256]; // string for JSON data
 extern char strHdr[64];
@@ -109,7 +110,12 @@ BYTE fileExistsForDate (char* stDate) {
 BYTE fileExists (char* stFileFullpath) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
+	FILINFO* fno;        // [OUT] FILINFO structure
 	BYTE sLen, retVal = sdOK;
+	
+	int lenLocal;
+	char strLocal[128]; // generic space for strings to be output
+
 	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely access card
@@ -118,7 +124,7 @@ BYTE fileExists (char* stFileFullpath) {
 	if(f_mount(0, &FileSystemObject)!=FR_OK) {
 		return sdMountFail;
 	}
-
+/*
 	DSTATUS driveStatus = disk_initialize(0);
 
 	if(driveStatus & STA_NOINIT ||
@@ -127,17 +133,19 @@ BYTE fileExists (char* stFileFullpath) {
 			retVal = sdInitFail;
 			goto unmountVolume;
 	}
-
-	FIL logFile;
+*/
 	
-	if(f_open(&logFile, stFileFullpath, FA_READ | FA_OPEN_EXISTING)!=FR_OK) {
+	res = f_stat(stFileFullpath, fno);
+	lenLocal = sprintf(strLocal, "\n\r (fileExists) File stat return code: %d\n\r", res);
+	outputStringToUART0(strLocal);
+	if (res != FR_OK) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;
 	}
 		
 	//Close and unmount.
-	closeFile:
-	f_close(&logFile);
+//	closeFile:
+//	f_close(&logFile);
 	unmountVolume:
 	f_mount(0,0);
 	return retVal;

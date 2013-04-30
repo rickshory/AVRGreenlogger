@@ -833,7 +833,10 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 	uint8_t fileFoundForDate = 0, fileErr = 0, fsRtn;
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
-	FILINFO* fno;        // [OUT] FILINFO structure
+	FILINFO* fno;        // [OUT] FILINFO
+	
+	int lenLocal;
+	char strLocal[128];
 	char stDateEnd[27], stDateTry[12], stFullPath[14];
 	if ((rtcStatus == rtcTimeNotSet) || (rtcStatus == rtcTimeSetFailed) || (rtcStatus == rtcTimeSetToDefault)) {
 		outputStringToUART0("\n\r time not valid\n\r");
@@ -867,8 +870,8 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 		}
 
 		res = f_stat(stFullPath, fno);
-		len = sprintf(str, "\n\r File stat return code: %d\n\r", res);
-		outputStringToUART0(str);
+		lenLocal = sprintf(strLocal, "\n\r File stat return code: %d\n\r", res);
+		outputStringToUART0(strLocal);
 		switch (res) {
 
 			case FR_OK: {

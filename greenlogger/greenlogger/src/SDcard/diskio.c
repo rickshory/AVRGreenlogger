@@ -113,8 +113,8 @@ BYTE fileExists (char* stFileFullpath) {
 	FILINFO* fno;        // [OUT] FILINFO structure
 	BYTE sLen, retVal = sdOK;
 	
-	int lenLocal;
-	char strLocal[128]; // generic space for strings to be output
+//	int lenLocal;
+//	char strLocal[128]; // generic space for strings to be output
 
 	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
@@ -136,8 +136,8 @@ BYTE fileExists (char* stFileFullpath) {
 */
 	
 	res = f_stat(stFileFullpath, fno);
-	lenLocal = sprintf(strLocal, "\n\r (fileExists) File stat return code: %d\n\r", res);
-	outputStringToUART0(strLocal);
+//	lenLocal = sprintf(strLocal, "\n\r (fileExists) File stat return code: %d\n\r", res);
+//	outputStringToUART0(strLocal);
 	if (res != FR_OK) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;

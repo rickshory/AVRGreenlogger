@@ -570,6 +570,9 @@ void BT_dataDump(char* stOpt) {
 				errBTDump = outputContentsOfFileForDate(stTryDate);
 					if (errBTDump) {
 						tellFileError (errBTDump);
+						if (errBTDump == sdPowerTooLowForSDCard) {
+							return;
+						}
 					}
 				// most likely fail point is during day's output
 				// mark success of each day, so as not to repeat on recovery

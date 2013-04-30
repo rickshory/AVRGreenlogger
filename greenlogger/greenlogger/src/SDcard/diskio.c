@@ -84,7 +84,7 @@ void dateToFullFilepath (char* stDt, char* stFile) {
  */
 
 BYTE fileExistsForDate (char* stDate) {
-	char* stFilePath;
+	char stFilePath[14];
 	dateToFullFilepath(stDate, stFilePath);
 //	outputStringToBothUARTs("filepath: \"");
 //	outputStringToBothUARTs(stFilePath);

@@ -110,7 +110,7 @@ BYTE fileExistsForDate (char* stDate) {
 BYTE fileExists (char* stFileFullpath) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
-	FILINFO* fno;        // [OUT] FILINFO structure
+	FILINFO fno;        // [OUT] FILINFO structure
 	BYTE sLen, retVal = sdOK;
 	
 //	int lenLocal;
@@ -135,7 +135,7 @@ BYTE fileExists (char* stFileFullpath) {
 	}
 */
 	
-	res = f_stat(stFileFullpath, fno);
+	res = f_stat(stFileFullpath, &fno);
 //	lenLocal = sprintf(strLocal, "\n\r (fileExists) File stat return code: %d\n\r", res);
 //	outputStringToUART0(strLocal);
 	if (res != FR_OK) {

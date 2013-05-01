@@ -833,7 +833,7 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 	uint8_t fileFoundForDate = 0, fileErr = 0, fsRtn;
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
-	FILINFO* fno;        // [OUT] FILINFO
+	FILINFO fno;        // [OUT] FILINFO
 	
 //	int lenLocal;
 	char strLocal[128];
@@ -869,7 +869,7 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 			break;
 		}
 
-		res = f_stat(stFullPath, fno);
+		res = f_stat(stFullPath, &fno);
 //		lenLocal = sprintf(strLocal, "\n\r File stat return code: %d\n\r", res);
 //		outputStringToUART0(strLocal);
 		switch (res) {

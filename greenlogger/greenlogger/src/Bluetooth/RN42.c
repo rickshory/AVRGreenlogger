@@ -583,8 +583,6 @@ void BT_dataDump(char* stOpt) {
 
 
 		} else { // tested if file exists, and some error
- //				outputStringToUART1(stTryDate);
- //				outputStringToUART1("  ");
 			if (errBTDump != sdFileOpenFail) // file does not exist, ignore
 				tellFileError (errBTDump);
 		}
@@ -596,8 +594,6 @@ void BT_dataDump(char* stOpt) {
 	if (outputOpt == 'c') { // data file contents 
 		outputStringToUART1("\n\r{\"datadump\":\"end\"}\n\r\n\r");
 		outputStringToUART1("\n\r");
-//		outputStringToUART1(stBeginTryDate);
-//		outputStringToUART1("\n\r");
 		errBTDump = writeLastDumpDateToSDCard(stBeginTryDate);
 		if (errBTDump) {
 			tellFileError (errBTDump);

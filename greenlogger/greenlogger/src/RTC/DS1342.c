@@ -835,7 +835,7 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 	FRESULT res;         // FatFs function common result code
 	FILINFO* fno;        // [OUT] FILINFO
 	
-	int lenLocal;
+//	int lenLocal;
 	char strLocal[128];
 	char stDateEnd[27], stDateTry[12], stFullPath[14];
 	if ((rtcStatus == rtcTimeNotSet) || (rtcStatus == rtcTimeSetFailed) || (rtcStatus == rtcTimeSetToDefault)) {

@@ -372,11 +372,6 @@ void checkForBTCommands (void) {
 				{ // output file 'D'ata (or 'D'ump)
 					strcpy(stTmp, btCmdBuffer); // make a copy of the command
 					BT_dataDump(stTmp); // let the general fn take it from there
-//					outputStringToUART1("\r\n output file data\r\n");
-//					 errSD = outputContentsOfFileForDate("2012-05-03"); // testing
-//					 if (errSD) {
-//						tellFileError (errSD);
-//					}
 					break;
 				}
 				// put other commands here

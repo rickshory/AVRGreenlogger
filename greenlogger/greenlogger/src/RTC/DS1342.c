@@ -846,16 +846,16 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 	strncpy(stDateEnd, datetime_string, 10);
 	strcpy(stDateTry, s);
 	if (forceAhead) {
-		outputStringToUART0("\n\r (forceAhead set)\n\r");
+//		outputStringToUART0("\n\r (forceAhead set)\n\r");
 		datetime_advanceDatestring1Day(stDateTry);
 	}
 	while ((strcmp(stDateTry, stDateEnd) <= 0) && (!(fileFoundForDate)) && (!(fileErr))) {
 		dateToFullFilepath(stDateTry, stFullPath);
-		outputStringToUART0("\r\n Date: ");
-		outputStringToUART0(stDateTry);
-		outputStringToUART0("\r\n\ FullPath: ");
-		outputStringToUART0(stFullPath);
-		outputStringToUART0("\r\n");
+//		outputStringToUART0("\r\n Date: ");
+//		outputStringToUART0(stDateTry);
+//		outputStringToUART0("\r\n\ FullPath: ");
+//		outputStringToUART0(stFullPath);
+//		outputStringToUART0("\r\n");
 
 		if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 			outputStringToUART0("\r\n (power too low)\r\n");

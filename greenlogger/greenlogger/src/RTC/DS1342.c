@@ -870,8 +870,8 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 		}
 
 		res = f_stat(stFullPath, fno);
-		lenLocal = sprintf(strLocal, "\n\r File stat return code: %d\n\r", res);
-		outputStringToUART0(strLocal);
+//		lenLocal = sprintf(strLocal, "\n\r File stat return code: %d\n\r", res);
+//		outputStringToUART0(strLocal);
 		switch (res) {
 
 			case FR_OK: {

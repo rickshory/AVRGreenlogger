@@ -380,11 +380,11 @@ BYTE readStringFromFileFromSDCard (char* stParam, char* stFile, BYTE stLen) {
 		goto unmountVolume;
 }	
 
-	outputStringToUART0("\n\r(before read) string passed to fn: ");
-	outputStringToUART0(stParam);
-	stringSize = stLen;
-	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stLen);
-	outputStringToUART0(stTmp);
+//	outputStringToUART0("\n\r(before read) string passed to fn: ");
+//	outputStringToUART0(stParam);
+//	stringSize = stLen;
+//	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stLen);
+//	outputStringToUART0(stTmp);
 
 	f_gets(stParam, stLen - 1, &logFile);
 	
@@ -395,11 +395,11 @@ BYTE readStringFromFileFromSDCard (char* stParam, char* stFile, BYTE stLen) {
 	
 	stParam[stLen] = '\0';
 
-	outputStringToUART0("\n\r(after read) string passed to fn: ");
-	outputStringToUART0(stParam);
-	stringSize = stLen;
-	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stringSize);
-	outputStringToUART0(stTmp);
+//	outputStringToUART0("\n\r(after read) string passed to fn: ");
+//	outputStringToUART0(stParam);
+//	stringSize = stLen;
+//	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stringSize);
+//	outputStringToUART0(stTmp);
 
 	//Close and unmount.
 	closeFile:

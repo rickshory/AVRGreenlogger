@@ -836,7 +836,7 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 	FILINFO fno;        // [OUT] FILINFO
 	
 //	int lenLocal;
-	char strLocal[128];
+//	char strLocal[128];
 	char stDateEnd[27], stDateTry[12], stFullPath[14];
 	if ((rtcStatus == rtcTimeNotSet) || (rtcStatus == rtcTimeSetFailed) || (rtcStatus == rtcTimeSetToDefault)) {
 		outputStringToUART0("\n\r system time not valid\n\r");

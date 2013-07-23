@@ -725,8 +725,8 @@ void checkForCommands (void) {
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
 
-				 case 'G': case 'g': { // get time from GPS
-					 outputStringToBothUARTs("\r\n reading GPS \r\n");
+				 case '$': { // an NMEA string from the GPS
+					 outputStringToUART1("\r\n NMEA from GPS \r\n");
 					 break;
 				 }					 
 

@@ -208,12 +208,16 @@ void checkForBTCommands (void) {
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
 				 case 'G': case 'g': { // get time from GPS
-					 outputStringToBothUARTs("\r\n reading GPS \r\n");
+					 outputStringToUART1("\r\n reading GPS \r\n");
+					 if (!GPS_powered()) {
+						 outputStringToUART0("\r\n reading GPS \r\n");
+					 }
 					 if (GPS_powered()) {
-						 outputStringToBothUARTs("\r\n GPS ON, turning OFF \r\n");
+						 outputStringToUART1("\r\n GPS ON, turning OFF \r\n");
 						 GPS_power_off();
 					 } else {
-						 outputStringToBothUARTs("\r\n GPS OFF, turning ON \r\n");
+						 outputStringToUART1("\r\n GPS OFF, turning ON \r\n");
+						 outputStringToUART0("\r\n GPS OFF, turning ON \r\n");
 						 GPS_power_on();
 					 }
 					 break;

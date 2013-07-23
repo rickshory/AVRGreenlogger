@@ -718,6 +718,12 @@ void checkForCommands (void) {
 			stayRoused(120); // keep system roused
             *commandBufferPtr++ = '\0'; // null terminate
             switch (commandBuffer[0]) { // command is 1st char in buffer
+
+				 case 'G': case 'g': { // get time from GPS
+					 outputStringToBothUARTs("\r\n reading GPS \r\n");
+					 break;
+				 }					 
+
 				
 				 case 'V': case 'v': { // show firmware version
 					 outputStringToBothUARTs(versionString);

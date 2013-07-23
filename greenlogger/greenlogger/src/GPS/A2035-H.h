@@ -13,8 +13,9 @@
 
 extern inline void GPS_power_on(void);
 extern inline void GPS_power_off(void);
+extern inline bool GPS_powered(void);
 extern inline void GPS_On_Off_High(void);
 extern inline void GPS_On_Off_Low(void);
 
 
-#endif /* A2035-H_H_ */
+#endif /* A2035_H_H_ */

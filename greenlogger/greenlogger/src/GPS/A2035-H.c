@@ -5,6 +5,7 @@
  *  Author: rshory
  */ 
 #include <inttypes.h>
+#include "A2035-H.h"
 #include "../Bluetooth/RN42.h"
 #include "../I2C/I2C.h"
 #include "../greenlogger.h"
@@ -37,6 +38,23 @@ inline void GPS_power_off(void)
 {
 	PORTB &= ~(1<<1); // set low; turn off
 }
+
+/**
+ * \brief check if the A2035-H GPS module is powered
+ *
+ * PortB, bit 1 is an output that enables the power supply to the 
+ * A2035-H GPS module: 
+ * HIGH when enabled, LOW when shut down.
+ * This functions reads that state of that pin.
+ *
+ * \retval true  if connection is active
+ * \retval false if no connection
+ */
+inline bool GPS_powered(void)
+{
+	return (PINB & (1<<1)); // read pin
+}
+
 
 /**
  * \brief sets the on/off line to the A2035-H GPS module HIGH

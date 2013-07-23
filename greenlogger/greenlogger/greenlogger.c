@@ -711,6 +711,7 @@ void outputStringToBothUARTs (char* St) {
 
 void checkForCommands (void) {
     char c;
+	char tmpStr[commandBufferLen];
     while (uart0_char_waiting_in()) {
 		c = uart0_getchar();
 		if (c == 0x08) { // backspace
@@ -726,7 +727,9 @@ void checkForCommands (void) {
             switch (commandBuffer[0]) { // command is 1st char in buffer
 
 				 case '$': { // an NMEA string from the GPS
-					 outputStringToUART1("\r\n NMEA from GPS \r\n");
+//					 outputStringToUART1("\r\n NMEA from GPS \r\n");
+					 strcpy(tmpStr, commandBuffer + 1);
+					 outputStringToUART1(tmpStr);
 					 break;
 				 }					 
 
@@ -739,7 +742,6 @@ void checkForCommands (void) {
                 case 'T': case 't': { // set time
 					// get info from commandBuffer before any UART output, 
 					// because in some configurations any Tx feeds back to Rx
-					char tmpStr[commandBufferLen];
 					strcpy(tmpStr, commandBuffer + 1);
 					if (!isValidDateTime(tmpStr)) {
 						outputStringToUART0("\r\n Invalid timestamp\r\n");

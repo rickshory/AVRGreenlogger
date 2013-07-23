@@ -222,73 +222,21 @@ void checkForBTCommands (void) {
 					 }
 					 break;
 				 }					 
+
+				 case 'P': case 'p': { // pulse the GPS on/off line
+					 outputStringToUART1("\r\n pulsing GPS on/off line \r\n");
+					 GPS_On_Off_High();
+					 for (Timer2 = 20; Timer2; );	// Wait for 200ms
+					 GPS_On_Off_Low();
+					 break;
+				 }
+
 				
 				 case 'V': case 'v': { // show firmware version
 					 outputStringToBothUARTs(versionString);
 					 break;
 				 }
 
-/*
-                case 'O': case 'o': { // experiment with oscillator control
-					uint16_t cyCt, cyCtNxtUp;
-//					uint16_t ct0a, ct0b, ct0c, cta[100], ctb[100], ctc[100];
-//					uint8_t i, os0, os[100];
-					// go into uC clock adjust mode
-
-					outputStringToUART1("\r\n going into uC adjust mode\r\n");
-					len = sprintf(str, "baud register UBBR1: %d\r\n", UBRR1);
-					outputStringToUART1(str);
-					
-					ct0a = cyPerRTCSqWave(); // get starting cycle count, 3 samples
-					ct0b = cyPerRTCSqWave(); 
-					ct0c = cyPerRTCSqWave();
-					os0 = OSCCAL; // remember OSCCAL
-					
-				//	OSCCAL = 0x7F; // set OSCCAL to high end of lower range
-					for (i=0; i<100; i++) {
-						OSCCAL-=1; // adjust down
-						os[i] = OSCCAL;
-						cta[i] = cyPerRTCSqWave(); // take three readings
-						ctb[i] = cyPerRTCSqWave();
-						ctc[i] = cyPerRTCSqWave();
-					}
-					
-					OSCCAL = os0; // restore
-					
-					len = sprintf(str, "original OSCCAL\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os0, (unsigned long)ct0a, (unsigned long)ct0b, (unsigned long)ct0c);
-					outputStringToUART1(str);
-					
-					for (i=0; i<100; i++) {
-						len = sprintf(str, "OSCCAL set to\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os[i], (unsigned long)cta[i], (unsigned long)ctb[i], (unsigned long)ctc[i]);
-						outputStringToUART1(str);
-					}
-
-					// try tuning uC osc down to 7.3728 MHz
-					OSCCAL = 0x7F; // set OSCCAL (oscillator calibration byte) to high end of lower range
-					cyCt = cyPerRTCSqWave();
-					do  { 
-						cyCtNxtUp = cyCt;
-						OSCCAL--;
-						cyCt = cyPerRTCSqWave();
-					} while ((unsigned long)cyCt > RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ);
-					// we are just below the ideal number, if the next higher count was closer ...					
-					if ((unsigned long)(RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ - (unsigned long)cyCt) > (unsigned long)((unsigned long)cyCtNxtUp - RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ)) {
-						OSCCAL++; // ... tweak OSCCAL up one
-					}
-//					UBRR1 = 47; // sets 9600 1x baud when osc=7.3728 MHz
-					UBRR1 = 95; // sets 9600 2x baud when osc=7.3728 MHz
-					UBRR0 = 95; // sets 9600 2x baud when osc=7.3728 MHz
-
-//					UBRR1 = 3; // sets 115200 baud when osc=7.3728 MHz					
-					
-					// see if we still get any sense out of the uart
-					len = sprintf(str, "OSCCAL\t%d\tCT_below\t%lu\tCT_above\t%lu\r\n", OSCCAL, (unsigned long)cyCt, (unsigned long)cyCtNxtUp);
-					outputStringToUART1(str);
-
-					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
-                    break;
-                }
-*/
 
 				case 'T': case 't': { // set time
 					// get info from btCmdBuffer before any UART output, 

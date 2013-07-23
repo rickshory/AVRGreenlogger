@@ -37,11 +37,15 @@
 #include <avr/interrupt.h>
 //! @}
 
+#define BAUD_4800_1X_OSC_7372800HZ 95 // 0% error
+#define BAUD_4800_2X_OSC_7372800HZ 191 // 0% error
 #define BAUD_9600_1X_OSC_7372800HZ 47 // 0% error
 #define BAUD_9600_2X_OSC_7372800HZ 95 // 0% error
 #define BAUD_115200_1X_OSC_7372800HZ 3 // 0% error
 #define BAUD_115200_2X_OSC_7372800HZ 7 // 0% error
 
+#define BAUD_4800_1X_OSC_8MHZ 103 // 0.2% error
+#define BAUD_4800_2X_OSC_8MHZ 207 // 0.2% error
 #define BAUD_9600_1X_OSC_8MHZ 51 // 0.16% error
 #define BAUD_9600_2X_OSC_8MHZ 103 // 0.16% error
 #define BAUD_115200_1X_OSC_8MHZ 3 //  not recommended 8.51% error
@@ -133,7 +137,8 @@ void uart0_init(void)
 //	UBRR0 = BAUD_9600_1X_OSC_7372800HZ;
 
 //	UBRR0 = BAUD_9600_2X_OSC_8MHZ;
-	UBRR0 = BAUD_9600_2X_OSC_7372800HZ;
+//	UBRR0 = BAUD_9600_2X_OSC_7372800HZ;
+	UBRR0 = BAUD_4800_2X_OSC_7372800HZ;
 	UCSR0A |= (1 << U2X0);
 	
 /*	

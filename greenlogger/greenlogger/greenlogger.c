@@ -729,7 +729,11 @@ void checkForCommands (void) {
 				 case '$': { // an NMEA string from the GPS
 //					 outputStringToUART1("\r\n NMEA from GPS \r\n");
 					 strcpy(tmpStr, commandBuffer + 1);
-					 outputStringToUART1(tmpStr);
+					 if (!strncmp(tmpStr,"GPRMC",5)) {
+						 outputStringToUART1(tmpStr);
+						 outputStringToUART1("\r\n");
+					 }
+					 
 					 break;
 				 }					 
 

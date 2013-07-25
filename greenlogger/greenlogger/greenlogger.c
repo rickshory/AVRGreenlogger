@@ -87,7 +87,7 @@ int main(void)
 	DDRD |= (1<<4); // make Bluetooth power control an output
 	DDRD |= (1<<7); // make Bluetooth baud rate control an output
 	DDRB |= (1<<1); // make GPS power control an output
-	DDRB |= (1<<0); // make GPS on/off and output
+	DDRB |= (1<<0); // make GPS on/off an output
 	
 	GPS_power_off; // default to power off
 	GPS_On_Off_Low; // brief (~200ms) high pulse turns GPS on/off
@@ -861,25 +861,7 @@ void checkForCommands (void) {
 					outputStringToUART0("\r\n SD card power turned off\r\n");
                     break;
                 }
-/*
-                case '^':
-				{ // force B3 high
-                    outputStringToUART0("\r\n forcing B3 high\r\n");
-					DDRB |= 0b00001000;
-					PORTB |= 0b00001000;
-					outputStringToUART0("\r\n B3 forced high \r\n");
-                    break;
-                }
 
-                case 'v':
-				{ // force B3 low
-                    outputStringToUART0("\r\n forcing B3 low\r\n");
-					DDRB |= 0b00001000;
-					PORTB &= 0b11110111;
-					outputStringToUART0("\r\n B3 forced low \r\n");
-                    break;
-                }
-*/
 				case 'A': case 'a':
 					{
 						findADXL345();
@@ -1001,25 +983,6 @@ void heartBeat (void)
 	if (n) Timer1 = --n;
 	n = Timer2;
 	if (n) Timer2 = --n;
-/*
-	n = pv;
-	pv = SOCKPORT & (SOCKWP | SOCKINS);	// Sample socket switch
 
-	if (n == pv) {					// Have contacts stabilized?
-		s = Stat;
-
-		if (pv & SOCKWP)			// WP is H (write protected)
-			s |= STA_PROTECT;
-		else						// WP is L (write enabled)
-			s &= ~STA_PROTECT;
-
-		if (pv & SOCKINS)			// INS = H (Socket empty)
-			s |= (STA_NODISK | STA_NOINIT);
-		else						// INS = L (Card inserted)
-			s &= ~STA_NODISK;
-
-		Stat = s;
-	}
-*/
 }
 

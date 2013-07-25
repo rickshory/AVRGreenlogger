@@ -88,7 +88,7 @@ enum fileWriteResults
 #define	DESELECT()	SD_CS_PORT |=  (1<<SD_CS_BIT)		// MMC CS = H
 
 #define SOCKPORT	PINB			// Socket contact port
-#define SOCKWP		1			// Write protect switch (PB1)
+//#define SOCKWP		1			// Write protect switch (PB1); not used on microSD cards
 #define SOCKINS		2			// Card detect switch (PB2)
 // following were from original example file
 // "C:\Users\rshory\Documents\Current work\DataLogger\SD card\ff007sample\avr\mmc.c"

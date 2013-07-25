@@ -894,7 +894,6 @@ BYTE wait_ready (void)
 {
 	BYTE res;
 
-
 	Timer2 = 50;	/* Wait for ready in timeout of 500ms */
 	rcvr_spi();
 	do
@@ -903,7 +902,6 @@ BYTE wait_ready (void)
 
 	return res;
 }
-
 
 
 /*-----------------------------------------------------------------------*/
@@ -917,26 +915,11 @@ void release_spi (void)
 	rcvr_spi();
 }
 
-
-
 /*-----------------------------------------------------------------------*/
 /* Power Control  (Platform dependent)                                   */
 /*-----------------------------------------------------------------------*/
 /* When the target system does not support socket power control, there   */
 /* is nothing to do in these functions and chk_power always returns 1.   */
-
-/*
-static
-void power_on (void)
-{
-	PORTE &= ~0x80;				// Socket power ON
-	for (Timer1 = 3; Timer1; );	// Wait for 30ms
-	PORTB = 0b10110101;			// Enable drivers
-	DDRB  = 0b11000111;
-	SPCR = 0b01010000;			// Initialize SPI port (Mode 0)
-	SPSR = 0b00000001;
-}
-*/
 
 static 
 void power_on (void) 
@@ -957,21 +940,6 @@ void power_on (void)
 	SD_MISO_PU_PORT |= (1<<SD_MISO_PU_BIT); // output high to the port, enables pull-up on the input
 } 
 
-/*
-static
-void power_off (void)
-{
-	SELECT();				// Wait for card ready
-	wait_ready();
-	release_spi();
-
-	SPCR = 0;				// Disable SPI function
-	DDRB  = 0b11000000;		// Disable drivers
-	PORTB = 0b10110000;
-	PORTE |=  0x80;			// Socket power OFF
-	Stat |= STA_NOINIT;		// Set STA_NOINIT
-}
-*/
 
 static 
 void power_off (void) 

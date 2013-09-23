@@ -38,7 +38,7 @@ volatile uint16_t btCountdown = 0; // timer for trying Bluetooth connection
 volatile uint16_t timer3val;
 
 volatile
-uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
+uint8_t Timer1, Timer2, intTmp1, I2C_timer;	// 100Hz decrement timer 
 
 int len, err = 0;
 char str[128]; // generic space for strings to be output
@@ -158,6 +158,21 @@ int main(void)
 	
 	if (initFlags & (1<<initI2C)) 
 		outputStringToUART0("\r\n  I2C_Init completed\r\n");
+		
+	// test the I2C bus, if it doesn't work nothing much else will
+	intTmp1 = I2C_Start();
+	if (intTmp1 == 0) { // I2C start timed out
+		// we are hung, go into SOS mode
+		while (1) {
+			for (Timer1 = 20; Timer1; );	// Wait for 200ms
+			PORTA |= (0b00000100); // set pilot light on
+			for (Timer1 = 20; Timer1; );	// Wait for 200ms
+			PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
+		}
+	}
+	else { // I2C bus started OK
+		I2C_Stop(); // release I2C bus and continue
+	}
 
 	intTmp1 = rtc_readTime(&dt_RTC);
 	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
@@ -986,6 +1001,8 @@ void heartBeat (void)
 	if (n) Timer1 = --n;
 	n = Timer2;
 	if (n) Timer2 = --n;
+	n = I2C_timer;
+	if (n) I2C_timer = --n;
 
 }
 

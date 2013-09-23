@@ -19,6 +19,9 @@
 #include <avr/io.h>
 #include <util/twi.h>
 
+extern volatile uint8_t I2C_timer;	// 100Hz decrement timer
+
+
 /**
  * \brief initializes the I2C peripheral
  *
@@ -76,9 +79,14 @@ void I2C_Init (void)
 uint8_t I2C_Start (void)
 {
 	uint8_t r;
+//		for (I2C_timer = 1; I2C_timer; );	// Wait for 10ms
+	I2C_timer = 1;
 	TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN); // initiate Start sequence
 	while (!(TWCR & (1<<TWINT))) // hardware sets TWINT bit when Start sequence done
-		; // timeout or other exit here?
+		if (!I2C_timer) {
+			return 0; // return this error code if I2C cannot be started
+			// usually there is a circuit error that keeps lines locked high
+		}
 	r = (TWSR & TW_STATUS_MASK);
 	return r;
 }

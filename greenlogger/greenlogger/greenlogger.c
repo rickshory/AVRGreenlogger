@@ -95,7 +95,40 @@ int main(void)
 	BT_power_off();
 //	BT_baud_9600();
 	BT_baud_115k();
+
+//	cli();
+//	setupDiagnostics(); // need heartbeat timer to correctly turn SD power off (may work around this)
+//	// also may help with power control tracking while testing dead battery re-charge
+//	sei();
+//	turnSDCardPowerOff();
+
+	// force SD card power off, and pins in lowest power modes
+
+	if (!(PRR0 & (1<<PRSPI))) // is SPI power on (Pwr Save bit clear)?
+	{
+		if (SPCR & (1<<SPE)) // is SPI enabled?
+		{
+			SPCR &= ~(1<<SPE); // disable SPI
+		}
+		PRR0 |= (1<<PRSPI); // turn off power to SPI module, stop its clock
+	}		
+	DESELECT();
+
+    DDR_SPI &= ~((1<<DD_MOSI)|(1<<DD_SCK)); // change SPI output lines MOSI and SCK into inputs
+	// pins might source current momentarily
+	 // set port bits to 0, disable any internal pull-ups; tri-state the pins
+	SPI_PORT &= ~((1<<SPI_MOSI_BIT)|(1<<SPI_SCK_BIT)|(1<<SPI_MISO_BIT)); // MISO was already an input
 	
+	SD_CS_DD &= ~(1<<SD_CS_BIT); // change SS to an input, momentarily sources current through internal pull-up
+	SD_CS_PORT &= ~(1<<SD_CS_BIT); // set port bit to zero, tri-state the input
+
+	SD_PWR_DD |= (1<<SD_PWR_BIT);          // Turns on PWR pin as output 
+	SD_PWR_PORT |= (1<<SD_PWR_BIT);   // Drive PWR pin high; this will turn FET off
+	SD_PWR_DD &= ~(1<<SD_PWR_BIT);          // change PWR pin to an input
+	// internal pull-up momentarily pulls high, along with external pull-up
+	SD_PWR_PORT &= ~(1<<SD_PWR_BIT);   // tri-state the pin; external pull-up keeps FET off
+	
+//	Stat |= STA_NOINIT;      // Set STA_NOINIT
 	
 	commandBuffer[0] = '\0'; // "empty" the command buffer
 	commandBufferPtr = commandBuffer;
@@ -133,40 +166,6 @@ int main(void)
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
 	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
 	
-//	cli();
-//	setupDiagnostics(); // need heartbeat timer to correctly turn SD power off (may work around this)
-//	// also may help with power control tracking while testing dead battery re-charge
-//	sei();
-//	turnSDCardPowerOff();
-
-	// force SD card power off, and pins in lowest power modes
-
-	if (!(PRR0 & (1<<PRSPI))) // is SPI power on (Pwr Save bit clear)?
-	{
-		if (SPCR & (1<<SPE)) // is SPI enabled?
-		{
-			SPCR &= ~(1<<SPE); // disable SPI
-		}
-		PRR0 |= (1<<PRSPI); // turn off power to SPI module, stop its clock
-	}		
-	DESELECT();
-
-    DDR_SPI &= ~((1<<DD_MOSI)|(1<<DD_SCK)); // change SPI output lines MOSI and SCK into inputs
-	// pins might source current momentarily
-	 // set port bits to 0, disable any internal pull-ups; tri-state the pins
-	SPI_PORT &= ~((1<<SPI_MOSI_BIT)|(1<<SPI_SCK_BIT)|(1<<SPI_MISO_BIT)); // MISO was already an input
-	
-	SD_CS_DD &= ~(1<<SD_CS_BIT); // change SS to an input, momentarily sources current through internal pull-up
-	SD_CS_PORT &= ~(1<<SD_CS_BIT); // set port bit to zero, tri-state the input
-
-	SD_PWR_DD |= (1<<SD_PWR_BIT);          // Turns on PWR pin as output 
-	SD_PWR_PORT |= (1<<SD_PWR_BIT);   // Drive PWR pin high; this will turn FET off
-	SD_PWR_DD &= ~(1<<SD_PWR_BIT);          // change PWR pin to an input
-	// internal pull-up momentarily pulls high, along with external pull-up
-	SD_PWR_PORT &= ~(1<<SD_PWR_BIT);   // tri-state the pin; external pull-up keeps FET off
-	
-//	Stat |= STA_NOINIT;      // Set STA_NOINIT
-
 	// tune uC osc down to 7.3728 MHz, implement 115200 baud
 	tuneMainOsc();
 

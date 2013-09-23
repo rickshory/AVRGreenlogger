@@ -129,7 +129,18 @@ int main(void)
 	SD_PWR_PORT &= ~(1<<SD_PWR_BIT);   // tri-state the pin; external pull-up keeps FET off
 	
 //	Stat |= STA_NOINIT;      // Set STA_NOINIT
+
+	// try allowing the following on first power-up, even if cell is barely charged
 	
+	cli();
+	setupDiagnostics();
+	uart0_init();
+	initFlags |= (1<<initUART0);
+	uart1_init();
+	initFlags |= (1<<initUART1);
+	sei();
+	
+	// main osc is not tuned yet, can't do that until I2C is working
 	commandBuffer[0] = '\0'; // "empty" the command buffer
 	commandBufferPtr = commandBuffer;
 	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup
@@ -138,7 +149,16 @@ int main(void)
 	
 	I2C_Init(); // enable I2C
 	initFlags |= (1<<initI2C);
-		
+				
+	if (initFlags & (1<<initUART0)) 
+		outputStringToUART0("\r\n  UART0 Initialized\r\n");
+					
+	if (initFlags & (1<<initUART1))
+		outputStringToUART1("\r\n  UART1 Initialized\r\n");
+	
+	if (initFlags & (1<<initI2C)) 
+		outputStringToUART0("\r\n  I2C_Init completed\r\n");
+
 	intTmp1 = rtc_readTime(&dt_RTC);
 	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
 	datetime_getstring(datetime_string, &dt_RTC);
@@ -167,26 +187,8 @@ int main(void)
 	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
 	
 	// tune uC osc down to 7.3728 MHz, implement 115200 baud
+	// need I2C to do this
 	tuneMainOsc();
-
-	// try allowing the following on first power-up, even if cell is barely charged
-	
-	cli();
-	setupDiagnostics();
-	uart0_init();
-	initFlags |= (1<<initUART0);
-	uart1_init();
-	initFlags |= (1<<initUART1);
-	sei();
-				
-	if (initFlags & (1<<initI2C)) 
-		outputStringToUART0("\r\n  I2C_Init completed\r\n");
-				
-	if (initFlags & (1<<initUART0)) 
-		outputStringToUART0("\r\n  UART0 Initialized\r\n");
-					
-	if (initFlags & (1<<initUART1))
-		outputStringToUART1("\r\n  UART1 Initialized\r\n");
 				
 	r = initializeADXL345();
 	if (r) {

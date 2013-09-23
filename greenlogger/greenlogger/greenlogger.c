@@ -164,13 +164,14 @@ int main(void)
 	if (intTmp1 == 0) { // I2C start timed out
 		// we are hung, go into SOS mode
 		while (1) {
-			for (Timer1 = 20; Timer1; );	// Wait for 200ms
+			for (Timer1 = 10; Timer1; );	// Wait for 100ms
 			PORTA |= (0b00000100); // set pilot light on
-			for (Timer1 = 20; Timer1; );	// Wait for 200ms
+			for (Timer1 = 10; Timer1; );	// Wait for 100ms
 			PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
 		}
 	}
 	else { // I2C bus started OK
+		for (Timer1 = 100; Timer1; );	// Wait for 1s
 		I2C_Stop(); // release I2C bus and continue
 	}
 

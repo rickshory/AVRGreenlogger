@@ -231,6 +231,7 @@ int main(void)
 
 	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 	
+/*
 	// try to adjust the uC clock frequency
 	// first step, measure the uC clock, relative to the RTC, which latter should be very accurate
 	// eventually put this in a more reasonable place, but for now right here before main loop
@@ -249,6 +250,7 @@ int main(void)
 		intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 		timeFlags |= (1<<nextAlarmSet);
 	}
+*/
 
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,

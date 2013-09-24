@@ -79,7 +79,7 @@ void I2C_Init (void)
 uint8_t I2C_Start (void)
 {
 	uint8_t r;
-	I2C_timer = 10; // 100 ms timeout
+	I2C_timer = 100; // 1 second timeout
 	TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN); // initiate Start sequence
 	while (!(TWCR & (1<<TWINT))) // hardware sets TWINT bit when Start sequence done
 		if (!I2C_timer) {

@@ -163,6 +163,11 @@ int main(void)
 	intTmp1 = I2C_Start();
 	if (intTmp1 == 0) { // I2C start timed out
 		// we are hung, go into SOS mode
+		PRR0 |= (1<<PRTWI); // disable I2C, turn module power off (set Power Reduction bit)
+		DDRC &= ~(1<<0); // make SCL pin an input so we can read it
+		PORTC &= ~(1<<0); // disable internal pull-up resistor
+		DDRC &= ~(1<<1); // make SDA pin an input so we can read it
+		PORTC &= ~(1<<1); // disable internal pull-up resistor
 		// uart0 is about all we've got to talk on
 		UBRR0 = 207; // 0.2% error BAUD_4800_2X_OSC_8MHZ, assume main osc untuned 8MHz
 		Timer2 = 0;
@@ -176,9 +181,13 @@ int main(void)
 				cli(); // temporarily disable interrupts to prevent Timer3 from
 					// changing the count partway through
 				stateFlags1 |= (1<<isRoused); // enable uart output
-				rouseCountdown = 100; // hold the Rouse flag on
+				rouseCountdown = 100; // hold the Rouse flag on long enough for output
 				sei();
-				outputStringToUART0("\r\n  I2C bus shorted\r\n");
+//				outputStringToUART0("\r\n I2C bus shorted\r\n");
+//				len = sprintf(str, "\n\r I2C bus shorted: PORTC = %i \n\r", PINC);
+//				outputStringToUART0(str);
+				len = sprintf(str, "\n\r I2C bus shorted: SCL = %i, SDA = %i \n\r", (PINC & 1), ((PINC & 2) ? 1 : 0));
+				outputStringToUART0(str);
 				Timer2 = 1000; // ~3 sec to next message
 			}
 		}

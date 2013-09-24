@@ -79,13 +79,12 @@ void I2C_Init (void)
 uint8_t I2C_Start (void)
 {
 	uint8_t r;
-//		for (I2C_timer = 1; I2C_timer; );	// Wait for 10ms
-	I2C_timer = 100; // 1 second timeout
+	I2C_timer = 10; // 100 ms timeout
 	TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN); // initiate Start sequence
 	while (!(TWCR & (1<<TWINT))) // hardware sets TWINT bit when Start sequence done
 		if (!I2C_timer) {
 			return 0; // return this error code if I2C cannot be started
-			// usually there is a circuit error that keeps lines locked high
+			// usually there is a circuit error that keeps lines locked high or low
 		}
 	r = (TWSR & TW_STATUS_MASK);
 	return r;

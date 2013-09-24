@@ -171,9 +171,8 @@ int main(void)
 		}
 	}
 	else { // I2C bus started OK
-		for (Timer1 = 100; Timer1; );	// Wait for 1s
+		intTmp1 = I2C_Write(0); // send the generic device address so devices release the bus
 		I2C_Stop(); // release I2C bus and continue
-		for (Timer1 = 100; Timer1; );	// Wait for 1s
 	}
 
 	intTmp1 = rtc_readTime(&dt_RTC);

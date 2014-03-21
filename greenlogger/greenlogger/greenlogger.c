@@ -163,9 +163,10 @@ int main(void)
 	intTmp1 = I2C_Start();
 	if (intTmp1 == 0) { // I2C start timed out
 		// we are hung, go into SOS mode
-		PRR0 |= (1<<PRTWI); // disable I2C, turn module power off (set Power Reduction bit)
-		DDRC &= 0b00111111; // make SCL and SDA pins inputs so we can read them
-		PORTC &= 0b00111111; // disable internal pull-up resistors
+		PRR0 |= (1<<PRTWI); // turn I2C module power off (set Power Reduction bit)
+		TWCR &= ~(1<<TWEN); // disable I2C module (clear enable bit)
+		DDRC &= 0b11111100; // make SCL and SDA pins inputs so we can read them
+		PORTC &= 0b11111100; // disable internal pull-up resistors
 		
 		// uart0 is about all we've got to talk on
 		UBRR0 = 207; // 0.2% error BAUD_4800_2X_OSC_8MHZ, assume main osc untuned 8MHz

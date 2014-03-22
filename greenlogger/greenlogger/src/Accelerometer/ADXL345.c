@@ -96,7 +96,7 @@ uint8_t initializeADXL345 (void) {
 				I2C_Start();
 				r = I2C_Write(ADXL345_ADDR_WRITE);
 				r = I2C_Write(ADXL345_REG_DATA_FORMAT);
-				r = I2C_Write(0x0b); // Full resolution, +/-16g, 4mg/LSB.
+				r = I2C_Write(0x08); // Full resolution, +/-2g, 4mg/LSB.
 				I2C_Stop();
 				// set data rate
 				I2C_Start();

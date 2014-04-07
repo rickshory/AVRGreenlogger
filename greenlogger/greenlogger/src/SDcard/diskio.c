@@ -113,10 +113,6 @@ BYTE fileExists (char* stFileFullpath) {
 	FILINFO fno;        // [OUT] FILINFO structure
 	BYTE sLen, retVal = sdOK;
 	
-//	int lenLocal;
-//	char strLocal[128]; // generic space for strings to be output
-
-	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely access card
 	}
@@ -124,16 +120,6 @@ BYTE fileExists (char* stFileFullpath) {
 	if(f_mount(0, &FileSystemObject)!=FR_OK) {
 		return sdMountFail;
 	}
-/*
-	DSTATUS driveStatus = disk_initialize(0);
-
-	if(driveStatus & STA_NOINIT ||
-		driveStatus & STA_NODISK ||
-		driveStatus & STA_PROTECT) {
-			retVal = sdInitFail;
-			goto unmountVolume;
-	}
-*/
 	
 	res = f_stat(stFileFullpath, &fno);
 //	lenLocal = sprintf(strLocal, "\n\r (fileExists) File stat return code: %d\n\r", res);
@@ -173,13 +159,14 @@ BYTE fileExists (char* stFileFullpath) {
 BYTE writeCharsToSDCard (char* St, BYTE n) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
+	FILINFO fno;        // [OUT] FILINFO structure
 	char stDir[6], stFile[20];
 	BYTE sLen, retVal = sdOK;
 	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely write card
 	}
-
+	
 	if(f_mount(0, &FileSystemObject)!=FR_OK) {
 		return sdMountFail;
 		//  flag error
@@ -211,6 +198,15 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	//
 	//works
 	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
+	// working on this section -->
+	
+	res = f_stat(stFile, &fno);
+	if (res == FR_NO_FILE) { 
+		
+		
+	}	
+	
+	// <-- to here
 	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;

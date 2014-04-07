@@ -161,7 +161,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	FRESULT res;         // FatFs function common result code
 	FILINFO fno;        // [OUT] FILINFO structure
 	char stDir[6], stFile[20];
-	BYTE sLen, retVal = sdOK;
+	BYTE sLen, retVal = sdOK, fileIsNew = 0;
 	
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely write card
@@ -200,20 +200,38 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
 	// working on this section -->
 	
-	res = f_stat(stFile, &fno);
+	res = f_stat(stFile, &fno); // test whether file for this date exists yet
 	if (res == FR_NO_FILE) { 
-		
-		
+		fileIsNew = 1; // when file is opened, in next step, it will be a new file
 	}	
 	
-	// <-- to here
 	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;
 //		len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
 //		outputStringToUART0(str);
 	//flag error
-}
+	}
+	
+	if (fileIsNew) {
+		FIL hdrFile;      // File object, source to copy from
+		BYTE buffer[512];   // File copy buffer
+		UINT br, bw;         // File read/write count
+		// try to open the Header file; serves as a test that it exists
+		if(f_open(&hdrFile, "HEADER.TXT", FA_OPEN_EXISTING | FA_READ)==FR_OK) { 
+			// copy header into new file
+			for (;;) {
+				res = f_read(&hdrFile, buffer, sizeof buffer, &br);  // Read a chunk of source file
+				if (res || br == 0) break; // error or eof
+				res = f_write(&logFile, buffer, br, &bw);            // Write it to the destination file
+				if (res || bw < br) break; // error or disk full
+			}
+			// close header file
+			f_close(&hdrFile);
+		}	
+	}
+	
+// <-- to here
 
 	// Move to end of the file to append data
 	if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {

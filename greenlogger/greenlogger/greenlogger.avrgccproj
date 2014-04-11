@@ -151,6 +151,12 @@
     <Compile Include="src\ExtInterrupt\ExtInterrupts.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\GPS\Venus6x.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GPS\Venus6x.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\I2C\I2C.c">
       <SubType>compile</SubType>
     </Compile>
@@ -217,6 +223,7 @@
     <Folder Include="src\LtSensor" />
     <Folder Include="src\BattMonitor" />
     <Folder Include="src\Bluetooth" />
+    <Folder Include="src\GPS" />
     <Folder Include="src\TemperatureSensor" />
     <Folder Include="src\RTC" />
     <Folder Include="src\SDcard" />

@@ -28,6 +28,7 @@
 #include "LtSensor/TSL2561.h"
 #include "TemperatureSensor/TCN75A.h"
 #include "BattMonitor/ADconvert.h"
+#include "GPS/Venus6x.h"
 
 volatile uint8_t machineState;
 volatile uint8_t iTmp;
@@ -85,6 +86,9 @@ int main(void)
 	PORTD &= ~(1<<5); // disable internal pull-up resistor
 	DDRD |= (1<<4); // make Bluetooth power control an output
 	DDRD |= (1<<7); // make Bluetooth baud rate control an output
+	DDRB |= (1<<1); // make GPS power control an output
+	
+	GPS_power_off; // default to power off
 
 	BT_power_off();
 //	BT_baud_9600();

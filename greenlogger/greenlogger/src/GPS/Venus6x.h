@@ -11,6 +11,7 @@
 
 #include "compiler.h"
 
+extern inline bool GPS_powered(void);
 extern inline void GPS_power_on(void);
 extern inline void GPS_power_off(void);
 

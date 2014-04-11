@@ -15,6 +15,7 @@
 #include "../SDcard/diskio.h"
 #include "../BattMonitor/ADconvert.h"
 #include "../LtSensor/TSL2561.h"
+#include "../GPS/Venus6x.h"
 #include <util/twi.h>
 
 char btCmdBuffer[commandBufferLen];
@@ -207,7 +208,14 @@ void checkForBTCommands (void) {
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
 				 case 'G': case 'g': { // get time from GPS
-					 outputStringToBothUARTs("\r\n reading GPS \r\n");
+//					 outputStringToBothUARTs("\r\n reading GPS \r\n");
+					 if (GPS_powered()) {
+						 outputStringToBothUARTs("\r\n GPS ON, turning OFF \r\n");
+						 GPS_power_off();
+					 } else {
+						 outputStringToBothUARTs("\r\n GPS OFF, turning ON \r\n");
+						 GPS_power_on();
+					 }
 					 break;
 				 }					 
 				

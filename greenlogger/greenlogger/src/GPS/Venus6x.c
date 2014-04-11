@@ -6,6 +6,7 @@
  */ 
 
 #include <inttypes.h>
+#include "Venus6x.h"
 #include "../Bluetooth/RN42.h"
 #include "../I2C/I2C.h"
 #include "../greenlogger.h"
@@ -16,6 +17,22 @@
 #include "../BattMonitor/ADconvert.h"
 #include "../LtSensor/TSL2561.h"
 #include <util/twi.h>
+
+ /**
+ * \brief check if the Venus GPS module is powered
+ *
+ * PortB, bit 1 is an output that enables the power supply to the 
+ * Venus SUP005R GPS module: 
+ * HIGH when enabled, LOW when shut down.
+ * This functions reads that state of that pin.
+ *
+ * \retval true  if connection is active
+ * \retval false if no connection
+ */
+inline bool GPS_powered(void)
+{
+	return (PINB & (1<<1)); // read pin
+}
 
 /**
  * \brief turns on power to the Venus GPS module

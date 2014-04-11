@@ -205,6 +205,11 @@ void checkForBTCommands (void) {
 			*btCmdBufferPtr++ = '\0'; // null terminate
 			btFlags &= ~(1<<btSerialBeingInput); // flag that input is complete; allow string output
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
+
+				 case 'G': case 'g': { // get time from GPS
+					 outputStringToBothUARTs("\r\n reading GPS \r\n");
+					 break;
+				 }					 
 				
 				 case 'V': case 'v': { // show firmware version
 					 outputStringToBothUARTs(versionString);

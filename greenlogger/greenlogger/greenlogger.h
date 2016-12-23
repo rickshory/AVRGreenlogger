@@ -38,6 +38,8 @@
 #define RTC_64CYCLES_FOR_MAIN_OSC_7372800HZ 28800 // target count when summing 64 full cycles of the RTC square wave
 // for tuning main oscillator to 7.3728 MHz
 
+#define GPS_TIME_REQUEST PB1 // the pin to pulse low, to initiate a GPS time request
+
 enum machStates
 {
  Asleep = 0, 

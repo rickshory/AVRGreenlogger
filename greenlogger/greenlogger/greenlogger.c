@@ -28,7 +28,7 @@
 #include "LtSensor/TSL2561.h"
 #include "TemperatureSensor/TCN75A.h"
 #include "BattMonitor/ADconvert.h"
-#include "GPS/Venus6x.h"
+#include "GPS/GPStime.h"
 
 volatile uint8_t machineState;
 volatile uint8_t iTmp;

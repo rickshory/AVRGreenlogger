@@ -15,7 +15,7 @@
 #include "../SDcard/diskio.h"
 #include "../BattMonitor/ADconvert.h"
 #include "../LtSensor/TSL2561.h"
-#include "../GPS/Venus6x.h"
+#include "../GPS/GPStime.h"
 #include <util/twi.h>
 
 char btCmdBuffer[commandBufferLen];

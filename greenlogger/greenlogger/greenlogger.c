@@ -380,6 +380,9 @@ int main(void)
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
+			if (cellVoltageReading.adcWholeWord > maxCellVoltageToday) {
+				maxCellVoltageToday = cellVoltageReading.adcWholeWord;
+			}
 			if (!(stateFlags1 & (1<<reachedFullPower))) { // if not achieved full power and initialized, skip this data acquisition loop
 				// for testing, set to 10-second interval, so don't have to wait an hour to see if battery charging worked
 				irradFlags &= ~(1<<isDark); // remove this line when done testing dead battery re-charging

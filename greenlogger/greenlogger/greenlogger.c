@@ -64,9 +64,9 @@ uint16_t previousADCCellVoltageReading = 0;
 uint16_t refDarkVoltage = 0;
 // for heuristics on when to try getting time from GPS
 uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current day
-uint32_t dayPtMaxChargeToday = 0; // track second-of-day when cell has highest charge, in the current day
+uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
 uint16_t maxAvgCellVoltage = 0; // moving average of maximum cell voltage through the day
-uint32_t dayPtMaxAvgCellCharge = 0; // moving modulo average, second-of-day since "midnight" when cell has the most power
+uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day since "midnight" when cell has the most power
 
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
 unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
@@ -381,7 +381,7 @@ int main(void)
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			if (cellVoltageReading.adcWholeWord > maxCellVoltageToday) {
 				maxCellVoltageToday = cellVoltageReading.adcWholeWord;
-				dayPtMaxChargeToday = (24 * 60 * 60 * dt_CurAlarm.hour) + (60 * 60 * dt_CurAlarm.minute) + (60 * dt_CurAlarm.second);
+				dayPtMaxChargeToday = (60 * dt_CurAlarm.hour) + (dt_CurAlarm.minute);
 			}
 			if (!(stateFlags1 & (1<<reachedFullPower))) { // if not achieved full power and initialized, skip this data acquisition loop
 				// for testing, set to 10-second interval, so don't have to wait an hour to see if battery charging worked

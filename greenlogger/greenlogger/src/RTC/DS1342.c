@@ -695,6 +695,19 @@ void datetime_copy(dateTime *from, dateTime *to) {
 	to->second = from->second;
 }
 
+/**
+ * \brief two dateTime structs
+ *
+ * This function takes pointers to 2 dateTime structs,
+ *  and compares the first to the second
+ * If the first is earlier, as in normal time sequence, returns something >0
+ * If the first is later, opposite to normal time sequence, returns <0
+ * If they are equal, returns 0
+ */
+int8_t datetime_compare(dateTime *t1, dateTime *t2) {
+	return 0; // stub, not working yet
+}
+
 
 /**
  * \brief sets date/time forward by the number of seconds

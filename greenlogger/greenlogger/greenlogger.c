@@ -55,7 +55,7 @@ char *commandBufferPtr;
 
 volatile uint8_t stateFlags1 = 0, stateFlags2 = 0, initFlags = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
-volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
+volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS, dt_CkGPS; //, dt_NextAlarm
 volatile int8_t timeZoneOffset = 0; // globally available
 volatile accelAxisData accelData;
 extern irrData irrReadings[4];

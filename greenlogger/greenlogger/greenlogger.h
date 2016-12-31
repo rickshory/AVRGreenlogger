@@ -125,7 +125,7 @@ enum timeFlagsBits
 	alarmDetected, // the RTC Alarm has caused an interrupt
 	timeZoneWritten, // time zone has been written to the SD card
 	timeZoneRead, // time zone has been read from the SD card
-	tfBit5, // unused
+	checkGpsToday, // initiate a set-time request from the GPS, when the time comes to do so
 	tfBit6, // unused
 	tfBit7 // unused
 };

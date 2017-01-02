@@ -696,6 +696,20 @@ void datetime_copy(dateTime *from, dateTime *to) {
 }
 
 /**
+ * \brief gets the total seconds in dateTime
+ *
+ * This function takes a pointer to a dateTime structs,
+ * It returns the total count of seconds, from Jan 1, 2000
+ * Since this is for a data logger, there would never be earlier dates
+ * It only works in the 100 years till Jan 1 2100
+ * Return value is a 32 bit number, sufficient
+ *  to hold the max possible: 3155760000
+ */
+uint32_t datetime_totalsecs (dateTime *t) {
+	return 0; // stub, not written yet
+}
+
+/**
  * \brief compares two dateTime structs
  *
  * This function takes pointers to 2 dateTime structs,

@@ -730,12 +730,9 @@ uint32_t datetime_totalsecs (dateTime *t) {
  * If they are equal, returns 0
  */
 int8_t datetime_compare(dateTime *t1, dateTime *t2) {
-	if t1->year < t2->year return 1;
-	if t1->year > t2->year return -1;
-	if t1->month < t2->month return 1;
-	if t1->month > t2->month return -1;
-	
-	return 0; // stub, not working yet
+	if (datetime_totalsecs(t1) < datetime_totalsecs(t2)) return 1;
+	if (datetime_totalsecs(t1) > datetime_totalsecs(t2)) return -1;
+	return 0;
 }
 
 

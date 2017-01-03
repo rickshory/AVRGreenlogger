@@ -384,9 +384,11 @@ int main(void)
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
-			if (cellVoltageReading.adcWholeWord > maxCellVoltageToday) {
-				maxCellVoltageToday = cellVoltageReading.adcWholeWord;
-				dayPtMaxChargeToday = (60 * dt_CurAlarm.hour) + (dt_CurAlarm.minute);
+			if (cellVoltageReading.adcWholeWord > cellReadingsPtr->level) {
+				cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
+				datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));
+//				maxCellVoltageToday = cellVoltageReading.adcWholeWord;
+//				dayPtMaxChargeToday = (60 * dt_CurAlarm.hour) + (dt_CurAlarm.minute);
 			}
 			if (!(stateFlags1 & (1<<reachedFullPower))) { // if not achieved full power and initialized, skip this data acquisition loop
 				// for testing, set to 10-second interval, so don't have to wait an hour to see if battery charging worked

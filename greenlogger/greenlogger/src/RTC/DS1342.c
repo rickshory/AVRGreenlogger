@@ -706,7 +706,18 @@ void datetime_copy(dateTime *from, dateTime *to) {
  *  to hold the max possible: 3155760000
  */
 uint32_t datetime_totalsecs (dateTime *t) {
-	return 0; // stub, not written yet
+	// t->year is the number of completed years, e.g. 1 (meaning 2001) says 
+	// 1 year of the century has elapsed. Doesn't really matter as long as 
+	// it's consistent for comparisons
+	uint32_t hrs = t->year * 8766; // pre multiply 365.25 * 24 to use integers
+	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	if (((t->year) % 4) == 0) m[1] = 29; // deal with leap years
+	for (uint8_t i=0; i<(t->month); i++) {
+		hrs += (m[i] * 24); // add on hours for the elapsed months
+	}
+	hrs += (t->day) * 24; // add hours for the days
+	hrs += (t->houroffset); // adjust for time zone
+	return (hrs * 60 * 60) + (t->minute * 60) + (t->second);
 }
 
 /**

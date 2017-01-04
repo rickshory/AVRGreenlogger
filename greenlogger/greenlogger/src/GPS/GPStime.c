@@ -21,6 +21,18 @@
 // no longer using Venus GPS module, unavailable
 // rewriting this to generic "GPStime"
 
+/**
+ * \brief assures GPS subsystem is idle
+ *
+ * PortB, bit 1 controls reset to the GPS subsystem,
+ * brief low causes reset, and initiates a time request sequence
+ * high = no reset, idle
+ */
+inline void GPS_idle(void)
+{
+	PORTB |= (1<<1); // set high; no reset
+}
+
  /**
  * \brief check if the Venus GPS module is powered
  *

@@ -18,6 +18,9 @@
 #include "../LtSensor/TSL2561.h"
 #include <util/twi.h>
 
+#define GPS_SUBSYSTEM_CTRL 1 // bit 1 of PortB, of this uC
+// controls reset of the uC in the GPS subsystem
+
 // no longer using Venus GPS module, unavailable
 // rewriting this to generic "GPStime"
 
@@ -30,9 +33,11 @@
  */
 inline void GPS_idle(void)
 {
-	PORTB |= (1<<1); // set high; no reset
+	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high; no reset
 }
 
+
+//
  /**
  * \brief check if the Venus GPS module is powered
  *

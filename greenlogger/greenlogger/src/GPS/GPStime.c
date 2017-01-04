@@ -49,18 +49,18 @@ inline void GPS_idle(void)
  * UART. This uC should stay roused for up to 3 minutes, to 
  * receive that command.
  */
-inline void GPS_initTimeRequest(void)
+void GPS_initTimeRequest(void)
 {
 	PORTB &= ~(1<<GPS_SUBSYSTEM_CTRL); // set low
 	// uC in GPS subsystem, at Vcc 3V, needs a 700ns low-going pulse for definite reset
 	// each clock cycle of this uC, at 8MHz, is 125ns
 	// so 6 clock cycles of this uC would be 750ns and ought to do it
-	asm volatile ("nop");
-	asm volatile ("nop");
-	asm volatile ("nop");
-	asm volatile ("nop");
-	asm volatile ("nop");
-	asm volatile ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
+	__asm__ __volatile__ ("nop");
 	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high
 }
 

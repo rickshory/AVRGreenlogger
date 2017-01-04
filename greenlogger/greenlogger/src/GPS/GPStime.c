@@ -37,7 +37,27 @@ inline void GPS_idle(void)
 }
 
 
-//
+//extern inline void GPS_initTimeRequest(void);
+/**
+ * \brief send GPS time-request signal
+ *
+ * Send low-going reset pulse to external uC, to
+ * initiate the time-request sequence in the GPS subsystem.
+ * Subsystem attempts to power cycle the GPS and
+ * parse a time signal from the GPS NMEA
+ * data. If successful, returns a set-time command on this uC's
+ * UART. This uC should stay roused for up to 3 minutes, to 
+ * receive that command.
+ */
+inline void GPS_initTimeRequest(void)
+{
+	PORTB &= ~(1<<GPS_SUBSYSTEM_CTRL); // set low
+	// uC in GPS subsystem needs a 700ns low-going pulse for definite reset
+	
+	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high
+}
+
+
  /**
  * \brief check if the Venus GPS module is powered
  *

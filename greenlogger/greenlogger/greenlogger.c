@@ -403,8 +403,11 @@ int main(void)
 				break;
 			}
 			
-			if (1) { // stub for GPS time request
-				;
+			if ((stateFlags1 & (1<<checkGpsToday)) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
+				// alarm has passed GPS check time
+				outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
+				stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
+				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 			}
 			
 			// see if it's time to log data

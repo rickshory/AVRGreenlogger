@@ -739,7 +739,10 @@ void checkForCommands (void) {
             switch (commandBuffer[0]) { // command is 1st char in buffer
 
 				 case 'G': case 'g': { // get time from GPS
-					 outputStringToBothUARTs("\r\n reading GPS \r\n");
+					 // for testing, manually initiate a get-time request from GPS
+					 outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
+					 stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
+					 GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 					 break;
 				 }					 
 				

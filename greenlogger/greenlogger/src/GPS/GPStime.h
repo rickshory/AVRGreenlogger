@@ -12,6 +12,9 @@
 #include "compiler.h"
 #include "RTC/DS1342.h"
 
+#define GPS_SUBSYSTEM_CTRL 1 // bit 1 of PortB, of this uC
+// controls reset of the uC in the GPS subsystem
+
 #define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
 
 typedef volatile struct { // used for tracking the cell voltage daily maximum, when

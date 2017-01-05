@@ -403,6 +403,10 @@ int main(void)
 				break;
 			}
 			
+			if (1) { // stub for GPS time request
+				;
+			}
+			
 			// see if it's time to log data
 			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags & (1<<isDark))) {
             // if an even number of minutes, and zero seconds

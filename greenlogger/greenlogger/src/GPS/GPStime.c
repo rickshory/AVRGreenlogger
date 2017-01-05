@@ -46,6 +46,8 @@ inline void GPS_idle(void)
  */
 void GPS_initTimeRequest(void)
 {
+	outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
+	stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
 	PORTB &= ~(1<<GPS_SUBSYSTEM_CTRL); // set low
 	// uC in GPS subsystem, at Vcc 3V, needs a 700ns low-going pulse for definite reset
 	// each clock cycle of this uC, at 8MHz, is 125ns

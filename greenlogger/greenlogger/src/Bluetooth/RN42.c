@@ -209,9 +209,7 @@ void checkForBTCommands (void) {
 
 				 case 'G': case 'g': { // get time from GPS
 					 // for testing, manually initiate a get-time request from GPS
-					 outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
-					 stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
-					 GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
+					 GPS_initTimeRequest();
 					 break;
 				 }					 
 				

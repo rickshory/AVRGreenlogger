@@ -93,9 +93,9 @@ int main(void)
 	PORTD &= ~(1<<5); // disable internal pull-up resistor
 	DDRD |= (1<<4); // make Bluetooth power control an output
 	DDRD |= (1<<7); // make Bluetooth baud rate control an output
-	DDRB |= (1<<1); // make GPS power control an output
+	DDRB |= (1<<GPS_SUBSYSTEM_CTRL); // make GPS subsystem control an output
 	
-	GPS_power_off; // default to power off
+	GPS_idle; // default
 
 	BT_power_off();
 //	BT_baud_9600();

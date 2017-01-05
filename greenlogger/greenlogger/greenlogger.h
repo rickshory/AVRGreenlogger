@@ -15,6 +15,9 @@
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"
 
+#define GPS_SUBSYSTEM_CTRL 1 // bit 1 of PortB, of this uC
+// controls reset of the uC in the GPS subsystem
+
 #define commandBufferLen 30
 
 #define versionString "\r\n Ver 3.00\t 2013-04-22\r\n "

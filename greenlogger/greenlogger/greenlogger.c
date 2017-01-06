@@ -54,7 +54,8 @@ char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
 volatile sFlags1 stateFlags1 = {0};
-volatile uint8_t stateFlags2 = 0, initFlags = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
+volatile iFlags initFlags = {0};
+volatile uint8_t stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS, dt_CkGPS; //, dt_NextAlarm
 volatile int8_t timeZoneOffset = 0; // globally available
@@ -143,7 +144,7 @@ int main(void)
 	intTmp1 = readCellVoltage(&cellVoltageReading);
 	
 	I2C_Init(); // enable I2C
-	initFlags |= (1<<initI2C);
+	initFlags.initI2C = 1;
 		
 	intTmp1 = rtc_readTime(&dt_RTC);
 	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
@@ -180,18 +181,18 @@ int main(void)
 	cli();
 	setupDiagnostics();
 	uart0_init();
-	initFlags |= (1<<initUART0);
+	initFlags.initUART0 = 1;
 	uart1_init();
-	initFlags |= (1<<initUART1);
+	initFlags.initUART1 = 1;
 	sei();
 				
-	if (initFlags & (1<<initI2C)) 
+	if (initFlags.initI2C) 
 		outputStringToUART0("\r\n  I2C_Init completed\r\n");
 				
-	if (initFlags & (1<<initUART0)) 
+	if (initFlags.initUART0) 
 		outputStringToUART0("\r\n  UART0 Initialized\r\n");
 					
-	if (initFlags & (1<<initUART1))
+	if (initFlags.initUART1)
 		outputStringToUART1("\r\n  UART1 Initialized\r\n");
 				
 	r = initializeADXL345();
@@ -199,7 +200,7 @@ int main(void)
 		len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
 		outputStringToUART0(str);
 	} else {
-		initFlags |= (1<<initAccelerometer);
+		initFlags.initAccelerometer = 1;
 		outputStringToUART0("\r\n ADXL345 initialized\r\n");
 	}
 				

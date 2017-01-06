@@ -80,7 +80,7 @@ enum stateRTC
 };
 
 typedef volatile union { // status bit flags
-	unsigned char sF1;
+	unsigned char sF1Val;
 	struct
 	{
 		unsigned char isReadingSensors:1; // has been awakened by RTCC interrupt and is reading data
@@ -95,18 +95,20 @@ typedef volatile union { // status bit flags
 	};
 } sFlags1;
 
-enum initFlagsBits
-{
-	initI2C, // I2C has been initialized
-	initUART0, // UART0 has been initialized
-	initUART1, // UART1 has been initialized
-	initAccelerometer, // Accelerometer has been initialized
-	sf2Bit4, // unused
-	sf2Bit5, // unused
-	sf2Bit6, // unused
-	sf2Bit7 // unused
- };
-
+typedef volatile union { // initialization bit flags
+	unsigned char iFVal;
+	struct
+	{
+		unsigned char initI2C:1; // I2C has been initialized
+		unsigned char initUART0:1; // UART0 has been initialized
+		unsigned char initUART1:1; // UART1 has been initialized
+		unsigned char initAccelerometer:1; // Accelerometer has been initialized
+		unsigned char sf2Bit4:1; // unused
+		unsigned char sf2Bit5:1; // unused
+		unsigned char sf2Bit6:1; // unused
+		unsigned char sf2Bit7:1; // unused
+	};
+} iFlags;
 
 enum btFlagsBits
 {

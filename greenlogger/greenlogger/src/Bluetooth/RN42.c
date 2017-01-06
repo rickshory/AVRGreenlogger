@@ -36,7 +36,7 @@ extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
 extern volatile tFlags timeFlags;
 extern volatile rFlags irradFlags;
-extern volatile uint8_t stateFlags2, motionFlags ;
+extern volatile mFlags motionFlags ;
 extern volatile uint8_t rtcStatus;
 extern char strHdr[64];
 extern int len, err;

@@ -58,7 +58,7 @@ volatile iFlags initFlags = {0};
 volatile bFlags btFlags = {0};
 volatile tFlags timeFlags = {0};
 volatile rFlags irradFlags = {0};
-volatile uint8_t stateFlags2 = 0, motionFlags = 0;
+volatile mFlags motionFlags = {0};
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS, dt_CkGPS; //, dt_NextAlarm
 volatile int8_t timeZoneOffset = 0; // globally available
@@ -291,14 +291,14 @@ int main(void)
 		// tests of normal operation
 		checkCriticalPower();
 		if (stateFlags1.reachedFullPower) { // only run this after cell has charged to full power and modules initialized
-			if (motionFlags & (1<<tapDetected)) {
+			if (motionFlags.tapDetected) {
 				outputStringToUART0("\n\r Tap detected \n\r\n\r");
 				if (stateFlags1.isRoused) { // if tap detected while already roused
 					stayRoused(12000); // 2 minutes (120 seconds)
 					tuneMainOsc(); // re-tune, in case clock was slow on first low-power startup
 					keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
 				}
-				motionFlags &= ~(1<<tapDetected);
+				motionFlags.tapDetected = 0;
 			}
 			if (stateFlags1.isRoused) { // if roused
 				irradFlags.isDark = 0; // clear the Dark flag
@@ -371,13 +371,13 @@ int main(void)
 		// Tap interrupt will not be active until first time initialization, so
 		//  following flag should not be settable till then anyway
 		//  but put internal check in case code rearranged
-		if (motionFlags & (1<<tapDetected)) { // if it was a tap, go into Roused state
+		if (motionFlags.tapDetected) { // if it was a tap, go into Roused state
 			if (stateFlags1.reachedFullPower) { // only if had achieved full power and initialized
 				stayRoused(3000); // 30 seconds
 			} else {
 				stayRoused(300); // 3 seconds
 			}
-			motionFlags &= ~(1<<tapDetected); // clear the flag
+			motionFlags.tapDetected = 0; // clear the flag
 		}
 			
 		timeFlags.nextAlarmSet = 0; // flag that current alarm is no longer valid
@@ -658,7 +658,7 @@ void checkCriticalPower(void){
 		if (stateFlags1.reachedFullPower) { // skip till initialized, or can prevent climbing out of reset
 			shutDownBluetooth();
 			endRouse();
-			motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
+			motionFlags.tapDetected = 0; // ignore any Tap interrupt
 			irradFlags.isDark = 1; // behave as if in the Dark
 			timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
 			refDarkVoltage = CELL_VOLTAGE_CRITICALLY_LOW; // allow testing that cell is recharging

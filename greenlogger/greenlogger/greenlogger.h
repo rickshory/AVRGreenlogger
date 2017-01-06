@@ -141,7 +141,7 @@ typedef volatile union tBF { // time bit flags
 	};
 } tFlags;
 
-typedef volatile union rBF { // time bit flags
+typedef volatile union rBF { // irradiance bit flags
 	unsigned char rFVal;
 	struct
 	{
@@ -156,18 +156,21 @@ typedef volatile union rBF { // time bit flags
 	};
 } rFlags;
 
-enum motionFlagsBits 
-{
-	// 
-	tapDetected, // accelerometer tap detected, used for diagnostics
-	isLeveling, // we are getting accelerometer axis readings, used for leveling the system
-	accelerometerIsThere, // set if system finds ADXL345 on I2C bus
-	mfBit3, // unused
-	mfBit4, // unused
-	mfBit5, // unused
-	mfBit6, // unused
-	mfBit7 // unused
-};
+typedef volatile union mBF { // motion bit flags
+	unsigned char mFVal;
+	struct
+	{
+		unsigned char tapDetected:1; // accelerometer tap detected, used for diagnostics
+		unsigned char isLeveling:1; // we are getting accelerometer axis readings, used for leveling the system
+		unsigned char accelerometerIsThere:1; // set if system finds ADXL345 on I2C bus
+		unsigned char mfBit3:1; // unused
+		unsigned char mfBit4:1; // unused
+		unsigned char mfBit5:1; // unused
+		unsigned char mfBit6:1; // unused
+		unsigned char mfBit7:1; // unused
+	};
+} mFlags;
+
 
 void tuneMainOsc(void);
 void checkCriticalPower(void);

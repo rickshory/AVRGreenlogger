@@ -19,7 +19,7 @@ extern volatile uint16_t btCountdown;
 extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
 extern volatile tFlags timeFlags;
-extern volatile char motionFlags;
+extern volatile mFlags motionFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -100,7 +100,7 @@ void disableAccelInterrupt(void)
 // is triggered by accelerometer
 ISR(PCINT1_vect)
 {
-	motionFlags |= (1<<tapDetected); // flag it
+	motionFlags.tapDetected = 1; // flag it
 	disableAccelInterrupt();
 	machineState = WakedFromSleep;
 }

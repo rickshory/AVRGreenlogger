@@ -27,7 +27,8 @@ static volatile
 DSTATUS Stat = STA_NOINIT;	// Disk status
 
 extern volatile sFlags1 stateFlags1;
-extern volatile uint8_t timeFlags, rtcStatus;
+extern volatile tFlags timeFlags;
+extern volatile uint8_t rtcStatus;
 extern volatile uint8_t stateFlags2;
 
 extern int len;
@@ -443,7 +444,7 @@ void syncTimeZone (void) {
 	BYTE errSD;
 	int len;
 	if (rtcStatus == rtcTimeRetained) { // get timezone from SD card
-		if (!(timeFlags & (1<<timeZoneRead))) { // if not already done
+		if (!(timeFlags.timeZoneRead)) { // if not already done
 			errSD = readTimezoneFromSDCard(); // if successful, internally sets timeZoneRead flag
 			if (errSD) {
 				tellFileError (errSD);
@@ -457,7 +458,7 @@ void syncTimeZone (void) {
 	}
 	if ((rtcStatus == rtcTimeSetToDefault) || (rtcStatus == rtcTimeManuallySet) || (rtcStatus == rtcHasGPSTime)) {
 		// put timezone to SD card
-		if (!(timeFlags & (1<<timeZoneWritten))) { // if not already done
+		if (!(timeFlags.timeZoneWritten)) { // if not already done
 			errSD = writeTimezoneToSDCard(); // if successful, internally sets timeZoneWritten flag
 			if (errSD) {
 				tellFileError (errSD);
@@ -538,7 +539,7 @@ BYTE writeTimezoneToSDCard (void) {
 	
 //	bytesWritten = f_printf(&logFile, "%d\n", timeZoneOffset);
 	bytesWritten =  f_puts(stTZ, &logFile);
-	timeFlags |= (1<<timeZoneWritten);
+	timeFlags.timeZoneWritten = 1;
 	
 //	sLen = sprintf(str, "\n\r timezone characters written to file : %d\n\r", bytesWritten);
 //	outputStringToBothUARTs(str);
@@ -613,7 +614,7 @@ BYTE readTimezoneFromSDCard (void) {
 	outputStringToUART0("\n\r\n\r");
 
 	timeZoneOffset = atoi(stTZ);
-	timeFlags |= (1<<timeZoneRead);
+	timeFlags.timeZoneRead = 1;
 	
 	//Close and unmount.
 	closeFile:

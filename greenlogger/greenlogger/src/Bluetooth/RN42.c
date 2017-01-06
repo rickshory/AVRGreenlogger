@@ -34,7 +34,8 @@ extern volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextA
 extern char datetime_string[25];
 extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
-extern volatile uint8_t stateFlags2, timeFlags, irradFlags, motionFlags ;
+extern volatile tFlags timeFlags;
+extern volatile uint8_t stateFlags2, irradFlags, motionFlags ;
 extern volatile uint8_t rtcStatus;
 extern char strHdr[64];
 extern int len, err;
@@ -131,7 +132,7 @@ uint16_t cyPerRTCSqWave(void) {
 	twoByteData cyPerSec;
 	// go into uC clock adjust mode
 //	outputStringToUART1("\r\n going into uC adjust mode\r\n");
-	timeFlags &= ~(1<<nextAlarmSet); // clear flag
+	timeFlags.nextAlarmSet = 0; // clear flag
 	disableRTCInterrupt();
 	intTmp1 = rtc_enableSqWave();
 	// PRTIM1 make sure power reduction register bit if off so timers run
@@ -164,9 +165,9 @@ uint16_t cyPerRTCSqWave(void) {
 	setupTimer3_10ms();
 	disableRTCInterrupt();
 //	outputStringToUART1("\r\n returning to timekeeping mode\r\n");
-	if (!(timeFlags & (1<<nextAlarmSet))) {
+	if (!(timeFlags.nextAlarmSet)) {
 		intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-		timeFlags |= (1<<nextAlarmSet);
+		timeFlags.nextAlarmSet = 1;
 	}
 	return (uint16_t)cyPerSec.wholeWord;
 }
@@ -316,7 +317,7 @@ void checkForBTCommands (void) {
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 					// cache timezone offset in persistent storage on SD card
 					timeZoneOffset = dt_tmp.houroffset;
-					timeFlags &= ~(1<<timeZoneWritten); // flag that time zone needs to be written
+					timeFlags.timeZoneWritten = 0; // flag that time zone needs to be written
 					syncTimeZone(); // attempt to write the time zone; will retry later if e.g. power too low
 					break;
 				}
@@ -477,11 +478,11 @@ void BT_dataDump(char* stOpt) {
 		outputStringToUART1("\n\r{\"datesHavingData\":\"begin\"}\n\r");
 	strcpy(stTryDate, stBeginTryDate);
 	do { // loop like this so dump will output at least one day
-		while (timeFlags & (1<<alarmDetected)) { // continue logging during data dump
+		while (timeFlags.alarmDetected) { // continue logging during data dump
 			uint8_t ct, swDnUp, swBbIr;
 			// use 'while' loop to allow various tests to break out
-			timeFlags &= ~(1<<alarmDetected); // clear flag so 'while' loop will only happen once in any case
-			timeFlags &= ~(1<<nextAlarmSet); // flag that current alarm is no longer valid
+			timeFlags.alarmDetected = 0; // clear flag so 'while' loop will only happen once in any case
+			timeFlags.nextAlarmSet = 0; // flag that current alarm is no longer valid
 			// will use to trigger setting next alarm
 
             // test if time to log; even number of minutes, and zero seconds
@@ -557,9 +558,9 @@ void BT_dataDump(char* stOpt) {
 		} // end of data acquisition loop
 		
 		// set next alarm
-		if (!(timeFlags & (1<<nextAlarmSet))) {
+		if (!(timeFlags.nextAlarmSet)) {
 			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-			timeFlags |= (1<<nextAlarmSet);
+			timeFlags.nextAlarmSet = 1;
 		}
 		
 //			outputStringToUART1("\n\r");

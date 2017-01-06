@@ -56,7 +56,8 @@ char *commandBufferPtr;
 volatile sFlags1 stateFlags1 = {0};
 volatile iFlags initFlags = {0};
 volatile bFlags btFlags = {0};
-volatile uint8_t stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0;
+volatile tFlags timeFlags = {0};
+volatile uint8_t stateFlags2 = 0, irradFlags = 0, motionFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS, dt_CkGPS; //, dt_NextAlarm
 volatile int8_t timeZoneOffset = 0; // globally available
@@ -171,7 +172,7 @@ int main(void)
 		}
 	}
 	stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write	
-	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
+	timeFlags.nextAlarmSet = 0; // alarm not set yet
 	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
 
 	// tune uC osc down to 7.3728 MHz, implement 115200 baud
@@ -245,7 +246,7 @@ int main(void)
 	
 	// go into uC clock adjust mode
 	outputStringToUART0("\r\n going into uC adjust mode\r\n");
-	timeFlags &= ~(1<<nextAlarmSet); // clear flag
+	timeFlags.nextAlarmSet = 0; // clear flag
 	disableRTCInterrupt();
 	intTmp1 = rtc_enableSqWave();
 	// PRTIM1 make sure power reduction register bit if off so timers run
@@ -253,9 +254,9 @@ int main(void)
 	
 	// go back into normal timekeeping mode
 	outputStringToUART0("\r\n returning to timekeeping mode\r\n");
-	if (!(timeFlags & (1<<nextAlarmSet))) {
+	if (!(timeFlags.nextAlarmSet)) {
 		intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-		timeFlags |= (1<<nextAlarmSet);
+		timeFlags.nextAlarmSet = 1;
 	}
 	
 	cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
@@ -300,9 +301,9 @@ int main(void)
 			}
 			if (stateFlags1.isRoused) { // if roused
 				irradFlags &= ~(1<<isDark); // clear the Dark flag
-				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+				timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
 	//			if (irradFlags & (1<<isDark))
-	//				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+	//				timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
 			}
 		
 			if (BT_connected()) {
@@ -333,10 +334,10 @@ int main(void)
 			checkForCommands();
 //			} // end of this full-power segment
 			
-			if (!(timeFlags & (1<<nextAlarmSet))) {
+			if (!(timeFlags.nextAlarmSet)) {
 	//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
 				intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-				timeFlags |= (1<<nextAlarmSet);
+				timeFlags.nextAlarmSet = 1;
 			}
 
 			if (!(stateFlags1.isRoused)) { // may add other conditions later
@@ -378,11 +379,11 @@ int main(void)
 			motionFlags &= ~(1<<tapDetected); // clear the flag
 		}
 			
-		timeFlags &= ~(1<<nextAlarmSet); // flag that current alarm is no longer valid
+		timeFlags.nextAlarmSet = 0; // flag that current alarm is no longer valid
 
-		while (timeFlags & (1<<alarmDetected)) { // interrupt that woke from sleep was RTC alarm
+		while (timeFlags.alarmDetected) { // interrupt that woke from sleep was RTC alarm
 			// use 'while' loop to allow various tests to break out
-			timeFlags &= ~(1<<alarmDetected); // clear flag so this will only happen once in any case
+			timeFlags.alarmDetected = 0; // clear flag so this will only happen once in any case
 			// monitor cell voltage, to decide whether there is enough power to proceed
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
@@ -406,7 +407,7 @@ int main(void)
 				break;
 			}
 			
-			if ((stateFlags1.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
+			if ((timeFlags.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
 				// alarm has passed GPS check time
 				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 			}
@@ -415,19 +416,19 @@ int main(void)
 			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags & (1<<isDark))) {
             // if an even number of minutes, and zero seconds
             // or the once-per-hour wakeup while dark
-				timeFlags |= (1<<timeToLogData);
+				timeFlags.timeToLogData = 1;
 				if (irradFlags & (1<<isDark)) { // store the voltage reading at this point
 					refDarkVoltage = cellVoltageReading.adcWholeWord; 
 				}
 				
 			//	outputStringToUART0("\n\r Time to log data \n\r");
 			} else {
-				timeFlags &= ~(1<<timeToLogData);
+				timeFlags.timeToLogData = 0;
 			//	outputStringToUART0("\n\r Not time to log data \n\r");
 			}
 			
 			// if not time to log data, and not roused
-			if ((!(timeFlags & (1<<timeToLogData))) && (!(stateFlags1.isRoused))) {
+			if ((!(timeFlags.timeToLogData)) && (!(stateFlags1.isRoused))) {
 				// won't do anything with results anyway, don't bother reading sensors, save power
 				stayRoused(5); // rouse for 0.05 second to flash the pilot light
 				break; 
@@ -541,7 +542,7 @@ int main(void)
 				strcat(strLog, str);
 			} // end of irradiance sensor validity testing
 
-			if (timeFlags & (1<<timeToLogData)) {
+			if (timeFlags.timeToLogData) {
 //				outputStringToUART0("\n\r Entered log data routine \n\r");
 				// (previously built irradiance part of log string)
 				
@@ -655,7 +656,7 @@ void checkCriticalPower(void){
 			endRouse();
 			motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
 			irradFlags |= (1<<isDark); // behave as if in the Dark
-			timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
+			timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
 			refDarkVoltage = CELL_VOLTAGE_CRITICALLY_LOW; // allow testing that cell is recharging
 		}
 	}
@@ -791,7 +792,7 @@ void checkForCommands (void) {
 					outputStringToUART0(strHdr);
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
 					timeZoneOffset = dt_tmp.houroffset;
-					timeFlags &= ~(1<<timeZoneWritten); // flag that time zone needs to be written
+					timeFlags.timeZoneWritten = 0; // flag that time zone needs to be written
 					syncTimeZone(); // attempt to write the time zone; will retry later if e.g. power too low
 
 					// 

@@ -90,7 +90,7 @@ typedef volatile union sBF { // status bit flags
 		unsigned char writeDataHeaders:1; // flag to write column headers to SD card
 		//  done on init, reset, time change, and midnight rollover
 		unsigned char reachedFullPower:1; // cell charging achieved high enough voltage to allow high-power modules, initializations
-		unsigned char checkGpsToday:1; // used along with calculated GPS check alarm to request time from GPS
+		unsigned char sfBit6:1; // unused
 		unsigned char sfBit7:1; // unused
 	};
 } sFlags1;
@@ -126,18 +126,21 @@ typedef volatile union bBF { // Bluetooth bit flags
 	};
 } bFlags;
 
+typedef volatile union tBF { // time bit flags
+	unsigned char tFVal;
+	struct
+	{
+		unsigned char nextAlarmSet:1; // next alarm has been correctly set
+		unsigned char timeToLogData:1; // flag that it is time to log data to SD card
+		unsigned char alarmDetected:1; // the RTC Alarm has caused an interrupt
+		unsigned char timeZoneWritten:1; // time zone has been written to the SD card
+		unsigned char timeZoneRead:1; // time zone has been read from the SD card
+		unsigned char checkGpsToday:1; // initiate a set-time request from the GPS, when the time comes to do so
+		unsigned char tfBit6:1; // unused
+		unsigned char tfBit7:1; // unused
+	};
+} tFlags;
 
-enum timeFlagsBits
-{
-	nextAlarmSet, // next alarm has been correctly set
-	timeToLogData, // flag that it is time to log data to SD card
-	alarmDetected, // the RTC Alarm has caused an interrupt
-	timeZoneWritten, // time zone has been written to the SD card
-	timeZoneRead, // time zone has been read from the SD card
-	checkGpsToday, // initiate a set-time request from the GPS, when the time comes to do so
-	tfBit6, // unused
-	tfBit7 // unused
-};
 
 enum irradFlagsBits 
 {

@@ -18,7 +18,8 @@ extern volatile uint16_t rouseCountdown;
 extern volatile uint16_t btCountdown;
 extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
-extern volatile char motionFlags, timeFlags;
+extern volatile tFlags timeFlags;
+extern volatile char motionFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -143,7 +144,7 @@ void disableRTCInterrupt(void)
 ISR(PCINT0_vect)
 {
 //	timer3val = TCNT3;
-	timeFlags |= (1<<alarmDetected); // flag it
+	timeFlags.alarmDetected = 1; // flag it
 	disableRTCInterrupt();
 	machineState = WakedFromSleep;
 }

@@ -26,7 +26,8 @@
 static volatile
 DSTATUS Stat = STA_NOINIT;	// Disk status
 
-extern volatile uint8_t stateFlags1, timeFlags, rtcStatus;
+extern volatile sFlags1 stateFlags1;
+extern volatile uint8_t timeFlags, rtcStatus;
 extern volatile uint8_t stateFlags2;
 
 extern int len;
@@ -241,13 +242,13 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 
 	unsigned int bytesWritten, tmpLen;
 	// if flagged, insert any JSON messages
-	if (stateFlags1 & (1<<writeJSONMsg)){
+	if (stateFlags1.writeJSONMsg){
 		tmpLen = strlen(strJSON);
 		if (f_write(&logFile, strJSON, tmpLen, &bytesWritten) != FR_OK) {
 			retVal = sdFileWriteFail;
 			goto closeFile;
 		}
-		stateFlags1 &= ~(1<<writeJSONMsg); // clear flag, write only once
+		stateFlags1.writeJSONMsg = 0; // clear flag, write only once
 		strJSON[0] = '\0'; // "erase" the string
 		if (bytesWritten < tmpLen) { // probably strJSON is corrupted; proceed next time with string and flag cleared
 			// at least allow normal logging to resume
@@ -256,8 +257,8 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		}			
 	}
 	// if flagged, insert column headers
-	if (stateFlags1 & (1<<writeDataHeaders)){
-		stateFlags1 &= ~(1<<writeDataHeaders); // clear flag, attempt to write only once
+	if (stateFlags1.writeDataHeaders){
+		stateFlags1.writeDataHeaders = 0; // clear flag, attempt to write only once
 //		tmpLen = sprintf(str, "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r");
 		tmpLen = strlen(strHdr);
 		if (f_write(&logFile, strHdr, tmpLen, &bytesWritten) != FR_OK) {

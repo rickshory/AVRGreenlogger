@@ -32,7 +32,8 @@ extern char strJSON[256]; // string for JSON data
 extern volatile uint8_t Timer1, Timer2, intTmp1;
 extern volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
 extern char datetime_string[25];
-extern volatile uint8_t stateFlags1, stateFlags2, timeFlags, irradFlags, motionFlags, btFlags;
+extern volatile sFlags1 stateFlags1;
+extern volatile uint8_t stateFlags2, timeFlags, irradFlags, motionFlags, btFlags;
 extern volatile uint8_t rtcStatus;
 extern char strHdr[64];
 extern int len, err;
@@ -307,8 +308,8 @@ void checkForBTCommands (void) {
 					outputStringToUART1(datetime_string);
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 					outputStringToUART1("\r\n");
-					stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
-					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
+					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write
+					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART1(strHdr);
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);

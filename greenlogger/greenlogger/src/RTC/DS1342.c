@@ -18,7 +18,8 @@ extern volatile dateTime dt_RTC;
 extern volatile int8_t timeZoneOffset;
 extern volatile uint8_t rtcStatus;
 
-extern volatile uint8_t stateFlags1, irradFlags;
+extern volatile sFlags1 stateFlags1;
+extern volatile uint8_t irradFlags;
 extern int len;
 extern char datetime_string[25];
 extern char str[128];
@@ -803,7 +804,7 @@ void datetime_advanceInterval(dateTime *t) {
 	else
 		datetime_advanceIntervalShort(t);
 	if (t->day !=startingDay) // day has rolled over
-		stateFlags1 |= (1<<writeDataHeaders); // flag to log column headers on next SD card write
+		stateFlags1.writeDataHeaders = 1; // flag to log column headers on next SD card write
 
 }
 

@@ -79,18 +79,21 @@ enum stateRTC
 	// stores when this was last done, to allow tracking its "freshness"
 };
 
-enum stateFlags1Bits
-{
-	isReadingSensors, // has been awakened by RTCC interrupt and is reading data
-	isRoused, // triggered by external interrupt, and re-triggered by any activity while awake
-	reRoused, // re-triggered while awake, used to reset timeout
-	writeJSONMsg, // there is a JSON message to log
-	writeDataHeaders, // flag to write column headers to SD card
-	//  done on init, reset, time change, and midnight rollover
-	reachedFullPower, // cell charging achieved high enough voltage to allow high-power modules, initializations
-	sfBit6, // unused
-	sfBit7 // unused
- };
+typedef volatile union { // status bit flags
+	unsigned char sF1;
+	struct
+	{
+		unsigned char isReadingSensors:1; // has been awakened by RTCC interrupt and is reading data
+		unsigned char isRoused:1; // triggered by external interrupt, and re-triggered by any activity while awake
+		unsigned char reRoused:1; // re-triggered while awake, used to reset timeout
+		unsigned char writeJSONMsg:1; // there is a JSON message to log
+		unsigned char writeDataHeaders:1; // flag to write column headers to SD card
+		//  done on init, reset, time change, and midnight rollover
+		unsigned char reachedFullPower:1; // cell charging achieved high enough voltage to allow high-power modules, initializations
+		unsigned char checkGpsToday:1; // used along with calculated GPS check alarm to request time from GPS
+		unsigned char sfBit7:1; // unused
+	};
+} sFlags1;
 
 enum initFlagsBits
 {

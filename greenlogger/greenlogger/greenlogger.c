@@ -53,7 +53,8 @@ char datetime_string[25];
 char commandBuffer[commandBufferLen];
 char *commandBufferPtr;
 
-volatile uint8_t stateFlags1 = 0, stateFlags2 = 0, initFlags = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
+volatile sFlags1 stateFlags1 = {0};
+volatile uint8_t stateFlags2 = 0, initFlags = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS, dt_CkGPS; //, dt_NextAlarm
 volatile int8_t timeZoneOffset = 0; // globally available
@@ -137,7 +138,7 @@ int main(void)
 	
 	commandBuffer[0] = '\0'; // "empty" the command buffer
 	commandBufferPtr = commandBuffer;
-	stateFlags1 |= (1<<writeDataHeaders); // write column headers at least once on startup
+	stateFlags1.writeDataHeaders = 1; // write column headers at least once on startup
 
 	intTmp1 = readCellVoltage(&cellVoltageReading);
 	
@@ -167,7 +168,7 @@ int main(void)
 			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
 		}
 	}
-	stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write	
+	stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write	
 	timeFlags &= ~(1<<nextAlarmSet); // alarm not set yet
 	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
 
@@ -225,7 +226,7 @@ int main(void)
 	syncTimeZone();
 
 	
-	stateFlags1 |= (1<<isRoused); // force on for testing, enable UART output
+	stateFlags1.isRoused = 1; // force on for testing, enable UART output
 //	for (Timer1 = 3; Timer1; );	// Wait for 30ms
 	outputStringToUART0("\r\n  test\r\n");
 //	for (Timer1 = 3; Timer1; );	// Wait for 30ms
@@ -261,9 +262,9 @@ int main(void)
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,
 		// sufficient to run initializations and modules that take more power
-		if (!(stateFlags1 & (1<<reachedFullPower))) { 
+		if (!(stateFlags1.reachedFullPower)) { 
 			if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_STARTUP) {
-				stateFlags1 |= (1<<reachedFullPower); // flag, so this loop does not happen again till next reset
+				stateFlags1.reachedFullPower = 1; // flag, so this loop does not happen again till next reset
 				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS) {
 					// probably, somebody has just popped a fresh battery in, and wants to set up this device
 					stayRoused(18000); // keep system roused for 3 minutes (180 sec) for diagnostic output
@@ -285,17 +286,17 @@ int main(void)
 		// beginning of loop that runs repeatedly
 		// tests of normal operation
 		checkCriticalPower();
-		if (stateFlags1 & (1<<reachedFullPower)) { // only run this after cell has charged to full power and modules initialized
+		if (stateFlags1.reachedFullPower) { // only run this after cell has charged to full power and modules initialized
 			if (motionFlags & (1<<tapDetected)) {
 				outputStringToUART0("\n\r Tap detected \n\r\n\r");
-				if (stateFlags1 & (1<<isRoused)) { // if tap detected while already roused
+				if (stateFlags1.isRoused) { // if tap detected while already roused
 					stayRoused(12000); // 2 minutes (120 seconds)
 					tuneMainOsc(); // re-tune, in case clock was slow on first low-power startup
 					keepBluetoothPowered(120); // try for two minutes to get a Bluetooth connection
 				}
 				motionFlags &= ~(1<<tapDetected);
 			}
-			if (stateFlags1 & (1<<isRoused)) { // if roused
+			if (stateFlags1.isRoused) { // if roused
 				irradFlags &= ~(1<<isDark); // clear the Dark flag
 				timeFlags &= ~(1<<nextAlarmSet); // flag that the next alarm might not be correctly set
 	//			if (irradFlags & (1<<isDark))
@@ -319,7 +320,7 @@ int main(void)
 		while (machineState == Idle) { // RTC interrupt will break out of this
 			checkCriticalPower();
 		
-//			if (stateFlags1 & (1<<reachedFullPower)) { // another full-power-only segment
+//			if (stateFlags1.reachedFullPower) { // another full-power-only segment
 			intTmp1 =  clearAnyADXL345TapInterrupt();
 			if (intTmp1) {
 				len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
@@ -336,7 +337,7 @@ int main(void)
 				timeFlags |= (1<<nextAlarmSet);
 			}
 
-			if (!(stateFlags1 & (1<<isRoused))) { // may add other conditions later
+			if (!(stateFlags1.isRoused)) { // may add other conditions later
 				// go to sleep
 				PORTA &= ~(0b00000100); // turn off bit 2, pilot light blinkey
 				// SE bit in SMCR must be written to logic one and a SLEEP
@@ -367,7 +368,7 @@ int main(void)
 		//  following flag should not be settable till then anyway
 		//  but put internal check in case code rearranged
 		if (motionFlags & (1<<tapDetected)) { // if it was a tap, go into Roused state
-			if (stateFlags1 & (1<<reachedFullPower)) { // only if had achieved full power and initialized
+			if (stateFlags1.reachedFullPower) { // only if had achieved full power and initialized
 				stayRoused(3000); // 30 seconds
 			} else {
 				stayRoused(300); // 3 seconds
@@ -390,7 +391,7 @@ int main(void)
 //				maxCellVoltageToday = cellVoltageReading.adcWholeWord;
 //				dayPtMaxChargeToday = (60 * dt_CurAlarm.hour) + (dt_CurAlarm.minute);
 			}
-			if (!(stateFlags1 & (1<<reachedFullPower))) { // if not achieved full power and initialized, skip this data acquisition loop
+			if (!(stateFlags1.reachedFullPower)) { // if not achieved full power and initialized, skip this data acquisition loop
 				// for testing, set to 10-second interval, so don't have to wait an hour to see if battery charging worked
 				irradFlags &= ~(1<<isDark); // remove this line when done testing dead battery re-charging
 				break; // will test reachedFullPower at top of main program loop
@@ -403,7 +404,7 @@ int main(void)
 				break;
 			}
 			
-			if ((stateFlags1 & (1<<checkGpsToday)) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
+			if ((stateFlags1.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
 				// alarm has passed GPS check time
 				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 			}
@@ -424,7 +425,7 @@ int main(void)
 			}
 			
 			// if not time to log data, and not roused
-			if ((!(timeFlags & (1<<timeToLogData))) && (!((stateFlags1 & (1<<isRoused))))) {
+			if ((!(timeFlags & (1<<timeToLogData))) && (!(stateFlags1.isRoused))) {
 				// won't do anything with results anyway, don't bother reading sensors, save power
 				stayRoused(5); // rouse for 0.05 second to flash the pilot light
 				break; 
@@ -567,7 +568,7 @@ int main(void)
 				    (irradFlags & (1<<isDarkIRDn)) && 
 					(irradFlags & (1<<isDarkBBUp)) && 
 					(irradFlags & (1<<isDarkIRUp)) && 
-					(!(stateFlags1 & (1<<isRoused)))) {
+					(!(stateFlags1.isRoused))) {
 				// flag that it is dark
 				irradFlags |= (1<<isDark);
 			} else { // or not
@@ -591,9 +592,9 @@ int main(void)
 				
 		turnSDCardPowerOff();
 		
-		if (stateFlags1 & (1<<reachedFullPower)) { // another full-power-only segment
+		if (stateFlags1.reachedFullPower) { // another full-power-only segment
 			if (!BT_connected()) { // timeout diagnostics if no Bluetooth connection
-				if (stateFlags1 & (1<<isRoused)) {
+				if (stateFlags1.isRoused) {
 					len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
 					outputStringToUART0(str);
 				}
@@ -647,7 +648,7 @@ void tuneMainOsc(void)	{
 void checkCriticalPower(void){
 //	return; // for testing, disable this fn
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_CRITICALLY_LOW) { // power too low, shut everything down
-		if (stateFlags1 & (1<<reachedFullPower)) { // skip till initialized, or can prevent climbing out of reset
+		if (stateFlags1.reachedFullPower) { // skip till initialized, or can prevent climbing out of reset
 			shutDownBluetooth();
 			endRouse();
 			motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
@@ -672,7 +673,7 @@ void checkCriticalPower(void){
 void outputStringToUART0 (char* St) {
 	uint8_t cnt;
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
-	if (stateFlags1 & (1<<isRoused)) { // if system not roused, no output
+	if (stateFlags1.isRoused) { // if system not roused, no output
 		for (cnt = 0; cnt < strlen(St); cnt++) {
 			uart0_putchar(St[cnt]);
 		}	
@@ -782,8 +783,8 @@ void checkForCommands (void) {
 					outputStringToUART0(datetime_string);
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 					outputStringToUART0("\r\n");
-					stateFlags1 |= (1<<writeJSONMsg); // log JSON message on next SD card write
-					stateFlags1 |= (1<<writeDataHeaders); // log data column headers on next SD card write
+					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write
+					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART0(strHdr);
 					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
@@ -1006,7 +1007,7 @@ void heartBeat (void)
 //	if (--rouseCountdown <= 0)
 	if (!rouseCountdown)
 	{
-		stateFlags1 &= ~(1<<isRoused);
+		stateFlags1.isRoused = 0;
 	}
 
 	n = Timer1;						/* 100Hz decrement timer */

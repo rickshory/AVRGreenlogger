@@ -16,7 +16,8 @@ extern volatile uint8_t machineState;
 extern volatile uint16_t timer3val;
 extern volatile uint16_t rouseCountdown;
 extern volatile uint16_t btCountdown;
-extern volatile char stateFlags1, motionFlags, timeFlags, btFlags;
+extern volatile sFlags1 stateFlags1;
+extern volatile char motionFlags, timeFlags, btFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -27,7 +28,7 @@ void stayRoused(uint16_t dSec)
 	if ((dSec) > rouseCountdown) { // never trim the rouse interval, only extend it
 		rouseCountdown = dSec;
 	}
-	stateFlags1 |= (1<<isRoused);
+	stateFlags1.isRoused = 1;
 	PORTA |= (0b00000100); // set pilot light on
 	sei();
 }
@@ -36,7 +37,7 @@ void endRouse(void) {
 	cli(); // temporarily disable interrupts to prevent Timer3 from
 		// changing the count partway through
 	rouseCountdown = 0;
-	stateFlags1 &= ~(1<<isRoused);
+	stateFlags1.isRoused = 0;
 	PORTA &= ~(0b00000100); // force pilot light off
 	sei();
 	

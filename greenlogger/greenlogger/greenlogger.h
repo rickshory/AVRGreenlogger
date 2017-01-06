@@ -79,7 +79,7 @@ enum stateRTC
 	// stores when this was last done, to allow tracking its "freshness"
 };
 
-typedef volatile union { // status bit flags
+typedef volatile union sBF { // status bit flags
 	unsigned char sF1Val;
 	struct
 	{
@@ -95,7 +95,7 @@ typedef volatile union { // status bit flags
 	};
 } sFlags1;
 
-typedef volatile union { // initialization bit flags
+typedef volatile union iBF { // initialization bit flags
 	unsigned char iFVal;
 	struct
 	{
@@ -110,18 +110,22 @@ typedef volatile union { // initialization bit flags
 	};
 } iFlags;
 
-enum btFlagsBits
-{
-	btWasConnected, // track transitions between connected to not connected
-	btSerialBeingInput, // characters being input to the Bluetooth serial port, may verify as a command
-	btSerialFirstInput, // first input after buffer clear
-	btCmdServiced, // Bluetooth command has been serviced on this read cycle
-	btBit3, // unused
-	btBit4, // unused
-	btBit5, // unused
-	btBit6, // unused
-	btBit7 // unused
+typedef volatile union bBF { // Bluetooth bit flags
+	unsigned char bFVal;
+	struct
+	{
+		unsigned char btWasConnected:1; // track transitions between connected to not connected
+		unsigned char btSerialBeingInput:1; // characters being input to the Bluetooth serial port, may verify as a command
+		unsigned char btSerialFirstInput:1; // first input after buffer clear
+		unsigned char btCmdServiced:1; // Bluetooth command has been serviced on this read cycle
+		unsigned char btBit3:1; // unused
+		unsigned char btBit4:1; // unused
+		unsigned char btBit5:1; // unused
+		unsigned char btBit6:1; // unused
+		unsigned char btBit7:1; // unused
 	};
+} bFlags;
+
 
 enum timeFlagsBits
 {

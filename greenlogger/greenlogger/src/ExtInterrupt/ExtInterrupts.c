@@ -17,7 +17,8 @@ extern volatile uint16_t timer3val;
 extern volatile uint16_t rouseCountdown;
 extern volatile uint16_t btCountdown;
 extern volatile sFlags1 stateFlags1;
-extern volatile char motionFlags, timeFlags, btFlags;
+extern volatile bFlags btFlags;
+extern volatile char motionFlags, timeFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
 
@@ -61,7 +62,7 @@ void shutDownBluetooth(void) {
 	btCountdown = 0;
 //	BT_power_on();
 	PORTD &= ~(1<<4); // set low; turn Bluetooth power off
-	btFlags &= ~(1<<btWasConnected); // clear the flag, so will not re-try
+	btFlags.btWasConnected = 0; // clear the flag, so will not re-try
 	sei();
 }
 

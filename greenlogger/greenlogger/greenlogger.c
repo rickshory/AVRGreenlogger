@@ -55,7 +55,8 @@ char *commandBufferPtr;
 
 volatile sFlags1 stateFlags1 = {0};
 volatile iFlags initFlags = {0};
-volatile uint8_t stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0, btFlags = 0;
+volatile bFlags btFlags = {0};
+volatile uint8_t stateFlags2 = 0, timeFlags = 0, irradFlags = 0, motionFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS, dt_CkGPS; //, dt_NextAlarm
 volatile int8_t timeZoneOffset = 0; // globally available
@@ -309,10 +310,10 @@ int main(void)
 				// to allow easy reconnection
 				keepBluetoothPowered(120);
 			} else { // not connected
-				if (btFlags & (1<<btWasConnected)) { // connection lost
+				if (btFlags.btWasConnected) { // connection lost
 					; // action(s) when connection lost
 				}
-				btFlags &= ~(1<<btWasConnected); // clear the flag
+				btFlags.btWasConnected = 0; // clear the flag
 			}		
 		} // end of this full power segment
 		
@@ -697,7 +698,7 @@ void outputStringToUART0 (char* St) {
 void outputStringToUART1 (char* St) {
 	uint8_t cnt;
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) return;
-	if (btFlags & (1<<btSerialBeingInput)) return; // suppress output if user in typing
+	if (btFlags.btSerialBeingInput) return; // suppress output if user in typing
 	if (BT_connected()) {
 		for (cnt = 0; cnt < strlen(St); cnt++) {
 			uart1_putchar(St[cnt]);

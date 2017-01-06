@@ -33,7 +33,8 @@ extern volatile uint8_t Timer1, Timer2, intTmp1;
 extern volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
 extern char datetime_string[25];
 extern volatile sFlags1 stateFlags1;
-extern volatile uint8_t stateFlags2, timeFlags, irradFlags, motionFlags, btFlags;
+extern volatile bFlags btFlags;
+extern volatile uint8_t stateFlags2, timeFlags, irradFlags, motionFlags ;
 extern volatile uint8_t rtcStatus;
 extern char strHdr[64];
 extern int len, err;
@@ -185,12 +186,12 @@ void checkForBTCommands (void) {
 	char stTmp[commandBufferLen];
 	if (!BT_connected()) return;
 
-	if (!(btFlags & (1<<btWasConnected))) { // new connection
+	if (!(btFlags.btWasConnected)) { // new connection
 		// initialize and clear buffer, ignore anything there before
 		uart1_init_input_buffer();
 		btCmdBuffer[0] = '\0'; // "empty" the command buffer
 		btCmdBufferPtr = btCmdBuffer;
-		btFlags |= (1<<btWasConnected); // set flag
+		btFlags.btWasConnected = 1; // set flag
 		return; // bail now, pick it up on next pass
 	}
 	
@@ -205,7 +206,7 @@ void checkForBTCommands (void) {
 			c = 0x0a; // substitute linefeed
 		if (c == 0x0a) { // if linefeed, attempt to parse the command
 			*btCmdBufferPtr++ = '\0'; // null terminate
-			btFlags &= ~(1<<btSerialBeingInput); // flag that input is complete; allow string output
+			btFlags.btSerialBeingInput = 0; // flag that input is complete; allow string output
 			switch (btCmdBuffer[0]) { // command is 1st char in buffer
 
 				 case 'G': case 'g': { // get time from GPS
@@ -399,7 +400,7 @@ void checkForBTCommands (void) {
 				if (btCmdBufferPtr == btCmdBuffer) { // if first input
 					outputStringToUART1("\r\n\r\n> "); // show the user a blank line & prompt
 				}
-				btFlags |= (1<<btSerialBeingInput); // flag that the user is inputting characters; blocks outputStringToUART1 fn
+				btFlags.btSerialBeingInput = 1; // flag that the user is inputting characters; blocks outputStringToUART1 fn
 				*btCmdBufferPtr++ = c; // append char to the command buffer
 				uart1_putchar(c); // echo the character
 			}					

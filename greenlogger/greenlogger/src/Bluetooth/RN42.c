@@ -35,7 +35,8 @@ extern char datetime_string[25];
 extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
 extern volatile tFlags timeFlags;
-extern volatile uint8_t stateFlags2, irradFlags, motionFlags ;
+extern volatile rFlags irradFlags;
+extern volatile uint8_t stateFlags2, motionFlags ;
 extern volatile uint8_t rtcStatus;
 extern char strHdr[64];
 extern int len, err;
@@ -529,7 +530,10 @@ void BT_dataDump(char* stOpt) {
 			// build log string
 			strcpy(strLog, "\n\r");
 			strcat(strLog, datetime_string);
-			irradFlags &= ~((1<<isDarkBBDn) | (1<<isDarkIRDn) | (1<<isDarkBBUp) | (1<<isDarkIRUp)); // default clear
+			irradFlags.isDarkBBDn = 0;
+			irradFlags.isDarkIRDn = 0;
+			irradFlags.isDarkBBUp = 0;
+			irradFlags.isDarkIRUp = 0; // default clear
 			for (ct = 0; ct < 4; ct++) { // generate irradiance readings
 				if (!(irrReadings[ct].validation)) {
 					len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
@@ -537,7 +541,7 @@ void BT_dataDump(char* stOpt) {
 					len = sprintf(str, "\t");
 				}
 				strcat(strLog, str);
-			} // end of prearing irradiance section
+			} // end of preparing irradiance section
 
 			// log temperature
 			if (!temperatureReading.verification)

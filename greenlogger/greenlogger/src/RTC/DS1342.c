@@ -19,7 +19,7 @@ extern volatile int8_t timeZoneOffset;
 extern volatile uint8_t rtcStatus;
 
 extern volatile sFlags1 stateFlags1;
-extern volatile uint8_t irradFlags;
+extern volatile rFlags irradFlags;
 extern int len;
 extern char datetime_string[25];
 extern char str[128];
@@ -799,7 +799,7 @@ void datetime_advanceIntervalLong(dateTime *t) {
 void datetime_advanceInterval(dateTime *t) {
 	uint8_t startingDay;
 	startingDay = t->day;
-	if (irradFlags & (1<<isDark))
+	if (irradFlags.isDark)
 		datetime_advanceIntervalLong(t);
 	else
 		datetime_advanceIntervalShort(t);

@@ -57,7 +57,8 @@ volatile sFlags1 stateFlags1 = {0};
 volatile iFlags initFlags = {0};
 volatile bFlags btFlags = {0};
 volatile tFlags timeFlags = {0};
-volatile uint8_t stateFlags2 = 0, irradFlags = 0, motionFlags = 0;
+volatile rFlags irradFlags = {0};
+volatile uint8_t stateFlags2 = 0, motionFlags = 0;
 volatile uint8_t rtcStatus = rtcTimeNotSet;
 volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS, dt_CkGPS; //, dt_NextAlarm
 volatile int8_t timeZoneOffset = 0; // globally available
@@ -173,7 +174,7 @@ int main(void)
 	}
 	stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write	
 	timeFlags.nextAlarmSet = 0; // alarm not set yet
-	irradFlags |= (1<<isDark); // set the Dark flag, default till full-power initializations passed
+	irradFlags.isDark = 1; // set the Dark flag, default till full-power initializations passed
 
 	// tune uC osc down to 7.3728 MHz, implement 115200 baud
 	tuneMainOsc();
@@ -300,9 +301,9 @@ int main(void)
 				motionFlags &= ~(1<<tapDetected);
 			}
 			if (stateFlags1.isRoused) { // if roused
-				irradFlags &= ~(1<<isDark); // clear the Dark flag
+				irradFlags.isDark = 0; // clear the Dark flag
 				timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
-	//			if (irradFlags & (1<<isDark))
+	//			if (irradFlagsisDark)
 	//				timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
 			}
 		
@@ -396,14 +397,14 @@ int main(void)
 			}
 			if (!(stateFlags1.reachedFullPower)) { // if not achieved full power and initialized, skip this data acquisition loop
 				// for testing, set to 10-second interval, so don't have to wait an hour to see if battery charging worked
-				irradFlags &= ~(1<<isDark); // remove this line when done testing dead battery re-charging
+				irradFlags.isDark = 0; // remove this line when done testing dead battery re-charging
 				break; // will test reachedFullPower at top of main program loop
 			}
 			
 			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_UART) {
 				// power too low for any output, no need to even read sensors
 				// remove comment-out of following line when done testing dead battery re-charge
-//				irradFlags |= (1<<isDark); // act as if dark, to save power
+//				irradFlags.isDark = 1; // act as if dark, to save power
 				break;
 			}
 			
@@ -413,11 +414,11 @@ int main(void)
 			}
 			
 			// see if it's time to log data
-			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags & (1<<isDark))) {
+			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags.isDark)) {
             // if an even number of minutes, and zero seconds
             // or the once-per-hour wakeup while dark
 				timeFlags.timeToLogData = 1;
-				if (irradFlags & (1<<isDark)) { // store the voltage reading at this point
+				if (irradFlags.isDark) { // store the voltage reading at this point
 					refDarkVoltage = cellVoltageReading.adcWholeWord; 
 				}
 				
@@ -494,7 +495,10 @@ int main(void)
 			// begin to build log string while testing, even if we end up not logging data
 			strcpy(strLog, "\n\r");
 			strcat(strLog, datetime_string);
-			irradFlags &= ~((1<<isDarkBBDn) | (1<<isDarkIRDn) | (1<<isDarkBBUp) | (1<<isDarkIRUp)); // default clear
+			irradFlags.isDarkBBDn = 0;
+			irradFlags.isDarkIRDn = 0;
+			irradFlags.isDarkBBUp = 0;
+			irradFlags.isDarkIRUp = 0; // default clear
 			for (ct = 0; ct < 4; ct++) { // generate irradiance readings
 				if (!(irrReadings[ct].validation)) {
 					lngTmp1 = (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier);
@@ -508,16 +512,16 @@ int main(void)
 					if (lngTmp1 < lngTmp2) {
 						switch (ct) {
 							case 0:
-								irradFlags |= (1<<isDarkBBDn);
+								irradFlags.isDarkBBDn = 1;
 								break;
 							case 1:
-								irradFlags |= (1<<isDarkIRDn);
+								irradFlags.isDarkIRDn = 1;
 								break;
 							case 2:
-								irradFlags |= (1<<isDarkBBUp);
+								irradFlags.isDarkBBUp = 1;
 								break;
 							case 3:
-								irradFlags |= (1<<isDarkIRUp);
+								irradFlags.isDarkIRUp = 1;
 								break;
 						}
 					}
@@ -526,16 +530,16 @@ int main(void)
 					// treat invalid readings as if dark
 					switch (ct) {
 						case 0:
-							irradFlags |= (1<<isDarkBBDn);
+							irradFlags.isDarkBBDn = 1;
 							break;
 						case 1:
-							irradFlags |= (1<<isDarkIRDn);
+							irradFlags.isDarkIRDn = 1;
 							break;
 						case 2:
-							irradFlags |= (1<<isDarkBBUp);
+							irradFlags.isDarkBBUp = 1;
 							break;
 						case 3:
-							irradFlags |= (1<<isDarkIRUp);
+							irradFlags.isDarkIRUp = 1;
 							break;
 					}
 				}
@@ -567,23 +571,23 @@ int main(void)
 			
 			// test if dark or not dark
 			// if all sensors are less than thresholds, or missing; and system not in Roused state
-			if ((irradFlags & (1<<isDarkBBDn)) && 
-				    (irradFlags & (1<<isDarkIRDn)) && 
-					(irradFlags & (1<<isDarkBBUp)) && 
-					(irradFlags & (1<<isDarkIRUp)) && 
+			if ((irradFlags.isDarkBBDn) && 
+				    (irradFlags.isDarkIRDn) && 
+					(irradFlags.isDarkBBUp) && 
+					(irradFlags.isDarkIRUp) && 
 					(!(stateFlags1.isRoused))) {
 				// flag that it is dark
-				irradFlags |= (1<<isDark);
+				irradFlags.isDark = 1;
 			} else { // or not
 				// try new algorithm:
 				if (cellVoltageReading.adcWholeWord > CELL_VOLTAGE_THRESHOLD_SD_CARD) { // if cell is high
-					irradFlags &= ~(1<<isDark); // always leave the Dark state
+					irradFlags.isDark = 0; // always leave the Dark state
 				} else { // if cell voltage is low, only leave the Dark state
 					// if cell has charged somewhat since last reading
 					// this should eliminate early morning drain, when data will not be good anyway
 					// require a small increase in cell voltage to ignore random jitter
 					if (cellVoltageReading.adcWholeWord > (refDarkVoltage + 3)) {
-						irradFlags &= ~(1<<isDark);
+						irradFlags.isDark = 0;
 					}						
 				}
 			} // end of testing for dark or not dark		
@@ -655,7 +659,7 @@ void checkCriticalPower(void){
 			shutDownBluetooth();
 			endRouse();
 			motionFlags &= ~(1<<tapDetected); // ignore any Tap interrupt
-			irradFlags |= (1<<isDark); // behave as if in the Dark
+			irradFlags.isDark = 1; // behave as if in the Dark
 			timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
 			refDarkVoltage = CELL_VOLTAGE_CRITICALLY_LOW; // allow testing that cell is recharging
 		}

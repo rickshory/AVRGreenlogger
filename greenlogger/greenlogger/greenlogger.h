@@ -141,19 +141,20 @@ typedef volatile union tBF { // time bit flags
 	};
 } tFlags;
 
-
-enum irradFlagsBits 
-{
-	testDark, // temporary flag
-	isDarkBBDn, // broadband down-looking tests as dark
-	isDarkIRDn, // infrared down-looking tests as dark
-	isDarkBBUp, // broadband up-looking tests as dark
-	isDarkIRUp, // infrared up-looking tests as dark
-	isDark, // combined tests show light level(s) below threshold, use long sampling intervals
-	ifBit6, // unused
-	ifBit7 // unused
-};
-
+typedef volatile union rBF { // time bit flags
+	unsigned char rFVal;
+	struct
+	{
+		unsigned char isDarkBBDn:1; // broadband down-looking tests as dark
+		unsigned char isDarkIRDn:1; // infrared down-looking tests as dark
+		unsigned char isDarkBBUp:1; // broadband up-looking tests as dark
+		unsigned char isDarkIRUp:1; // infrared up-looking tests as dark
+		unsigned char isDark:1; // combined tests show light level(s) below threshold, use long sampling intervals
+		unsigned char testDark:1; // temporary flag
+		unsigned char ifBit6:1; // unused
+		unsigned char ifBit7:1; // unused
+	};
+} rFlags;
 
 enum motionFlagsBits 
 {

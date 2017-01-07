@@ -62,7 +62,7 @@ void GPS_initTimeRequest(void)
 	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high
 }
 
-void getAverageTime (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t endIndex, uint16_t avgMinutes) {
+uint16_t getAverageMinute (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t endIndex) {
 	uint8_t pos = startIndex;
 	dateTime *curTime = startOfArrayOfTimes + pos;
 	// adjust by hour offset to always treat as if Universal Time
@@ -83,5 +83,5 @@ void getAverageTime (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t 
 	}
 	minuteRadians = atan2(sumSine, sumCosine); // fn output range is -pi to +pi
 	if (minuteRadians < 0) minuteRadians += (2 * M_PI); // should now range 0 to 2pi
-	minutesFromTime = (uint16_t) (1440 * minuteRadians / (2 * M_PI));
+	return (uint16_t) (1440 * minuteRadians / (2 * M_PI)); // convert back to a positive minutes count
 };

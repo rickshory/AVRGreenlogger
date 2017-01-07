@@ -1,0 +1,278 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>7.0</ProjectVersion>
+    <ProjectGuid>{945c6e75-15ed-460f-8efc-4f503a8cbd98}</ProjectGuid>
+    <avrdevice>ATmega1284P</avrdevice>
+    <avrdeviceseries>none</avrdeviceseries>
+    <OutputType>Executable</OutputType>
+    <Language>C</Language>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <AvrGccProjectExtensions>
+    </AvrGccProjectExtensions>
+    <AssemblyName>greenlogger</AssemblyName>
+    <Name>greenlogger</Name>
+    <RootNamespace>greenlogger</RootNamespace>
+    <avrtool>com.atmel.avrdbg.tool.simulator</avrtool>
+    <com_atmel_avrdbg_tool_simulator>
+      <ToolType xmlns="">com.atmel.avrdbg.tool.simulator</ToolType>
+      <ToolName xmlns="">AVR Simulator</ToolName>
+      <ToolNumber xmlns="">
+      </ToolNumber>
+      <Channel xmlns="">
+        <host>127.0.0.1</host>
+        <port>49645</port>
+        <ssl>False</ssl>
+      </Channel>
+    </com_atmel_avrdbg_tool_simulator>
+    <avrtoolinterface />
+    <ToolchainName>com.Atmel.AVRGCC8.C</ToolchainName>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <CacheFlash>true</CacheFlash>
+    <ProgFlashFromRam>true</ProgFlashFromRam>
+    <RamSnippetAddress />
+    <UncachedRange />
+    <preserveEEPROM>true</preserveEEPROM>
+    <OverrideVtorValue />
+    <BootSegment>2</BootSegment>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <AsfFrameworkConfig>
+      <framework-data xmlns="">
+  <options />
+  <configurations />
+  <files />
+  <documentation help="" />
+  <offline-documentation help="" />
+  <dependencies>
+    <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.30.1" />
+  </dependencies>
+</framework-data>
+    </AsfFrameworkConfig>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputFileName>greenlogger</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
+    <ToolchainSettings>
+      <AvrGcc>
+  <avrgcc.common.Device>-mmcu=atmega1284p -B "%24(PackRepoDir)\atmel\ATmega_DFP\1.0.98\gcc\dev\atmega1284p"</avrgcc.common.Device>
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+  <avrgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.0.98\include</Value>
+    </ListValues>
+  </avrgcc.compiler.directories.IncludePaths>
+  <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>libm</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
+  <avrgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.0.98\include</Value>
+    </ListValues>
+  </avrgcc.assembler.general.IncludePaths>
+</AvrGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputFileName>greenlogger</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
+    <ToolchainSettings>
+      <AvrGcc>
+  <avrgcc.common.Device>-mmcu=atmega1284p -B "%24(PackRepoDir)\atmel\ATmega_DFP\1.0.98\gcc\dev\atmega1284p"</avrgcc.common.Device>
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+  <avrgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../src</Value>
+      <Value>../src/asf/common/utils</Value>
+      <Value>../src/asf/mega</Value>
+      <Value>../src/asf/mega/utils</Value>
+      <Value>../src/config</Value>
+      <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.0.98\include</Value>
+    </ListValues>
+  </avrgcc.compiler.directories.IncludePaths>
+  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
+  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>libm</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
+  <avrgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.0.98\include</Value>
+    </ListValues>
+  </avrgcc.assembler.general.IncludePaths>
+  <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
+</AvrGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="greenlogger.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="greenlogger.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Accelerometer\ADXL345.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Accelerometer\ADXL345.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\asf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\asf\common\utils\interrupt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\asf\common\utils\interrupt\interrupt_avr8.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\asf\mega\utils\compiler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\asf\mega\utils\parts.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\asf\mega\utils\status_codes.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\BattMonitor\ADconvert.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\BattMonitor\ADconvert.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Bluetooth\RN42.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Bluetooth\RN42.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\config\conf_clock.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\config\conf_uart.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\config\mega_uart_interrupt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\diagnostics\diagnostics.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\diagnostics\diagnostics.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ExtInterrupt\ExtInterrupts.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ExtInterrupt\ExtInterrupts.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GPS\GPStime.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GPS\GPStime.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\I2C\I2C.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\I2C\I2C.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\LtSensor\TSL2561.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\LtSensor\TSL2561.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\mega_uart_interrupt.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ring_buffer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTC\DS1342.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTC\DS1342.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SDcard\diskio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SDcard\ff.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SDcard\ff.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SDcard\ffconf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SDcard\integer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\SDcard\diskio.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\TemperatureSensor\TCN75A.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\TemperatureSensor\TCN75A.h">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src" />
+    <Folder Include="src\asf" />
+    <Folder Include="src\asf\common" />
+    <Folder Include="src\asf\common\utils" />
+    <Folder Include="src\asf\common\utils\interrupt" />
+    <Folder Include="src\asf\common\utils\make" />
+    <Folder Include="src\asf\mega" />
+    <Folder Include="src\asf\mega\utils" />
+    <Folder Include="src\config" />
+    <Folder Include="src\diagnostics" />
+    <Folder Include="src\ExtInterrupt" />
+    <Folder Include="src\I2C" />
+    <Folder Include="src\Accelerometer" />
+    <Folder Include="src\LtSensor" />
+    <Folder Include="src\BattMonitor" />
+    <Folder Include="src\Bluetooth" />
+    <Folder Include="src\GPS" />
+    <Folder Include="src\TemperatureSensor" />
+    <Folder Include="src\RTC" />
+    <Folder Include="src\SDcard" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\asf\common\utils\make\Makefile.avr.in">
+      <SubType>compile</SubType>
+    </None>
+  </ItemGroup>
+  <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\AvrGCC.targets" />
+</Project>

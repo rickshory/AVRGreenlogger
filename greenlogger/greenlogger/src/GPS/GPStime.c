@@ -6,7 +6,7 @@
  */ 
 
 #include <inttypes.h>
-#include "GPStime.h"
+#include "../GPS/GPStime.h"
 #include "../Bluetooth/RN42.h"
 #include "../I2C/I2C.h"
 #include "../greenlogger.h"
@@ -17,6 +17,7 @@
 #include "../BattMonitor/ADconvert.h"
 #include "../LtSensor/TSL2561.h"
 #include <util/twi.h>
+#include <math.h>
 
 // generic control of GPS subsystem
 
@@ -61,3 +62,25 @@ void GPS_initTimeRequest(void)
 	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high
 }
 
+void getAverageTime (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t endIndex, uint16_t avgMinutes) {
+	uint8_t ctr = 0, pos = startIndex;
+	dateTime *curTime = startOfArrayOfTimes + pos;
+	uint16_t minutesFromTime = curTime->hour * 60 + curTime->minute; // will be zero to 1440
+	// map to 2Pi radians
+	double minuteRadians = 2 * M_PI * (double)minutesFromTime / 1440;
+	double sumSine = sin(minuteRadians), sumCosine = cos(minuteRadians);
+	ctr++;
+	while (1) { // use finish condition to exit loop
+		ctr++;
+		pos++;
+		if (pos >= DAYS_FOR_MOVING_AVERAGE) pos = 0;
+		curTime = startOfArrayOfTimes + pos;
+		minutesFromTime = curTime->hour * 60 + curTime->minute;
+		minuteRadians = 2 * M_PI * minutesFromTime / 1440;
+		sumSine += sin(minuteRadians);
+		sumCosine += cos(minuteRadians);
+		if (pos == endIndex) break; // we have summed the last item and are now ready to calc the average
+	}
+	minuteRadians = atan2(sumSine, sumCosine); // range is -pi to +pi
+	
+};

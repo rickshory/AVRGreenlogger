@@ -63,7 +63,7 @@ void GPS_initTimeRequest(void)
 }
 
 void getAverageTime (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t endIndex, uint16_t avgMinutes) {
-	uint8_t ctr = 0, pos = startIndex;
+	uint8_t pos = startIndex;
 	dateTime *curTime = startOfArrayOfTimes + pos;
 	// adjust by hour offset to always treat as if Universal Time
 	// range zero to 1440, offset by time zone
@@ -71,9 +71,7 @@ void getAverageTime (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t 
 	// map to 2Pi radians
 	double minuteRadians = 2 * M_PI * minutesFromTime / 1440;
 	double sumSine = sin(minuteRadians), sumCosine = cos(minuteRadians);
-	ctr++;
 	while (1) { // use finish condition to exit loop
-		ctr++;
 		pos++;
 		if (pos >= DAYS_FOR_MOVING_AVERAGE) pos = 0;
 		curTime = startOfArrayOfTimes + pos;

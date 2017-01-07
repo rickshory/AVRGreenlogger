@@ -81,6 +81,7 @@ void getAverageTime (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t 
 		sumCosine += cos(minuteRadians);
 		if (pos == endIndex) break; // we have summed the last item and are now ready to calc the average
 	}
-	minuteRadians = atan2(sumSine, sumCosine); // range is -pi to +pi
-	
+	minuteRadians = atan2(sumSine, sumCosine); // fn output range is -pi to +pi
+	if (minuteRadians < 0) minuteRadians += (2 * M_PI); // should now range 0 to 2pi
+	minutesFromTime = (uint16_t) (1440 * minuteRadians / (2 * M_PI));
 };

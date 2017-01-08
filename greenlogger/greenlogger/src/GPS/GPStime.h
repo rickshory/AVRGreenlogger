@@ -23,7 +23,7 @@ typedef volatile struct { // used for tracking the cell voltage daily maximum, w
 	uint16_t level; // ADC reading of the cell voltage
 	dateTime timeStamp; // when this charge level was read
 
-} chargeInfo ;
+} chargeInfo;
 
 extern inline void GPS_idle(void);
 extern void GPS_initTimeRequest(void);

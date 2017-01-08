@@ -72,8 +72,9 @@ uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current d
 uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
 uint16_t maxAvgCellVoltage = 0; // moving average of maximum cell voltage through the day
 uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day since "midnight" when cell has the most power
-chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE]; // array to hold multiple days' max cell charge info, for getting average
-chargeInfo *cellReadingsPtr;
+chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE] = {0}; // array to hold multiple days' max cell charge info, for 
+	// getting average. Initialization to zero flags that they are not valid items yet.
+chargeInfo *cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
 uint16_t daysSinceGPSSuccessfullyRead = 0;
 
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
@@ -260,9 +261,6 @@ int main(void)
 		if (!rtc_setupNextAlarm(&dt_CurAlarm))
 			timeFlags.nextAlarmSet = 1;
 	}
-	
-	cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
-	
 
 	while (1) { // main program loop
 		// code that will only run once when/if cell voltage first goes above threshold,

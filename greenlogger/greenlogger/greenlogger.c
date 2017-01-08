@@ -74,6 +74,7 @@ uint16_t maxAvgCellVoltage = 0; // moving average of maximum cell voltage throug
 uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day since "midnight" when cell has the most power
 chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE]; // array to hold multiple days' max cell charge info, for getting average
 chargeInfo *cellReadingsPtr;
+uint16_t daysSinceGPSSuccessfullyRead = 0;
 
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
 unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
@@ -409,8 +410,12 @@ int main(void)
 			}
 			
 			if (timeFlags.trackNewCellReading) {
+				timeFlags.trackNewCellReading = 0; // do this only once, till next flagged
+				cellReadingsPtr++;
+				if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
+					cellReadingsPtr = cellReadings;
+				daysSinceGPSSuccessfullyRead++;
 				
-				timeFlags.trackNewCellReading = 0;
 			}
 			
 			if ((timeFlags.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {

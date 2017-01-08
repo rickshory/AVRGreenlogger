@@ -409,12 +409,27 @@ int main(void)
 			
 			if (timeFlags.trackNewCellReading) {
 				timeFlags.trackNewCellReading = 0; // do this only once, till next flagged
+				// point to the next position to fill in the readings array
 				cellReadingsPtr++;
 				if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
 					cellReadingsPtr = cellReadings;
+				// test whether to request time from the GPS
 				daysSinceGPSSuccessfullyRead++;
-				
-			}
+				if (daysSinceGPSSuccessfullyRead > DAYS_FOR_MOVING_AVERAGE) {
+					uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
+					// get most (year, month, etc.) of timestamp for checking GPS from the current alarm time
+					datetime_copy(&dt_CurAlarm, &dt_CkGPS);
+					dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
+					dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
+					dt_CkGPS.second = 0; // don't really matter much
+					dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
+					if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) { 
+						// timezone adjust has made the GPS check time earlier than the current alarm
+						(dt_CkGPS.day)++; // move one day ahead
+						datetime_normalize(&dt_CkGPS);
+					}
+				} // end test whether to access GPS
+			} // end trackNewCellReading
 			
 			if ((timeFlags.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
 				// alarm has passed GPS check time

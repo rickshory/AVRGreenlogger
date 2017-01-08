@@ -62,25 +62,24 @@ void GPS_initTimeRequest(void)
 	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high
 }
 
-uint16_t getAverageMinute (dateTime *startOfArrayOfTimes, uint8_t startIndex, uint8_t endIndex) {
-	uint8_t pos = startIndex;
-	dateTime *curTime = startOfArrayOfTimes + pos;
-	// adjust by hour offset to always treat as if Universal Time
-	// range zero to 1440, offset by time zone
-	int16_t minutesFromTime = (curTime->hour - curTime->houroffset) * 60 + curTime->minute;
-	// map to 2Pi radians
-	double minuteRadians = 2 * M_PI * minutesFromTime / 1440;
-	double sumSine = sin(minuteRadians), sumCosine = cos(minuteRadians);
-	while (1) { // use finish condition to exit loop
-		pos++;
-		if (pos >= DAYS_FOR_MOVING_AVERAGE) pos = 0;
-		curTime = startOfArrayOfTimes + pos;
-		minutesFromTime = (curTime->hour - curTime->houroffset) * 60 + curTime->minute;
-		minuteRadians = 2 * M_PI * minutesFromTime / 1440;
-		sumSine += sin(minuteRadians);
-		sumCosine += cos(minuteRadians);
-		if (pos == endIndex) break; // we have summed the last item and are now ready to calc the average
+uint16_t getAverageMinute (dateTime *startOfArrayOfTimes) {
+	dateTime *curTime;
+	int16_t minutesFromTime;
+	double minuteRadians, sumSine = 0, sumCosine = 0;
+	for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
+		curTime = startOfArrayOfTimes + i;
+		if (curTime->day > 0) { // day=0 flags that this is not a filled-in item
+			// get minutes
+			// adjust by hour offset to always treat as if Universal Time
+			// range zero to 1440, can be negative after offset by time zone
+			minutesFromTime = (curTime->hour - curTime->houroffset) * 60 + curTime->minute;
+			// map to 2Pi radians
+			double minuteRadians = 2 * M_PI * minutesFromTime / 1440;
+			sumSine += sin(minuteRadians);
+			sumCosine += cos(minuteRadians);
+		} // don't even need to count how many
 	}
+	// we have summed all the valid items and are now ready to calc the average
 	minuteRadians = atan2(sumSine, sumCosine); // fn output range is -pi to +pi
 	if (minuteRadians < 0) minuteRadians += (2 * M_PI); // should now range 0 to 2pi
 	return (uint16_t) (1440 * minuteRadians / (2 * M_PI)); // convert back to a positive minutes count

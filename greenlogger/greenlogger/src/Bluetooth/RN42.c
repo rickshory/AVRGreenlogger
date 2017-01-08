@@ -167,8 +167,8 @@ uint16_t cyPerRTCSqWave(void) {
 	disableRTCInterrupt();
 //	outputStringToUART1("\r\n returning to timekeeping mode\r\n");
 	if (!(timeFlags.nextAlarmSet)) {
-		intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-		timeFlags.nextAlarmSet = 1;
+		if (!rtc_setupNextAlarm(&dt_CurAlarm))
+			timeFlags.nextAlarmSet = 1;
 	}
 	return (uint16_t)cyPerSec.wholeWord;
 }
@@ -315,7 +315,8 @@ void checkForBTCommands (void) {
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART1(strHdr);
-					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+					if (!rtc_setupNextAlarm(&dt_CurAlarm))
+						timeFlags.nextAlarmSet = 1;
 					// cache timezone offset in persistent storage on SD card
 					timeZoneOffset = dt_tmp.houroffset;
 					timeFlags.timeZoneWritten = 0; // flag that time zone needs to be written
@@ -563,8 +564,8 @@ void BT_dataDump(char* stOpt) {
 		
 		// set next alarm
 		if (!(timeFlags.nextAlarmSet)) {
-			intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-			timeFlags.nextAlarmSet = 1;
+			if (!rtc_setupNextAlarm(&dt_CurAlarm))
+				timeFlags.nextAlarmSet = 1;
 		}
 		
 //			outputStringToUART1("\n\r");

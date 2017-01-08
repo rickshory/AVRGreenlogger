@@ -256,8 +256,8 @@ int main(void)
 	// go back into normal timekeeping mode
 	outputStringToUART0("\r\n returning to timekeeping mode\r\n");
 	if (!(timeFlags.nextAlarmSet)) {
-		intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-		timeFlags.nextAlarmSet = 1;
+		if (!rtc_setupNextAlarm(&dt_CurAlarm))
+			timeFlags.nextAlarmSet = 1;
 	}
 	
 	cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
@@ -337,8 +337,8 @@ int main(void)
 			
 			if (!(timeFlags.nextAlarmSet)) {
 	//			outputStringToUART0("\n\r about to call setupNextAlarm \n\r\n\r");
-				intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
-				timeFlags.nextAlarmSet = 1;
+				if (!rtc_setupNextAlarm(&dt_CurAlarm))
+					timeFlags.nextAlarmSet = 1;
 			}
 
 			if (!(stateFlags1.isRoused)) { // may add other conditions later
@@ -794,7 +794,7 @@ void checkForCommands (void) {
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToUART0(strHdr);
-					intTmp1 = rtc_setupNextAlarm(&dt_CurAlarm);
+					if (!rtc_setupNextAlarm(&dt_CurAlarm)) timeFlags.nextAlarmSet = 1;
 					timeZoneOffset = dt_tmp.houroffset;
 					timeFlags.timeZoneWritten = 0; // flag that time zone needs to be written
 					syncTimeZone(); // attempt to write the time zone; will retry later if e.g. power too low

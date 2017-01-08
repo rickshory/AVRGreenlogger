@@ -408,6 +408,11 @@ int main(void)
 				break;
 			}
 			
+			if (timeFlags.trackNewCellReading) {
+				
+				timeFlags.trackNewCellReading = 0;
+			}
+			
 			if ((timeFlags.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
 				// alarm has passed GPS check time
 				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC

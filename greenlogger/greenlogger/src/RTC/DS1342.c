@@ -1015,14 +1015,14 @@ void datetime_getstring(char* dtstr, dateTime *dtp)
 	dtstr[15] = '0'+ ((dtp->minute) % 10);
 	dtstr[17] = '0'+ ((dtp->second) / 10);
 	dtstr[18] = '0'+ ((dtp->second) % 10);
-//	if ((dtp->houroffset) < 0) {
-	if ((timeZoneOffset) < 0) {
-//		iTmp  = -1 * (dtp->houroffset);
-		iTmp  = -1 * (timeZoneOffset);
+	if ((dtp->houroffset) < 0) {
+//	if ((timeZoneOffset) < 0) {
+		iTmp  = -1 * (dtp->houroffset);
+//		iTmp  = -1 * (timeZoneOffset);
 		dtstr[20] = '-';
 	} else {
-//		iTmp  = (dtp->houroffset);
-		iTmp  = (timeZoneOffset);
+		iTmp  = (dtp->houroffset);
+//		iTmp  = (timeZoneOffset);
 		dtstr[20] = '+';
 	}
 	dtstr[21] = '0'+ (iTmp / 10);

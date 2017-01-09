@@ -93,8 +93,7 @@ unsigned long lngTmp1, lngTmp2;
 int main(void)
 {
 	uint8_t ct, swDnUp, swBbIr;
-	uint8_t errSD, cnt, r;
-	uint16_t cntout = 0;
+	uint8_t errSD, r;
 	strJSON[0] = '\0'; // "erase" the string
 	DDRD &= ~(1<<5); // make the Bluetooth connection monitor pin an input
 	PORTD &= ~(1<<5); // disable internal pull-up resistor

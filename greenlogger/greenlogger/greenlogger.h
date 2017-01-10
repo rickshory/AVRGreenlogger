@@ -21,6 +21,7 @@
 
 // ADC reading * 2.5 = mV
 #define CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS 520 // corresponds to 1300mV, sufficient for high drain functions like GPS
+#define CELL_VOLTAGE_OK_FOR_GPS 490 // corresponds to 1225mV, determined empirically as OK to complete time request
 #define CELL_VOLTAGE_GOOD_FOR_STARTUP 480 // corresponds to 1200mV, sufficient for startup sequence using Bluetooth
 #define CELL_VOLTAGE_THRESHOLD_SD_CARD 456 // corresponds to 1140mV, where the NiMH cell voltage just starts to droop
 #define CELL_VOLTAGE_THRESHOLD_READ_DATA 427 // corresponds to 1067mV where cell voltage is just about to plummet

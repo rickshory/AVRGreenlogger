@@ -21,6 +21,7 @@
 
 // generic control of GPS subsystem
 
+extern volatile adcData cellVoltageReading;
 extern volatile gFlags gpsFlags;
 
 /**
@@ -49,22 +50,29 @@ inline void GPS_idle(void)
  */
 void GPS_initTimeRequest(void)
 {
-	outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
-	
-	stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
-	gpsFlags.gpsTimeRequested = 1; // for now, use this to distinguish any
-	// time-set command that comes back as being from the GPS
-	PORTB &= ~(1<<GPS_SUBSYSTEM_CTRL); // set low
-	// uC in GPS subsystem, at Vcc 3V, needs a 700ns low-going pulse for definite reset
-	// each clock cycle of this uC, at 8MHz, is 125ns
-	// so 6 clock cycles of this uC would be 750ns and ought to do it
-	for ( uint8_t i=6; i; i--){ 
-		// loop opcodes will make the time more than double, 
-		// but still brief enough to not interfere with overall
-		// program flow
-		asm volatile ("nop");
-    }
-	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high
+	// check if enough power to get time from GPS
+	uint8_t intTmp1 = readCellVoltage(&cellVoltageReading);
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_OK_FOR_GPS) {
+		outputStringToBothUARTs("\r\n power too low for GPS get-time request \r\n");
+	} else {
+		outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
+		stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
+		gpsFlags.gpsTimeRequested = 1; // for now, use this to distinguish any
+		// time-set command that comes back as being from the GPS
+		PORTB &= ~(1<<GPS_SUBSYSTEM_CTRL); // set low
+		// uC in GPS subsystem, at Vcc 3V, needs a 700ns low-going pulse for definite reset
+		// each clock cycle of this uC, at 8MHz, is 125ns
+		// so 6 clock cycles of this uC would be 750ns and ought to do it
+		for ( uint8_t i=6; i; i--){ 
+			// loop opcodes will make the time more than double, 
+			// but still brief enough to not interfere with overall
+			// program flow
+			asm volatile ("nop");
+		}
+		PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high	
+	}
+		
+
 }
 
 uint16_t getAverageMinute (dateTime *startOfArrayOfTimes) {

@@ -789,46 +789,74 @@ void checkForCommands (void) {
                 case 'T': case 't': { // set time
 					// get info from commandBuffer before any UART output, 
 					// because in some configurations any Tx feeds back to Rx
+					// Presently, a set-time command from the GPS could not come in by Bluetooth, but 
+					// a request to the GPS could be sent by Bluetooth. In that case, user is probably
+					// monitoring Bluetooth modem, UART1, and so diagnostics should go there
 					char tmpStr[commandBufferLen];
 					strcpy(tmpStr, commandBuffer + 1);
 					if (!isValidDateTime(tmpStr)) {
-						outputStringToUART0("\r\n Invalid timestamp\r\n");
+						if (gpsFlags.gpsTimeRequestedByBluetooth) {
+							outputStringToUART1("\r\n Invalid timestamp from GPS\r\n");
+						} else {
+							outputStringToUART0("\r\n Invalid timestamp\r\n");
+						}
 						break;
 					}
 					if (!isValidTimezone(tmpStr + 20)) {
-						outputStringToUART0("\r\n Invalid hour offset\r\n");
+						if (gpsFlags.gpsTimeRequestedByBluetooth) {
+							outputStringToUART1("\r\n Invalid hour offset from GPS\r\n");
+						} else {
+							outputStringToUART0("\r\n Invalid hour offset\r\n");
+						}
 						break;
 					}
-					outputStringToUART0("\r\n Time changed from ");
 					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_RTC);
 					datetime_getstring(datetime_string, &dt_RTC);
 					strcat(strJSON, datetime_string);
-					outputStringToUART0(datetime_string);
+
+					if (gpsFlags.gpsTimeRequestedByBluetooth) {
+						outputStringToUART1("\r\n Time changed, by GPS, from ");
+						outputStringToUART1(datetime_string);
+					} else {
+						outputStringToUART0("\r\n Time changed from ");
+						outputStringToUART0(datetime_string);
+					}
 					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
 					rtc_setTime(&dt_tmp);
 					strcat(strJSON, "\",\"to\":\"");
-					outputStringToUART0(" to ");
 					datetime_getstring(datetime_string, &dt_tmp);
 					strcat(strJSON, datetime_string);
-					outputStringToUART0(datetime_string);
+					if (gpsFlags.gpsTimeRequestedByBluetooth) {
+						outputStringToUART1(" to ");
+						outputStringToUART1(datetime_string);
+						outputStringToUART1("\r\n");					
+					} else {
+						outputStringToUART0(" to ");
+						outputStringToUART0(datetime_string);
+						outputStringToUART0("\r\n");
+					}
 					if (gpsFlags.gpsTimeRequested) { // set-time signal was requested from GPS
 						// for now, assume that's where this came from
 						strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
-						outputStringToUART0("\r\n");
 						rtcStatus = rtcHasGPSTime;
 						datetime_copy(&dt_tmp, &dt_LatestGPS);
 						if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
 							for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
 								// give diagnostics on the readings being stored for the moving average
 								chargeInfo_getString(str, &(cellReadings[i]));
-								outputStringToUART0(str);
+								if (gpsFlags.gpsTimeRequestedByBluetooth) {
+									outputStringToUART1(str);
+								} else {
+									outputStringToUART0(str);
+								}
 							}
 							gpsFlags.gpsReqTest = 0; // test is over
 						} else { // only if NOT a test
 							daysSinceGPSSuccessfullyRead = 0; // reset the counter
 						}
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced
+						gpsFlags.gpsTimeRequestedByBluetooth = 0; // end of request by BT
 					} else { // time was set manually
 						strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 						outputStringToUART0("\r\n");
@@ -1061,6 +1089,7 @@ void heartBeat (void)
 		stateFlags1.isRoused = 0;
 		gpsFlags.gpsTimeRequested = 0; // set-time request from GPS times out if system goes out of Roused mode
 		gpsFlags.gpsReqTest = 0; // any test now ends
+		gpsFlags.gpsTimeRequestedByBluetooth = 0; // BT request terminate
 	}
 
 	n = Timer1;						/* 100Hz decrement timer */

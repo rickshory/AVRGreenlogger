@@ -149,7 +149,7 @@ typedef volatile union gBF { // GPS bit flags
 		unsigned char checkGpsToday:1; // used with GPS alarm time to initiate a set-time request from the GPS
 		unsigned char gpsTimeRequested:1; // flag that a request is out to the GPS for a set-time signal
 		unsigned char gpsReqTest:1; // this is a manual test request, to distinguish from a system generated one
-		unsigned char gfBit3:1; // unused
+		unsigned char gpsTimeRequestedByBluetooth:1; // request came in by the Bluetooth modem
 		unsigned char gfBit4:1; // unused
 		unsigned char gfBit5:1; // unused
 		unsigned char gfBit6:1; // unused

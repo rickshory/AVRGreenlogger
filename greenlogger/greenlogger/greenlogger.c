@@ -417,10 +417,10 @@ int main(void)
 				// test whether to request time from the GPS
 				if ((!(gpsFlags.checkGpsToday))  // don't flag another till this one serviced
 						&& (daysSinceGPSSuccessfullyRead > DAYS_FOR_MOVING_AVERAGE)) {
-					uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
 					// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
 					datetime_copy(&dt_CurAlarm, &dt_CkGPS);
 					// get hour and minute from average
+					uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
 					dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
 					dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
 					dt_CkGPS.second = 0; // don't really matter much
@@ -857,6 +857,7 @@ void checkForCommands (void) {
 							gpsFlags.gpsReqTest = 0; // test is over
 						} else { // only if NOT a test
 							daysSinceGPSSuccessfullyRead = 0; // reset the counter
+							gpsFlags.checkGpsToday = 0; // clear the system-set request flag
 						}
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced
 						gpsFlags.gpsTimeRequestByBluetooth = 0; // end of request by BT

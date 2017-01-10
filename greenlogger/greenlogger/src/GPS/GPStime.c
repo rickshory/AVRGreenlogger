@@ -50,6 +50,7 @@ inline void GPS_idle(void)
 void GPS_initTimeRequest(void)
 {
 	outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
+	
 	stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
 	gpsFlags.gpsTimeRequested = 1; // for now, use this to distinguish any
 	// time-set command that comes back as being from the GPS

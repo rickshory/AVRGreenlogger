@@ -776,6 +776,7 @@ void checkForCommands (void) {
 
 				 case 'G': case 'g': { // get time from GPS
 					 // for testing, manually initiate a get-time request from GPS
+					 gpsFlags.gpsReqTest = 1; // this is a manually initiated test, not from the system
 					 GPS_initTimeRequest();
 					 break;
 				 }					 
@@ -811,11 +812,31 @@ void checkForCommands (void) {
 					datetime_getstring(datetime_string, &dt_tmp);
 					strcat(strJSON, datetime_string);
 					outputStringToUART0(datetime_string);
-					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
-					outputStringToUART0("\r\n");
+					if (gpsFlags.gpsTimeRequested) { // set-time signal was requested from GPS
+						// for now, assume that's where this came from
+						strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
+						outputStringToUART0("\r\n");
+						rtcStatus = rtcHasGPSTime;
+						datetime_copy(&dt_tmp, &dt_LatestGPS);
+						if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
+							for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
+								// give diagnostics on the readings being stored for the moving average
+								chargeInfo_getString(str, &(cellReadings[i]));
+								outputStringToUART0(str);
+							}
+							gpsFlags.gpsReqTest = 0; // test is over
+						} else { // only if NOT a test
+							daysSinceGPSSuccessfullyRead = 0; // reset the counter
+						}
+						gpsFlags.gpsTimeRequested = 0; // request has been serviced
+					} else { // time was set manually
+						strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
+						outputStringToUART0("\r\n");
+						rtcStatus = rtcTimeManuallySet;
+					}
 					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
-					rtcStatus = rtcTimeManuallySet;
+					
 					outputStringToUART0(strHdr);
 					if (!rtc_setupNextAlarm(&dt_CurAlarm)) timeFlags.nextAlarmSet = 1;
 					timeZoneOffset = dt_tmp.houroffset;
@@ -1038,6 +1059,8 @@ void heartBeat (void)
 	if (!rouseCountdown)
 	{
 		stateFlags1.isRoused = 0;
+		gpsFlags.gpsTimeRequested = 0; // set-time request from GPS times out if system goes out of Roused mode
+		gpsFlags.gpsReqTest = 0; // any test now ends
 	}
 
 	n = Timer1;						/* 100Hz decrement timer */

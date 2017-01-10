@@ -19,6 +19,7 @@ extern volatile uint16_t btCountdown;
 extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
 extern volatile tFlags timeFlags;
+extern volatile gFlags gpsFlags;
 extern volatile mFlags motionFlags;
 
 extern volatile dateTime dt_CurAlarm, dt_NextAlarm;
@@ -40,6 +41,8 @@ void endRouse(void) {
 		// changing the count partway through
 	rouseCountdown = 0;
 	stateFlags1.isRoused = 0;
+	gpsFlags.gpsTimeRequested = 0; // set-time request from GPS times out if system goes out of Roused mode
+	gpsFlags.gpsReqTest; // any test ends
 	PORTA &= ~(0b00000100); // force pilot light off
 	sei();
 	

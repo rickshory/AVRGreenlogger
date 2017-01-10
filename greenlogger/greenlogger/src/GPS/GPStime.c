@@ -21,6 +21,8 @@
 
 // generic control of GPS subsystem
 
+extern volatile gFlags gpsFlags;
+
 /**
  * \brief assures GPS subsystem is idle
  *
@@ -49,6 +51,8 @@ void GPS_initTimeRequest(void)
 {
 	outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
 	stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
+	gpsFlags.gpsTimeRequested = 1; // for now, use this to distinguish any
+	// time-set command that comes back as being from the GPS
 	PORTB &= ~(1<<GPS_SUBSYSTEM_CTRL); // set low
 	// uC in GPS subsystem, at Vcc 3V, needs a 700ns low-going pulse for definite reset
 	// each clock cycle of this uC, at 8MHz, is 125ns
@@ -93,5 +97,5 @@ void chargeInfo_getString(char* ciStr, chargeInfo *cip) {
 	iLen = sprintf(ciStr, "%lumV\t", (unsigned long)(2.5 * (unsigned long)(cip->level)));
 	// if not a valid date/time, will show as "2000-00-00 00:00:00 +00"
 	datetime_getstring(ciStr + iLen, &(cip->timeStamp));
-	strcat(ciStr, "\n");
+	strcat(ciStr, "\r\n");
 }

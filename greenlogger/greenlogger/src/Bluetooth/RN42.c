@@ -35,6 +35,7 @@ extern char datetime_string[25];
 extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
 extern volatile tFlags timeFlags;
+extern volatile gFlags gpsFlags;
 extern volatile rFlags irradFlags;
 extern volatile mFlags motionFlags ;
 extern volatile uint8_t rtcStatus;
@@ -213,6 +214,7 @@ void checkForBTCommands (void) {
 
 				 case 'G': case 'g': { // get time from GPS
 					 // for testing, manually initiate a get-time request from GPS
+					 gpsFlags.gpsReqTest = 1; // this is a manually initiated test, not from the system
 					 GPS_initTimeRequest();
 					 break;
 				 }					 
@@ -309,6 +311,31 @@ void checkForBTCommands (void) {
 					datetime_getstring(datetime_string, &dt_tmp);
 					strcat(strJSON, datetime_string);
 					outputStringToUART1(datetime_string);
+/*	presently, a set-time command from the GPS could not come in by Bluetooth, though a
+     request to the GPS to send the command could go out by Bluetooth
+					if (gpsFlags.gpsTimeRequested) { // set-time signal was requested from GPS
+						// for now, assume that's where this came from
+					strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
+					outputStringToUART1("\r\n");
+					rtcStatus = rtcHasGPSTime;
+					datetime_copy(&dt_tmp, &dt_LatestGPS);
+					if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
+						for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
+							// give diagnostics on the readings being stored for the moving average
+							chargeInfo_getString(str, &(cellReadings[i]));
+							outputStringToUART1(str);
+						}
+						gpsFlags.gpsReqTest = 0; // test is over
+						} else { // only if NOT a test
+						daysSinceGPSSuccessfullyRead = 0; // reset the counter
+					}
+					gpsFlags.gpsTimeRequested = 0; // request has been serviced
+					} else { // time was set manually
+					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
+					outputStringToUART1("\r\n");
+					rtcStatus = rtcTimeManuallySet;
+				}
+*/
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 					outputStringToUART1("\r\n");
 					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write

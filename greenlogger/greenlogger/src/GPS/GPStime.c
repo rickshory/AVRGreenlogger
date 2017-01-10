@@ -83,4 +83,15 @@ uint16_t getAverageMinute (dateTime *startOfArrayOfTimes) {
 	minuteRadians = atan2(sumSine, sumCosine); // fn output range is -pi to +pi
 	if (minuteRadians < 0) minuteRadians += (2 * M_PI); // should now range 0 to 2pi
 	return (uint16_t) (1440 * minuteRadians / (2 * M_PI)); // convert back to a positive minutes count
-};
+}
+
+void chargeInfo_getString(char* ciStr, chargeInfo *cip) {
+	// get charge level into string
+	// chargeInfo.level is the 32 bit reading stored direct from the ADC
+	// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
+	int iLen;
+	iLen = sprintf(ciStr, "%lumV\t", (unsigned long)(2.5 * (unsigned long)(cip->level)));
+	// if not a valid date/time, will show as "2000-00-00 00:00:00 +00"
+	datetime_getstring(ciStr + iLen, &(cip->timeStamp));
+	strcat(ciStr, "\n");
+}

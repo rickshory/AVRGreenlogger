@@ -413,12 +413,14 @@ int main(void)
 				cellReadingsPtr++;
 				if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
 					cellReadingsPtr = cellReadings;
+				daysSinceGPSSuccessfullyRead++; // count the day
 				// test whether to request time from the GPS
-				daysSinceGPSSuccessfullyRead++;
-				if (daysSinceGPSSuccessfullyRead > DAYS_FOR_MOVING_AVERAGE) {
+				if ((!(gpsFlags.checkGpsToday))  // don't flag another till this one serviced
+						&& (daysSinceGPSSuccessfullyRead > DAYS_FOR_MOVING_AVERAGE)) {
 					uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
-					// get most (year, month, etc.) of timestamp for checking GPS from the current alarm time
+					// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
 					datetime_copy(&dt_CurAlarm, &dt_CkGPS);
+					// get hour and minute from average
 					dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
 					dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
 					dt_CkGPS.second = 0; // don't really matter much
@@ -428,10 +430,11 @@ int main(void)
 						(dt_CkGPS.day)++; // move one day ahead
 						datetime_normalize(&dt_CkGPS);
 					}
+					gpsFlags.checkGpsToday = 1;
 				} // end test whether to access GPS
 			} // end trackNewCellReading
 			
-			if ((gpsFlags.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
+			if ((gpsFlags.checkGpsToday) && (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
 				// alarm has passed GPS check time
 				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 			}

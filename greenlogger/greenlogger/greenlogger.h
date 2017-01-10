@@ -88,8 +88,9 @@ typedef volatile union sBF { // status bit flags
 		unsigned char reRoused:1; // re-triggered while awake, used to reset timeout
 		unsigned char writeJSONMsg:1; // there is a JSON message to log
 		unsigned char writeDataHeaders:1; // flag to write column headers to SD card
-		//  done on init, reset, time change, and midnight rollover
-		unsigned char reachedFullPower:1; // cell charging achieved high enough voltage to allow high-power modules, initializations
+			// done on initialization, reset, time change, and midnight rollover
+		unsigned char reachedFullPower:1; // cell charging achieved high enough voltage to allow 
+			// high-power modules, initializations
 		unsigned char sfBit6:1; // unused
 		unsigned char sfBit7:1; // unused
 	};
@@ -136,10 +137,25 @@ typedef volatile union tBF { // time bit flags
 		unsigned char timeZoneWritten:1; // time zone has been written to the SD card
 		unsigned char timeZoneRead:1; // time zone has been read from the SD card
 		unsigned char trackNewCellReading:1; // "day" has rolled over, so track a new cell voltage maximum
-		unsigned char checkGpsToday:1; // initiate a set-time request from the GPS, when the time comes to do so
+		unsigned char tfBit6:1; // unused
 		unsigned char tfBit7:1; // unused
 	};
 } tFlags;
+
+typedef volatile union gBF { // GPS bit flags
+	unsigned char gFVal;
+	struct
+	{
+		unsigned char checkGpsToday:1; // used with GPS alarm time to initiate a set-time request from the GPS
+		unsigned char gpsTimeRequested:1; // flag that a request is out to the GPS for a set-time signal
+		unsigned char gpsReqTest:1; // this is a manual test request, to distinguish from a system generated one
+		unsigned char gfBit3:1; // unused
+		unsigned char gfBit4:1; // unused
+		unsigned char gfBit5:1; // unused
+		unsigned char gfBit6:1; // unused
+		unsigned char gfBit7:1; // unused
+	};
+} gFlags;
 
 typedef volatile union rBF { // irradiance bit flags
 	unsigned char rFVal;

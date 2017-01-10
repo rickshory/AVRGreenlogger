@@ -57,6 +57,7 @@ volatile sFlags1 stateFlags1 = {0};
 volatile iFlags initFlags = {0};
 volatile bFlags btFlags = {0};
 volatile tFlags timeFlags = {0};
+volatile gFlags gpsFlags = {0};
 volatile rFlags irradFlags = {0};
 volatile mFlags motionFlags = {0};
 volatile uint8_t rtcStatus = rtcTimeNotSet;
@@ -430,7 +431,7 @@ int main(void)
 				} // end test whether to access GPS
 			} // end trackNewCellReading
 			
-			if ((timeFlags.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
+			if ((gpsFlags.checkGpsToday) & (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
 				// alarm has passed GPS check time
 				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 			}

@@ -795,7 +795,7 @@ void checkForCommands (void) {
 					char tmpStr[commandBufferLen];
 					strcpy(tmpStr, commandBuffer + 1);
 					if (!isValidDateTime(tmpStr)) {
-						if (gpsFlags.gpsTimeRequestedByBluetooth) {
+						if (gpsFlags.gpsTimeRequestByBluetooth) {
 							outputStringToUART1("\r\n Invalid timestamp from GPS\r\n");
 						} else {
 							outputStringToUART0("\r\n Invalid timestamp\r\n");
@@ -803,7 +803,7 @@ void checkForCommands (void) {
 						break;
 					}
 					if (!isValidTimezone(tmpStr + 20)) {
-						if (gpsFlags.gpsTimeRequestedByBluetooth) {
+						if (gpsFlags.gpsTimeRequestByBluetooth) {
 							outputStringToUART1("\r\n Invalid hour offset from GPS\r\n");
 						} else {
 							outputStringToUART0("\r\n Invalid hour offset\r\n");
@@ -815,7 +815,7 @@ void checkForCommands (void) {
 					datetime_getstring(datetime_string, &dt_RTC);
 					strcat(strJSON, datetime_string);
 
-					if (gpsFlags.gpsTimeRequestedByBluetooth) {
+					if (gpsFlags.gpsTimeRequestByBluetooth) {
 						outputStringToUART1("\r\n Time changed, by GPS, from ");
 						outputStringToUART1(datetime_string);
 					} else {
@@ -827,7 +827,7 @@ void checkForCommands (void) {
 					strcat(strJSON, "\",\"to\":\"");
 					datetime_getstring(datetime_string, &dt_tmp);
 					strcat(strJSON, datetime_string);
-					if (gpsFlags.gpsTimeRequestedByBluetooth) {
+					if (gpsFlags.gpsTimeRequestByBluetooth) {
 						outputStringToUART1(" to ");
 						outputStringToUART1(datetime_string);
 						outputStringToUART1("\r\n");					
@@ -845,7 +845,7 @@ void checkForCommands (void) {
 							for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
 								// give diagnostics on the readings being stored for the moving average
 								chargeInfo_getString(str, &(cellReadings[i]));
-								if (gpsFlags.gpsTimeRequestedByBluetooth) {
+								if (gpsFlags.gpsTimeRequestByBluetooth) {
 									outputStringToUART1(str);
 								} else {
 									outputStringToUART0(str);
@@ -856,7 +856,7 @@ void checkForCommands (void) {
 							daysSinceGPSSuccessfullyRead = 0; // reset the counter
 						}
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced
-						gpsFlags.gpsTimeRequestedByBluetooth = 0; // end of request by BT
+						gpsFlags.gpsTimeRequestByBluetooth = 0; // end of request by BT
 					} else { // time was set manually
 						strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 						outputStringToUART0("\r\n");
@@ -1089,7 +1089,7 @@ void heartBeat (void)
 		stateFlags1.isRoused = 0;
 		gpsFlags.gpsTimeRequested = 0; // set-time request from GPS times out if system goes out of Roused mode
 		gpsFlags.gpsReqTest = 0; // any test now ends
-		gpsFlags.gpsTimeRequestedByBluetooth = 0; // BT request terminate
+		gpsFlags.gpsTimeRequestByBluetooth = 0; // BT request terminate
 	}
 
 	n = Timer1;						/* 100Hz decrement timer */

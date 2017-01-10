@@ -215,7 +215,7 @@ void checkForBTCommands (void) {
 				 case 'G': case 'g': { // get time from GPS
 					 // for testing, manually initiate a get-time request from GPS
 					 gpsFlags.gpsReqTest = 1; // this is a manually initiated test, not from the system
-					 gpsFlags.gpsTimeRequestedByBluetooth = 1; // request came in by the BT modem
+					 gpsFlags.gpsTimeRequestByBluetooth = 1; // request came in by the BT modem
 					 GPS_initTimeRequest();
 					 break;
 				 }					 

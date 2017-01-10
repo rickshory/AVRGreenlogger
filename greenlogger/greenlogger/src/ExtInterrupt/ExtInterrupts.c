@@ -43,7 +43,7 @@ void endRouse(void) {
 	stateFlags1.isRoused = 0;
 	gpsFlags.gpsTimeRequested = 0; // set-time request from GPS times out if system goes out of Roused mode
 	gpsFlags.gpsReqTest; // any test ends
-	gpsFlags.gpsTimeRequestedByBluetooth = 0; // any request by BT terminated
+	gpsFlags.gpsTimeRequestByBluetooth = 0; // any request by BT terminated
 	PORTA &= ~(0b00000100); // force pilot light off
 	sei();
 	

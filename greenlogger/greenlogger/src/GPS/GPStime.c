@@ -63,7 +63,7 @@ void GPS_initTimeRequest(void)
 		// uC in GPS subsystem, at Vcc 3V, needs a 700ns low-going pulse for definite reset
 		// each clock cycle of this uC, at 8MHz, is 125ns
 		// so 6 clock cycles of this uC would be 750ns and ought to do it
-		for ( uint8_t i=6; i; i--){ 
+		for (uint8_t i=6; i; i--){ 
 			// loop opcodes will make the time more than double, 
 			// but still brief enough to not interfere with overall
 			// program flow

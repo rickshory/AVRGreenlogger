@@ -312,7 +312,8 @@ int main(void)
 				keepBluetoothPowered(120);
 			} else { // not connected
 				if (btFlags.btWasConnected) { // connection lost
-					; // action(s) when connection lost
+					// action(s) when connection lost
+					btFlags.btSerialBeingInput = 0; // prevent hang on half-finished commands
 				}
 				btFlags.btWasConnected = 0; // clear the flag
 			}		

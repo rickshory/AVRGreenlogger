@@ -46,6 +46,7 @@ extern volatile int8_t timeZoneOffset;
 extern unsigned long darkCutoffIR, darkCutOffBB;
 extern volatile adcData cellVoltageReading;
 extern irrData irrReadings[4];
+extern chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE];
 
 /**
  * \brief turns on power to the RN-42 Bluetooth module
@@ -216,6 +217,15 @@ void checkForBTCommands (void) {
 					 // for testing, manually initiate a get-time request from GPS
 					 gpsFlags.gpsReqTest = 1; // this is a manually initiated test, not from the system
 					 gpsFlags.gpsTimeRequestByBluetooth = 1; // request came in by the BT modem
+					 
+					 // for testing, put diagnostics here too, redundant
+					for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
+						// give diagnostics on the readings being stored for the moving average
+						chargeInfo_getString(str, &(cellReadings[i]));
+						outputStringToBothUARTs(str);
+					}
+					// end test diagnostics
+					
 					 GPS_initTimeRequest();
 					 break;
 				 }					 

@@ -73,7 +73,7 @@ uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current d
 uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
 uint16_t maxAvgCellVoltage = 0; // moving average of maximum cell voltage through the day
 uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day since "midnight" when cell has the most power
-chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE] = {0}; // array to hold multiple days' max cell charge info, for 
+chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE]; // array to hold multiple days' max cell charge info, for 
 	// getting average. Initialization to zero flags that they are not valid items yet.
 chargeInfo *cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
 uint16_t daysSinceGPSSuccessfullyRead = 0;
@@ -245,6 +245,9 @@ int main(void)
 
 	stateFlags1.isRoused = 1; // force on for testing, enable UART output
 	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
+	
+	// for diagnostics, show the set of cell readings, even if still empty
+	showCellReadings();
 	
 	if (!(timeFlags.nextAlarmSet)) {
 		if (!rtc_setupNextAlarm(&dt_CurAlarm))
@@ -742,6 +745,25 @@ void outputStringToBothUARTs (char* St) {
 	outputStringToUART1 (St);
 }	
 
+
+/**
+ * \brief Show the cell readings
+ *
+ * Show the series of cell readings
+ *
+ * \
+ *  
+ */
+void showCellReadings(void) {
+	outputStringToBothUARTs("\r\nCell readings\r\n");
+	for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
+		// give diagnostics on the readings being stored for the moving average
+		chargeInfo_getString(str, &(cellReadings[i]));
+		outputStringToBothUARTs(str);
+	}
+	outputStringToBothUARTs("\r\n");
+}
+
 /**
  * \brief Check the UART0 for commands
  *
@@ -835,15 +857,7 @@ void checkForCommands (void) {
 						rtcStatus = rtcHasGPSTime;
 						datetime_copy(&dt_tmp, &dt_LatestGPS);
 						if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
-							for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
-								// give diagnostics on the readings being stored for the moving average
-								chargeInfo_getString(str, &(cellReadings[i]));
-								if (gpsFlags.gpsTimeRequestByBluetooth) {
-									outputStringToUART1(str);
-								} else {
-									outputStringToUART0(str);
-								}
-							}
+							showCellReadings();
 							gpsFlags.gpsReqTest = 0; // test is over
 						} else { // only if NOT a test
 							daysSinceGPSSuccessfullyRead = 0; // reset the counter

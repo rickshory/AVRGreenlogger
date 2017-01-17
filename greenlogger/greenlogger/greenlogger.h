@@ -199,5 +199,6 @@ void enableAccelInterrupt (void);
 void disableAccelInterrupt(void);
 void enableRTCInterrupt(void);
 void disableRTCInterrupt(void);
+void showCellReadings(void);
 
 #endif /* GREENLOGGER_H_ */

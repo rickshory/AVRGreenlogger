@@ -219,12 +219,7 @@ void checkForBTCommands (void) {
 					 gpsFlags.gpsTimeRequestByBluetooth = 1; // request came in by the BT modem
 					 
 					 // for testing, put diagnostics here too, redundant
-					for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
-						// give diagnostics on the readings being stored for the moving average
-						chargeInfo_getString(str, &(cellReadings[i]));
-						outputStringToBothUARTs(str);
-					}
-					// end test diagnostics
+					 showCellReadings();
 					
 					 GPS_initTimeRequest();
 					 break;
@@ -330,16 +325,7 @@ void checkForBTCommands (void) {
 					outputStringToUART1("\r\n");
 					rtcStatus = rtcHasGPSTime;
 					datetime_copy(&dt_tmp, &dt_LatestGPS);
-					if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
-						for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
-							// give diagnostics on the readings being stored for the moving average
-							chargeInfo_getString(str, &(cellReadings[i]));
-							outputStringToUART1(str);
-						}
-						gpsFlags.gpsReqTest = 0; // test is over
-						} else { // only if NOT a test
-						daysSinceGPSSuccessfullyRead = 0; // reset the counter
-					}
+					showCellReadings();
 					gpsFlags.gpsTimeRequested = 0; // request has been serviced
 					} else { // time was set manually
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");

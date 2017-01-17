@@ -233,30 +233,8 @@ int main(void)
 
 	
 	stateFlags1.isRoused = 1; // force on for testing, enable UART output
-//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
-	outputStringToUART0("\r\n  test\r\n");
-//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
-	outputStringToUART0("\r\n  test\r\n");
-//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
-	outputStringToUART0("\r\n  test\r\n");
-//	for (Timer1 = 3; Timer1; );	// Wait for 30ms
-
 	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 	
-	// try to adjust the uC clock frequency
-	// first step, measure the uC clock, relative to the RTC, which latter should be very accurate
-	// eventually put this in a more reasonable place, but for now right here before main loop
-	
-	// go into uC clock adjust mode
-	outputStringToUART0("\r\n going into uC adjust mode\r\n");
-	timeFlags.nextAlarmSet = 0; // clear flag
-	disableRTCInterrupt();
-	intTmp1 = rtc_enableSqWave();
-	// PRTIM1 make sure power reduction register bit if off so timers run
-	
-	
-	// go back into normal timekeeping mode
-	outputStringToUART0("\r\n returning to timekeeping mode\r\n");
 	if (!(timeFlags.nextAlarmSet)) {
 		if (!rtc_setupNextAlarm(&dt_CurAlarm))
 			timeFlags.nextAlarmSet = 1;

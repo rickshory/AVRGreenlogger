@@ -230,8 +230,19 @@ int main(void)
 				
 	// attempt to read/write the time zone; will retry later if e.g. power too low
 	syncTimeZone();
-
 	
+	// initialize array that will be used for tracking moving average
+	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
+		cellReadings[i].level = 0;
+		cellReadings[i].timeStamp.year = 0;
+		cellReadings[i].timeStamp.month = 0; // this flags this instance as still empty
+		cellReadings[i].timeStamp.day = 0; // this flags this instance as still empty
+		cellReadings[i].timeStamp.houroffset = 0;
+		cellReadings[i].timeStamp.hour = 0;
+		cellReadings[i].timeStamp.minute = 0;
+		cellReadings[i].timeStamp.second = 0;
+	}
+
 	stateFlags1.isRoused = 1; // force on for testing, enable UART output
 	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 	

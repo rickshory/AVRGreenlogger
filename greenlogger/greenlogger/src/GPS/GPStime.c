@@ -6,6 +6,7 @@
  */ 
 
 #include <inttypes.h>
+#include <string.h>
 #include "../GPS/GPStime.h"
 #include "../Bluetooth/RN42.h"
 #include "../I2C/I2C.h"
@@ -105,8 +106,8 @@ void chargeInfo_getString(char* ciStr, chargeInfo *cip) {
 	int iLen;
 	
 //	iLen = sprintf(ciStr, "%lumV\t", (unsigned long)(2.5 * (unsigned long)(cip->level)));
-	iLen = sprintf(ciStr, "%lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cip->level)));
 	// if not a valid date/time, will show as "2000-00-00 00:00:00 +00"
 //	datetime_getstring(ciStr + iLen, &(cip->timeStamp));
 //	strcat(ciStr, "\r\n");
+	strcat(ciStr, "data would be here\r\n");
 }

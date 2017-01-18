@@ -756,10 +756,14 @@ void outputStringToBothUARTs (char* St) {
  *  
  */
 void showCellReadings(void) {
+	int iLen;
 	outputStringToBothUARTs("\r\nCell readings\r\n");
 	for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
 		// give diagnostics on the readings being stored for the moving average
-		chargeInfo_getString(str, &(cellReadings[i]));
+//		iLen = sprintf(str, "%lumV\t", (unsigned long)(2.5 * (unsigned long)(cellReadings[i].level)));
+		iLen = sprintf(str, "\r\n%lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellReadings[i].level)));
+		 
+//		chargeInfo_getString(str, &(cellReadings[i]));
 		outputStringToBothUARTs(str);
 	}
 	outputStringToBothUARTs("\r\nDone with cell readings\r\n");

@@ -103,8 +103,10 @@ void chargeInfo_getString(char* ciStr, chargeInfo *cip) {
 	// chargeInfo.level is the 32 bit reading stored direct from the ADC
 	// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
 	int iLen;
-	iLen = sprintf(ciStr, "%lumV\t", (unsigned long)(2.5 * (unsigned long)(cip->level)));
+	
+//	iLen = sprintf(ciStr, "%lumV\t", (unsigned long)(2.5 * (unsigned long)(cip->level)));
+	iLen = sprintf(ciStr, "%lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cip->level)));
 	// if not a valid date/time, will show as "2000-00-00 00:00:00 +00"
-	datetime_getstring(ciStr + iLen, &(cip->timeStamp));
-	strcat(ciStr, "\r\n");
+//	datetime_getstring(ciStr + iLen, &(cip->timeStamp));
+//	strcat(ciStr, "\r\n");
 }

@@ -244,10 +244,11 @@ int main(void)
 	}
 
 	stateFlags1.isRoused = 1; // force on for testing, enable UART output
-	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 	
 	// for diagnostics, show the set of cell readings, even if still empty
 	showCellReadings();
+	
+	outputStringToBothUARTs("\n\r Power good \n\r\n\r");
 	
 	if (!(timeFlags.nextAlarmSet)) {
 		if (!rtc_setupNextAlarm(&dt_CurAlarm))
@@ -761,7 +762,7 @@ void showCellReadings(void) {
 		chargeInfo_getString(str, &(cellReadings[i]));
 		outputStringToBothUARTs(str);
 	}
-	outputStringToBothUARTs("\r\n");
+	outputStringToBothUARTs("\r\nDone with cell readings\r\n");
 }
 
 /**

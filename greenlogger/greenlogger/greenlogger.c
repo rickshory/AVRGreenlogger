@@ -42,6 +42,7 @@ uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
 
 int len, err = 0;
 char str[128]; // generic space for strings to be output
+char stCellReading[128]; // space for cell reading string
 char strJSON[256]; // string for JSON data
 char strHdr[64] = "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r";
 char strLog[64];
@@ -756,15 +757,11 @@ void outputStringToBothUARTs (char* St) {
  *  
  */
 void showCellReadings(void) {
-	int iLen;
 	outputStringToBothUARTs("\r\nCell readings\r\n");
-	for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
+	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		// give diagnostics on the readings being stored for the moving average
-//		iLen = sprintf(str, "%lumV\t", (unsigned long)(2.5 * (unsigned long)(cellReadings[i].level)));
-		iLen = sprintf(str, "\r\n%lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellReadings[i].level)));
-		 
-//		chargeInfo_getString(str, &(cellReadings[i]));
-		outputStringToBothUARTs(str);
+		chargeInfo_getString(stCellReading, &(cellReadings[i]));
+		outputStringToBothUARTs(stCellReading);
 	}
 	outputStringToBothUARTs("\r\nDone with cell readings\r\n");
 }

@@ -17,7 +17,7 @@
 
 #define commandBufferLen 30
 
-#define versionString "\r\n Ver 4.01\t 2017-01-14\r\n "
+#define versionString "\r\n Ver 4.02\t 2017-01-18\r\n "
 
 // ADC reading * 2.5 = mV
 #define CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS 520 // corresponds to 1300mV, sufficient for high drain functions like GPS

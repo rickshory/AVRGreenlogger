@@ -15,9 +15,7 @@
 #define GPS_SUBSYSTEM_CTRL 1 // bit 1 of PortB, of this uC
 // controls reset of the uC in the GPS subsystem
 
-//#define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
-// special test version, tries to check GPS every 2 days
-#define DAYS_FOR_MOVING_AVERAGE 2 // sets size of the array of chargeInfo's
+#define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
 
 typedef volatile struct { // used for tracking the cell voltage daily maximum, when
 						// most power is available for tasks whose timing is 

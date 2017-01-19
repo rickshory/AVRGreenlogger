@@ -719,30 +719,6 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 			retVal = sdInitFail;
 			goto unmountVolume;
 	}
-/*
-	strncpy(stFile, stDt + 2, 5); // slice out e.g. "12-05" from "2012-05-03"
-	strcat(stFile, "/"); // append the folder delimiter
-	strncat(stFile, stDt + 8, 2); // append e.g. "03" from "2012-05-03"
-	strcat(stFile, ".TXT"); // complete the filename
-*/	
-	
-//	stFile[0] = stDt[2];
-//	stFile[1] = stDt[3];
-//	stFile[2] = stDt[4];
-//	stFile[3] = stDt[5];
-//	stFile[4] = stDt[6];
-//	stFile[5] = '/';
-//	stFile[6] = stDt[8];
-//	stFile[7] = stDt[9];
-//	stFile[8] = '.';
-//	stFile[9] = 'T';
-//	stFile[10] = 'X';
-//	stFile[11] = 'T';
-//	stFile[12] = '\0';
-
-//	outputStringToBothUARTs("\n\r attempting to open file: \"");
-//	outputStringToBothUARTs(stFile);
-//	outputStringToBothUARTs("\"\n\r");
 	
 	dateToFullFilepath (stDt, stFile);
 	

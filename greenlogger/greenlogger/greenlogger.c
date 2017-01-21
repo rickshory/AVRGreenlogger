@@ -388,11 +388,19 @@ int main(void)
 					|| (cellReadingsPtr->timeStamp.month != dt_CurAlarm.month)
 					|| (cellReadingsPtr->timeStamp.year != dt_CurAlarm.year)) {
 					// date is different, from day rollover, or time change
-				// point to the next position to fill in the readings array
-				cellReadingsPtr++;
-				if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
-				cellReadingsPtr = cellReadings;
-				daysSinceGPSSuccessfullyRead++; // count the day
+				// if previous year is > 2 years different, either was previously 0 (initial
+				//  null value) or from default date (see fn 'rtc_setdefault'); in either case,
+				//  don't track a new date but overwrite the current one
+				if ((dt_CurAlarm.year - cellReadingsPtr->timeStamp.year) > 2) {
+					cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
+					datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));
+				} else { // only a regular new date
+					// point to the next position to fill in the readings array
+					cellReadingsPtr++;
+					if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
+					cellReadingsPtr = cellReadings;
+					daysSinceGPSSuccessfullyRead++; // count the day
+				}
 				// test whether to request time from the GPS
 				if ((!(gpsFlags.checkGpsToday))  // don't flag another till this one serviced
 						&& (daysSinceGPSSuccessfullyRead > DAYS_FOR_MOVING_AVERAGE)) {
@@ -410,9 +418,10 @@ int main(void)
 						datetime_normalize(&dt_CkGPS);
 					}
 					gpsFlags.checkGpsToday = 1;
-					} // end test whether to access GPS
+				} // end test whether to access GPS
 			}
 			
+			// track the maximum cell voltage for this date
 			if (cellVoltageReading.adcWholeWord > cellReadingsPtr->level) {
 				cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
 				datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));

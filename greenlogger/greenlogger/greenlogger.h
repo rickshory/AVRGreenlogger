@@ -137,7 +137,7 @@ typedef volatile union tBF { // time bit flags
 		unsigned char alarmDetected:1; // the RTC Alarm has caused an interrupt
 		unsigned char timeZoneWritten:1; // time zone has been written to the SD card
 		unsigned char timeZoneRead:1; // time zone has been read from the SD card
-		unsigned char trackNewCellReading:1; // "day" has rolled over, so track a new cell voltage maximum
+		unsigned char tfBit5:1; // unused
 		unsigned char tfBit6:1; // unused
 		unsigned char tfBit7:1; // unused
 	};

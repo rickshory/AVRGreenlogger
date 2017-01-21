@@ -806,7 +806,6 @@ void datetime_advanceInterval(dateTime *t) {
 		datetime_advanceIntervalShort(t);
 	if (t->day !=startingDay) { // day has rolled over
 		stateFlags1.writeDataHeaders = 1; // flag to log column headers on next SD card write
-		timeFlags.trackNewCellReading = 1; // switch to a new cell reading tracker
 	}
 }
 

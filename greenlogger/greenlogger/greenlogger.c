@@ -77,7 +77,6 @@ uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day sinc
 chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE]; // array to hold multiple days' max cell charge info, for 
 	// getting average. Initialization to zero flags that they are not valid items yet.
 chargeInfo *cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
-uint16_t daysSinceGPSSuccessfullyRead = 0;
 
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
 unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
@@ -231,6 +230,17 @@ int main(void)
 				
 	// attempt to read/write the time zone; will retry later if e.g. power too low
 	syncTimeZone();
+	
+	//initialize latest GPS-read time to null, so will compare as
+	// less than any real time and trigger a request for GPS time
+	dt_LatestGPS.year = 0;
+	dt_LatestGPS.month = 0;
+	dt_LatestGPS.day = 0;
+	dt_LatestGPS.houroffset = 0;
+	dt_LatestGPS.hour = 0;
+	dt_LatestGPS.minute = 0;
+	dt_LatestGPS.second = 0;
+	
 	
 	// initialize array that will be used for tracking moving average
 	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
@@ -398,12 +408,12 @@ int main(void)
 					// point to the next position to fill in the readings array
 					cellReadingsPtr++;
 					if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
-					cellReadingsPtr = cellReadings;
-					daysSinceGPSSuccessfullyRead++; // count the day
+								cellReadingsPtr = cellReadings;
 				}
 				// test whether to request time from the GPS
 				if ((!(gpsFlags.checkGpsToday))  // don't flag another till this one serviced
-						&& (daysSinceGPSSuccessfullyRead > DAYS_FOR_MOVING_AVERAGE)) {
+						&& ((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) > 
+						(86400 * DAYS_FOR_MOVING_AVERAGE)))) {
 					// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
 					datetime_copy(&dt_CurAlarm, &dt_CkGPS);
 					// get hour and minute from average
@@ -876,7 +886,6 @@ void checkForCommands (void) {
 							showCellReadings();
 							gpsFlags.gpsReqTest = 0; // test is over
 						} else { // only if NOT a test
-							daysSinceGPSSuccessfullyRead = 0; // reset the counter
 							gpsFlags.checkGpsToday = 0; // clear the system-set request flag
 						}
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced

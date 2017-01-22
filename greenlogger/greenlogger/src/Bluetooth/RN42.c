@@ -319,19 +319,6 @@ void checkForBTCommands (void) {
 					outputStringToBluetoothUART(datetime_string);
 /*	presently, a set-time command from the GPS could not come in by Bluetooth, though a
      request to the GPS to send the command could go out by Bluetooth
-					if (gpsFlags.gpsTimeRequested) { // set-time signal was requested from GPS
-						// for now, assume that's where this came from
-					strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
-					outputStringToBluetoothUART("\r\n");
-					rtcStatus = rtcHasGPSTime;
-					datetime_copy(&dt_tmp, &dt_LatestGPS);
-					showCellReadings();
-					gpsFlags.gpsTimeRequested = 0; // request has been serviced
-					} else { // time was set manually
-					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
-					outputStringToBluetoothUART("\r\n");
-					rtcStatus = rtcTimeManuallySet;
-				}
 */
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 					outputStringToBluetoothUART("\r\n");

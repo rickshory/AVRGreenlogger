@@ -706,6 +706,11 @@ void datetime_copy(dateTime *from, dateTime *to) {
  * It only works in the 100 years till Jan 1 2100
  * Return value is a 32 bit number, sufficient
  *  to hold the max possible: 3155760000
+ * Fn is actually inaccurate as written
+ * Counts 1 more month and 1 more day than correct, but
+ *  still gives consistent comparisons
+ * Fn is left this way so "null" date, 2000-00-00 00:00:00
+ *  will return 0 and compare as less than any real date
  */
 uint32_t datetime_totalsecs (dateTime *t) {
 	// t->year is the number of completed years, e.g. 1 (meaning 2001) says 

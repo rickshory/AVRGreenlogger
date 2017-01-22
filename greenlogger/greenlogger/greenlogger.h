@@ -191,8 +191,8 @@ typedef volatile union mBF { // motion bit flags
 
 void tuneMainOsc(void);
 void checkCriticalPower(void);
-void outputStringToUART0 (char* St);
-void outputStringToUART1 (char* St);
+void outputStringToWiredUART (char* St);
+void outputStringToBluetoothUART (char* St);
 void outputStringToBothUARTs (char* St);
 void checkForCommands (void);
 void enableAccelInterrupt (void);

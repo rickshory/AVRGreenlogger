@@ -21,32 +21,32 @@ extern char str[128];
 *****************************************/
 uint8_t findADXL345 (void) {
     uint8_t r;
-    outputStringToUART0("\n\r entered findADXL345 routine \n\r");
+    outputStringToWiredUART("\n\r entered findADXL345 routine \n\r");
 	motionFlags.accelerometerIsThere = 0; // flag cleared, until accel found
 	r = I2C_Start();
     len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-    outputStringToUART0(str);
+    outputStringToWiredUART(str);
 	if (r == TW_START) {
 		r = I2C_Write(ADXL345_ADDR_WRITE); // address the device, say we are going to write
 		len = sprintf(str, "\n\r I2C_Write(ADXL345_ADDR_WRITE): 0x%x\n\r", r);
-		outputStringToUART0(str);
+		outputStringToWiredUART(str);
 		if (r == TW_MT_SLA_ACK) {
 			motionFlags.accelerometerIsThere = 1; // accel found, set flag
 			r = I2C_Write(ADXL345_REG_DEVID); // tell the device the register we are going to want
 			len = sprintf(str, "\n\r I2C_Write(ADXL345_REG_DEVID): 0x%x\n\r", r);
-			outputStringToUART0(str);
+			outputStringToWiredUART(str);
 			if (r == TW_MT_DATA_ACK) {
 				r = I2C_Start(); // restart, preparatory to reading
 				len = sprintf(str, "\n\r ReStart: 0x%x\n\r", r);
-				outputStringToUART0(str);
+				outputStringToWiredUART(str);
 				if (r == TW_REP_START){
 					r = I2C_Write(ADXL345_ADDR_READ); // address the device, say we are going to read
 					len = sprintf(str, "\n\r I2C_Write(ADXL345_ADDR_READ): 0x%x\n\r", r);
-					outputStringToUART0(str);
+					outputStringToWiredUART(str);
 					if (r == TW_MR_SLA_ACK){
 						r = I2C_Read(0); // do NACK, since this is the last byte
 						len = sprintf(str, "\n\r I2C_Read(0): 0x%x\n\r", r);
-						outputStringToUART0(str);
+						outputStringToWiredUART(str);
 					}       
 				} else {
 					I2C_Stop();
@@ -64,7 +64,7 @@ uint8_t findADXL345 (void) {
 		return errNoI2CStart;
 	}
     I2C_Stop();
-    outputStringToUART0("\n\r I2C_Stop completed \n\r");
+    outputStringToWiredUART("\n\r I2C_Stop completed \n\r");
 	return I2C_OK;
 } // end of findAccelerometer
 
@@ -74,7 +74,7 @@ uint8_t findADXL345 (void) {
 
 uint8_t initializeADXL345 (void) {
     uint8_t r;
-	outputStringToUART0("\n\r entered initializeADXL345 routine \n\r");
+	outputStringToWiredUART("\n\r entered initializeADXL345 routine \n\r");
 //	findADXL345();
 //    if (!(motionFlags.accelerometerIsThere) {
 //        return;
@@ -180,7 +180,7 @@ uint8_t initializeADXL345 (void) {
 				r = I2C_Write(ADXL345_REG_POWER_CTL);
 				r = I2C_Write(0x08); //
 				I2C_Stop();
-//				outputStringToUART0("\n\r accelerometer initialization completed \n\r");
+//				outputStringToWiredUART("\n\r accelerometer initialization completed \n\r");
 				return I2C_OK;
 			} else { // could not write data to device
 				I2C_Stop();
@@ -209,7 +209,7 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
 		rs = readADXL345Register (ADXL345_REG_INT_SOURCE, &val);
 		if (rs) {
 			len = sprintf(str, " failure clearing ADXL345 tap interrupt: 0x%x\n\r", rs);
-			outputStringToUART0(str);
+			outputStringToWiredUART(str);
 			return rs;
 		}
     } while (val & 0x40); // tap = 0x40, double tap = 0x20
@@ -258,7 +258,7 @@ uint8_t readADXL345Axes (volatile accelAxisData *d) {
 //				// read format info
 //				d->dataFormat = I2C_Read(1); // do ACK, since not the last byte
 //				len = sprintf(str, "\n\r format = 0x%x\n\r", d->dataFormat);
-//				outputStringToUART0(str);
+//				outputStringToWiredUART(str);
 
 //				I2C_Stop();
 //				r = I2C_Write(ADXL345_ADDR_WRITE);
@@ -272,7 +272,7 @@ uint8_t readADXL345Axes (volatile accelAxisData *d) {
 				d->zHiByte = I2C_Read(0); // do NACK, since this is the last byte
 //				len = sprintf(str, "\n\r X0=0x%x, X1=0x%x, Y0=0x%x, Y1=0x%x, Z0=0x%x, Z1=0x%x\n\r", 
 //				     d->xLoByte, d->xHiByte, d->yLoByte, d->yHiByte, d->zLoByte, d->zHiByte);
-//				outputStringToUART0(str);
+//				outputStringToWiredUART(str);
 				I2C_Stop();
 				d->validation = I2C_OK;
 				return I2C_OK;
@@ -306,17 +306,17 @@ uint8_t setADXL345Register (uint8_t reg, uint8_t val) {
 	uint8_t r;
     r = I2C_Start();
 	if (r == TW_START) {
-//		outputStringToUART0("\n\r setADXL345Register: about to write address \n\r");
+//		outputStringToWiredUART("\n\r setADXL345Register: about to write address \n\r");
 		r = I2C_Write(ADXL345_ADDR_WRITE); // address the device, say we are going to write
 		if (r == TW_MT_SLA_ACK) {
-//			outputStringToUART0("\n\r setADXL345Register: about to write data \n\r");
+//			outputStringToWiredUART("\n\r setADXL345Register: about to write data \n\r");
 			r = I2C_Write(reg); // tell the device the register we are going to want
 			if (r == TW_MT_DATA_ACK) {
-//				outputStringToUART0("\n\r setADXL345Register: about to write value \n\r");
+//				outputStringToWiredUART("\n\r setADXL345Register: about to write value \n\r");
 				r = I2C_Write(val); // set the value
-//				outputStringToUART0("\n\r setADXL345Register: about to Stop \n\r");
+//				outputStringToWiredUART("\n\r setADXL345Register: about to Stop \n\r");
 				I2C_Stop();
-//				outputStringToUART0("\n\r setADXL345Register: Stop completed \n\r");
+//				outputStringToWiredUART("\n\r setADXL345Register: Stop completed \n\r");
 				return I2C_OK;
 			} else { // could not write data to device
 				I2C_Stop();
@@ -336,20 +336,20 @@ uint8_t readADXL345Register (uint8_t reg, uint8_t *valp) {
 	uint8_t r;
     r = I2C_Start();
 	if (r == TW_START) {
-//		outputStringToUART0("\n\r setADXL345Register: about to write address \n\r");
+//		outputStringToWiredUART("\n\r setADXL345Register: about to write address \n\r");
 		r = I2C_Write(ADXL345_ADDR_WRITE); // address the device, say we are going to write
 		if (r == TW_MT_SLA_ACK) {
-//			outputStringToUART0("\n\r setADXL345Register: about to write data \n\r");
+//			outputStringToWiredUART("\n\r setADXL345Register: about to write data \n\r");
 			r = I2C_Write(reg); // tell the device the register we are going to want
 			if (r == TW_MT_DATA_ACK) {
 				r = I2C_Start(); // restart, preparatory to reading
 				r = I2C_Write(ADXL345_ADDR_READ); // address the device, say we are going to read
-//				outputStringToUART0("\n\r setADXL345Register: about to read value \n\r");
+//				outputStringToWiredUART("\n\r setADXL345Register: about to read value \n\r");
 				*valp = I2C_Read(0); // do NACK, since this is the last and only byte
 //				r = I2C_Write(val); // set the value
-//				outputStringToUART0("\n\r setADXL345Register: about to Stop \n\r");
+//				outputStringToWiredUART("\n\r setADXL345Register: about to Stop \n\r");
 				I2C_Stop();
-//				outputStringToUART0("\n\r setADXL345Register: Stop completed \n\r");
+//				outputStringToWiredUART("\n\r setADXL345Register: Stop completed \n\r");
 				return I2C_OK;
 			} else { // could not write data to device
 				I2C_Stop();

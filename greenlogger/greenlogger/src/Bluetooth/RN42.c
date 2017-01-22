@@ -134,7 +134,7 @@ uint16_t cyPerRTCSqWave(void) {
 	uint8_t i, sreg;
 	twoByteData cyPerSec;
 	// go into uC clock adjust mode
-//	outputStringToUART1("\r\n going into uC adjust mode\r\n");
+//	outputStringToBluetoothUART("\r\n going into uC adjust mode\r\n");
 	timeFlags.nextAlarmSet = 0; // clear flag
 	disableRTCInterrupt();
 	intTmp1 = rtc_enableSqWave();
@@ -167,7 +167,7 @@ uint16_t cyPerRTCSqWave(void) {
 	// go back into normal timekeeping mode
 	setupTimer3_10ms();
 	disableRTCInterrupt();
-//	outputStringToUART1("\r\n returning to timekeeping mode\r\n");
+//	outputStringToBluetoothUART("\r\n returning to timekeeping mode\r\n");
 	if (!(timeFlags.nextAlarmSet)) {
 		if (!rtc_setupNextAlarm(&dt_CurAlarm))
 			timeFlags.nextAlarmSet = 1;
@@ -237,9 +237,9 @@ void checkForBTCommands (void) {
 //					uint8_t i, os0, os[100];
 					// go into uC clock adjust mode
 
-					outputStringToUART1("\r\n going into uC adjust mode\r\n");
+					outputStringToBluetoothUART("\r\n going into uC adjust mode\r\n");
 					len = sprintf(str, "baud register UBBR1: %d\r\n", UBRR1);
-					outputStringToUART1(str);
+					outputStringToBluetoothUART(str);
 					
 					ct0a = cyPerRTCSqWave(); // get starting cycle count, 3 samples
 					ct0b = cyPerRTCSqWave(); 
@@ -258,11 +258,11 @@ void checkForBTCommands (void) {
 					OSCCAL = os0; // restore
 					
 					len = sprintf(str, "original OSCCAL\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os0, (unsigned long)ct0a, (unsigned long)ct0b, (unsigned long)ct0c);
-					outputStringToUART1(str);
+					outputStringToBluetoothUART(str);
 					
 					for (i=0; i<100; i++) {
 						len = sprintf(str, "OSCCAL set to\t%d\t cycle counts\t%lu\t%lu\t%lu\r\n", os[i], (unsigned long)cta[i], (unsigned long)ctb[i], (unsigned long)ctc[i]);
-						outputStringToUART1(str);
+						outputStringToBluetoothUART(str);
 					}
 
 					// try tuning uC osc down to 7.3728 MHz
@@ -285,9 +285,9 @@ void checkForBTCommands (void) {
 					
 					// see if we still get any sense out of the uart
 					len = sprintf(str, "OSCCAL\t%d\tCT_below\t%lu\tCT_above\t%lu\r\n", OSCCAL, (unsigned long)cyCt, (unsigned long)cyCtNxtUp);
-					outputStringToUART1(str);
+					outputStringToBluetoothUART(str);
 
-					outputStringToUART1("\r\n returning to timekeeping mode\r\n");
+					outputStringToBluetoothUART("\r\n returning to timekeeping mode\r\n");
                     break;
                 }
 */
@@ -297,48 +297,48 @@ void checkForBTCommands (void) {
 					// because in some configurations any Tx feeds back to Rx
 					strcpy(stTmp, btCmdBuffer + 1);
 					if (!isValidDateTime(stTmp)) {
-						outputStringToUART1("\r\n Invalid timestamp\r\n");
+						outputStringToBluetoothUART("\r\n Invalid timestamp\r\n");
 						break;
 					}
 					if (!isValidTimezone(stTmp + 20)) {
-						outputStringToUART1("\r\n Invalid hour offset\r\n");
+						outputStringToBluetoothUART("\r\n Invalid hour offset\r\n");
 						break;
 					}
-					outputStringToUART1("\r\n Time changed from ");
+					outputStringToBluetoothUART("\r\n Time changed from ");
 					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_RTC);
 					datetime_getstring(datetime_string, &dt_RTC);
 					strcat(strJSON, datetime_string);
-					outputStringToUART1(datetime_string);
+					outputStringToBluetoothUART(datetime_string);
 					datetime_getFromUnixString(&dt_tmp, stTmp, 0);
 					rtc_setTime(&dt_tmp);
 					strcat(strJSON, "\",\"to\":\"");
-					outputStringToUART1(" to ");
+					outputStringToBluetoothUART(" to ");
 					datetime_getstring(datetime_string, &dt_tmp);
 					strcat(strJSON, datetime_string);
-					outputStringToUART1(datetime_string);
+					outputStringToBluetoothUART(datetime_string);
 /*	presently, a set-time command from the GPS could not come in by Bluetooth, though a
      request to the GPS to send the command could go out by Bluetooth
 					if (gpsFlags.gpsTimeRequested) { // set-time signal was requested from GPS
 						// for now, assume that's where this came from
 					strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
-					outputStringToUART1("\r\n");
+					outputStringToBluetoothUART("\r\n");
 					rtcStatus = rtcHasGPSTime;
 					datetime_copy(&dt_tmp, &dt_LatestGPS);
 					showCellReadings();
 					gpsFlags.gpsTimeRequested = 0; // request has been serviced
 					} else { // time was set manually
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
-					outputStringToUART1("\r\n");
+					outputStringToBluetoothUART("\r\n");
 					rtcStatus = rtcTimeManuallySet;
 				}
 */
 					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
-					outputStringToUART1("\r\n");
+					outputStringToBluetoothUART("\r\n");
 					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
-					outputStringToUART1(strHdr);
+					outputStringToBluetoothUART(strHdr);
 					if (!rtc_setupNextAlarm(&dt_CurAlarm))
 						timeFlags.nextAlarmSet = 1;
 					// cache timezone offset in persistent storage on SD card
@@ -351,28 +351,28 @@ void checkForBTCommands (void) {
 				case 'L': case 'l': 
 				{ // experimenting with the accelerometer Leveling functions
 					uint8_t rs, val;
-//					outputStringToUART1("\r\n about to initialize ADXL345\r\n");
+//					outputStringToBluetoothUART("\r\n about to initialize ADXL345\r\n");
 //					rs = initializeADXL345();
 //					if (rs) {
 //						len = sprintf(str, "\n\r initialize failed: %d\n\r", rs);
-//						outputStringToUART1(str);
+//						outputStringToBluetoothUART(str);
 //						break;
 //					}
-//					outputStringToUART1("\r\n ADXL345 initialized\r\n");
+//					outputStringToBluetoothUART("\r\n ADXL345 initialized\r\n");
 
 					// bring out of low power mode
 					// use 100Hz for now ; bit 4 set = reduced power, higher noise
 					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x0a);
 					if (rs) {
 						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
-						outputStringToUART1(str);
+						outputStringToBluetoothUART(str);
 						break;
 					}
 //					for (iTmp = 1; iTmp < 6; iTmp++) { // try reading bit 7, INT_SOURCE.DATA_READY
 //						rs = readADXL345Register(ADXL345_REG_INT_SOURCE, &val);
 //						if (rs) {
 //							len = sprintf(str, "\n\r could not read ADXL345_REG_INT_SOURCE: %d\n\r", rs);
-//							outputStringToUART1(str);
+//							outputStringToBluetoothUART(str);
 //							break;
 //						}
 //						if (val & (1 << 7)) {
@@ -380,27 +380,27 @@ void checkForBTCommands (void) {
 //						} else {
 //							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY clear: 0x%x\n\r", val);
 //						}							
-//						outputStringToUART1(str);
+//						outputStringToBluetoothUART(str);
 //					}
 
 
-//					outputStringToUART1("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
+//					outputStringToBluetoothUART("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
 					if (readADXL345Axes (&accelData)) {
-						outputStringToUART1("\r\n could not get ADXL345 data\r\n");
+						outputStringToBluetoothUART("\r\n could not get ADXL345 data\r\n");
 						break;
 					}
 					// set low power bit (4) and 25Hz sampling rate, for 40uA current
 					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x18);
 					if (rs) {
 						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
-						outputStringToUART1(str);
+						outputStringToBluetoothUART(str);
 						break;
 					}
 //				len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", (unsigned int)((int)x1 << 8 | (int)x0),
 //						  (unsigned int)((int)y1 << 8 | (int)y0),  (unsigned int)((int)z1 << 8 | (int)z0));
 					len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
 						accelData.yWholeWord,  accelData.zWholeWord);
-						outputStringToUART1(str);
+						outputStringToBluetoothUART(str);
 					break;
 				}
 
@@ -413,9 +413,9 @@ void checkForBTCommands (void) {
 				// put other commands here
 				default: 
 				{ // if no valid command, echo back the input
-					outputStringToUART1("\r\n> ");
-					outputStringToUART1(btCmdBuffer);
-					outputStringToUART1("\r\n");
+					outputStringToBluetoothUART("\r\n> ");
+					outputStringToBluetoothUART(btCmdBuffer);
+					outputStringToBluetoothUART("\r\n");
 //					startTimer1ToRunThisManySeconds(30); // keep system Roused another two minutes
 					break;
 				}
@@ -425,9 +425,9 @@ void checkForBTCommands (void) {
 		} else { // some other character
 			if (btCmdBufferPtr < (btCmdBuffer + commandBufferLen - 1)) { // if there is room
 				if (btCmdBufferPtr == btCmdBuffer) { // if first input
-					outputStringToUART1("\r\n\r\n> "); // show the user a blank line & prompt
+					outputStringToBluetoothUART("\r\n\r\n> "); // show the user a blank line & prompt
 				}
-				btFlags.btSerialBeingInput = 1; // flag that the user is inputting characters; blocks outputStringToUART1 fn
+				btFlags.btSerialBeingInput = 1; // flag that the user is inputting characters; blocks outputStringToBluetoothUART fn
 				*btCmdBufferPtr++ = c; // append char to the command buffer
 				uart1_putchar(c); // echo the character
 			}					
@@ -444,25 +444,25 @@ void BT_dataDump(char* stOpt) {
 	char stTryDate[12], stEndTryDate[25];
 	datetime_getstring(stEndTryDate, &dt_CurAlarm); // get current timestamp as string
 	stEndTryDate[10] = '\0'; // truncate to only the date
-//	outputStringToUART1("\n\r current date: \"");
-//	outputStringToUART1(stEndTryDate);
-//	outputStringToUART1("\"\n\r");
+//	outputStringToBluetoothUART("\n\r current date: \"");
+//	outputStringToBluetoothUART(stEndTryDate);
+//	outputStringToBluetoothUART("\"\n\r");
 	// find first date that has data
 	errBTDump = datetime_nextDateWithData(stBeginTryDate, 0);
 	if (errBTDump == sdPowerTooLowForSDCard) {
-		outputStringToUART1("\n\r Power too low for SD card.\n\r\n\r");
+		outputStringToBluetoothUART("\n\r Power too low for SD card.\n\r\n\r");
 		return;
 	}
 	switch (stOpt[1]) {
 		case '\0': { // "D" alone, most common option. Dump any days' data collected since previous dump.
 			errBTDump = readLastDumpDateFromSDCard(stBeginTryDate); // attempt to fetch the previous dump date
 			if (errBTDump) {
-				outputStringToUART1("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
+				outputStringToBluetoothUART("\n\r Failed to find previous dump date. Dumping all data.\n\r\n\r");
 			}
 			
-			outputStringToUART1("\n\r lastDump date read from SD card: ");
-			outputStringToUART1(stBeginTryDate);
-			outputStringToUART1("\n\r");
+			outputStringToBluetoothUART("\n\r lastDump date read from SD card: ");
+			outputStringToBluetoothUART(stBeginTryDate);
+			outputStringToBluetoothUART("\n\r");
 		
 			break;
 		}		
@@ -483,14 +483,14 @@ void BT_dataDump(char* stOpt) {
 				stBeginTryDate[11] = '\0'; // assure terminated
 				errBTDump = fileExistsForDate(stBeginTryDate);
 				if (errBTDump == sdFileOpenFail) { // file does not exist
-					outputStringToUART1("\n\r no data for ");
-					outputStringToUART1(stBeginTryDate);
-					outputStringToUART1(". Use \"dd\" to list dates having data.\n\r\n\r");
+					outputStringToBluetoothUART("\n\r no data for ");
+					outputStringToBluetoothUART(stBeginTryDate);
+					outputStringToBluetoothUART(". Use \"dd\" to list dates having data.\n\r\n\r");
 					return;
 				}					
 				strcpy(stEndTryDate, stBeginTryDate); // output one day only
 			} else {
-				outputStringToUART1("\n\r Invalid option.\n\r\n\r");
+				outputStringToBluetoothUART("\n\r Invalid option.\n\r\n\r");
 				return;
 			}
 			break;
@@ -499,9 +499,9 @@ void BT_dataDump(char* stOpt) {
 	} // end switch (stOpt[1])
 
 	if (outputOpt == 'c')
-		outputStringToUART1("\n\r{\"datadump\":\"begin\"}\n\r");
+		outputStringToBluetoothUART("\n\r{\"datadump\":\"begin\"}\n\r");
 	else
-		outputStringToUART1("\n\r{\"datesHavingData\":\"begin\"}\n\r");
+		outputStringToBluetoothUART("\n\r{\"datesHavingData\":\"begin\"}\n\r");
 	strcpy(stTryDate, stBeginTryDate);
 	do { // loop like this so dump will output at least one day
 		while (timeFlags.alarmDetected) { // continue logging during data dump
@@ -592,15 +592,15 @@ void BT_dataDump(char* stOpt) {
 				timeFlags.nextAlarmSet = 1;
 		}
 		
-//			outputStringToUART1("\n\r");
+//			outputStringToBluetoothUART("\n\r");
 		errBTDump = fileExistsForDate(stTryDate);
 		// somewhat redundant to test first because output fns test internally, but avoids output for nonexistent files
 		if (!errBTDump) {
 			if (outputOpt == 'c') { // contents
 				keepBluetoothPowered(120); // or eventually will time out
-				outputStringToUART1("\n\r{\"datafor\":\"");
-				outputStringToUART1(stTryDate);
-				outputStringToUART1("\"}\n\r");	
+				outputStringToBluetoothUART("\n\r{\"datafor\":\"");
+				outputStringToBluetoothUART(stTryDate);
+				outputStringToBluetoothUART("\"}\n\r");	
 				errBTDump = outputContentsOfFileForDate(stTryDate);
 					if (errBTDump) {
 						tellFileError (errBTDump);
@@ -615,9 +615,9 @@ void BT_dataDump(char* stOpt) {
 					tellFileError (errBTDump);
 				}
 			} else { // list of dates only
-//				outputStringToUART1("\n\r{\"datafor\":\"");
-				outputStringToUART1(stTryDate);
-				outputStringToUART1("\n\r");
+//				outputStringToBluetoothUART("\n\r{\"datafor\":\"");
+				outputStringToBluetoothUART(stTryDate);
+				outputStringToBluetoothUART("\n\r");
 			}
 
 
@@ -629,16 +629,16 @@ void BT_dataDump(char* stOpt) {
 		datetime_advanceDatestring1Day(stTryDate);
 	} while (strcmp(stTryDate, stEndTryDate) <= 0);
 
-//		outputStringToUART1("\n\r");
+//		outputStringToBluetoothUART("\n\r");
 	if (outputOpt == 'c') { // data file contents 
-		outputStringToUART1("\n\r{\"datadump\":\"end\"}\n\r\n\r");
-		outputStringToUART1("\n\r");
+		outputStringToBluetoothUART("\n\r{\"datadump\":\"end\"}\n\r\n\r");
+		outputStringToBluetoothUART("\n\r");
 		errBTDump = writeLastDumpDateToSDCard(stBeginTryDate);
 		if (errBTDump) {
 			tellFileError (errBTDump);
 		}
 	} else { // list of dates with data, only
-		outputStringToUART1("\n\r{\"datesHavingData\":\"end\"}\n\r");
+		outputStringToBluetoothUART("\n\r{\"datesHavingData\":\"end\"}\n\r");
 	}
 		
 	return;

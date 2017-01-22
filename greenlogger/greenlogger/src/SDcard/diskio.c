@@ -125,7 +125,7 @@ BYTE fileExists (char* stFileFullpath) {
 	
 	res = f_stat(stFileFullpath, &fno);
 //	lenLocal = sprintf(strLocal, "\n\r (fileExists) File stat return code: %d\n\r", res);
-//	outputStringToUART0(strLocal);
+//	outputStringToWiredUART(strLocal);
 	if (res != FR_OK) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;
@@ -173,7 +173,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		return sdMountFail;
 		//  flag error
 //		len = sprintf(str, "\n\r f_mount failed: 0x%x\n\r", 0);
-//		outputStringToUART0(str);
+//		outputStringToWiredUART(str);
 	}
 
 	DSTATUS driveStatus = disk_initialize(0);
@@ -185,7 +185,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 			goto unmountVolume;
 //	flag error.
 //	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
-//	outputStringToUART0(str);
+//	outputStringToWiredUART(str);
 	}
 	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
 	res = f_mkdir(stDir);
@@ -193,7 +193,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		retVal = sdMkDirFail;
 		goto unmountVolume;
 //		len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
-//		outputStringToUART0(str);	
+//		outputStringToWiredUART(str);	
 	}
 	
 	FIL logFile;
@@ -211,7 +211,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;
 //		len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
-//		outputStringToUART0(str);
+//		outputStringToWiredUART(str);
 	//flag error
 	}
 	
@@ -283,7 +283,7 @@ BYTE writeCharsToSDCard (char* St, BYTE n) {
 	}
 	
 //		len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
-//		outputStringToUART0(str);
+//		outputStringToWiredUART(str);
 	//Flush the write buffer with f_sync(&logFile);
 
 // retVal = sdOK;
@@ -396,11 +396,11 @@ BYTE readStringFromFileFromSDCard (char* stParam, char* stFile, BYTE stLen) {
 		goto unmountVolume;
 }	
 
-//	outputStringToUART0("\n\r(before read) string passed to fn: ");
-//	outputStringToUART0(stParam);
+//	outputStringToWiredUART("\n\r(before read) string passed to fn: ");
+//	outputStringToWiredUART(stParam);
 //	stringSize = stLen;
 //	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stLen);
-//	outputStringToUART0(stTmp);
+//	outputStringToWiredUART(stTmp);
 
 	f_gets(stParam, stLen - 1, &logFile);
 	
@@ -411,11 +411,11 @@ BYTE readStringFromFileFromSDCard (char* stParam, char* stFile, BYTE stLen) {
 	
 	stParam[stLen] = '\0';
 
-//	outputStringToUART0("\n\r(after read) string passed to fn: ");
-//	outputStringToUART0(stParam);
+//	outputStringToWiredUART("\n\r(after read) string passed to fn: ");
+//	outputStringToWiredUART(stParam);
 //	stringSize = stLen;
 //	tmpLen = sprintf(stTmp, "\t size=%d\n\r\n\r", stringSize);
-//	outputStringToUART0(stTmp);
+//	outputStringToWiredUART(stTmp);
 
 	//Close and unmount.
 	closeFile:
@@ -609,9 +609,9 @@ BYTE readTimezoneFromSDCard (void) {
 		goto closeFile;
 	}
 	
-	outputStringToUART0("\n\rTimezone read from file: ");
-	outputStringToUART0(stTZ);
-	outputStringToUART0("\n\r\n\r");
+	outputStringToWiredUART("\n\rTimezone read from file: ");
+	outputStringToWiredUART(stTZ);
+	outputStringToWiredUART("\n\r\n\r");
 
 	timeZoneOffset = atoi(stTZ);
 	timeFlags.timeZoneRead = 1;
@@ -643,16 +643,16 @@ BYTE readTimezoneFromSDCard (void) {
  *
  */
 BYTE writeLastDumpDateToSDCard (char* stDate) {
-	outputStringToUART0("\n\r(inside fn 'writeLastDumpDateToSDCard') ");
+	outputStringToWiredUART("\n\r(inside fn 'writeLastDumpDateToSDCard') ");
 	if (!isValidDate(stDate)) {
-		outputStringToUART0("invalid date: ");
-		outputStringToUART0(stDate);
-		outputStringToUART0("\n\r\n\r");
+		outputStringToWiredUART("invalid date: ");
+		outputStringToWiredUART(stDate);
+		outputStringToWiredUART("\n\r\n\r");
 		return sdInvalidDate;
 	} 
-	outputStringToUART0("date string about to be written: ");
-	outputStringToUART0(stDate);
-	outputStringToUART0("\n\r\n\r");
+	outputStringToWiredUART("date string about to be written: ");
+	outputStringToWiredUART(stDate);
+	outputStringToWiredUART("\n\r\n\r");
 	return writeStringInFileToSDCard(stDate, "LASTDUMP.TXT");
 }
 
@@ -733,7 +733,7 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 			retVal = sdFileReadFail;
 			goto closeFile;
 		}
-		outputStringToUART1(stLine); // output to Bluetooth only
+		outputStringToBluetoothUART(stLine); // output to Bluetooth only
 	}
 	
 	//Close and unmount.
@@ -760,7 +760,7 @@ void tellFileError (BYTE err)
 {
  switch (err) {
   //case IgnoreCard: {
-   //outputStringToUART0("\r\n SD card ignored (\"O\" toggles)\r\n");
+   //outputStringToWiredUART("\r\n SD card ignored (\"O\" toggles)\r\n");
    //break;
   //}
   case sdPowerTooLowForSDCard: {

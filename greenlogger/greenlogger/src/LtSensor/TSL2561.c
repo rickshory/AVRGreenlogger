@@ -63,7 +63,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 		rd->validation = errBadParameters;
 		return rd->validation;
 	}
-//	outputStringToUART0("\n\r entered irradiance routine \n\r");
+//	outputStringToWiredUART("\n\r entered irradiance routine \n\r");
 	// check device ID, could use to read from various devices
 	// can comment out this whole first section, if always using TSL2561
 
@@ -72,23 +72,23 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 		// power up the device
 		r = I2C_Start();
 	//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-	//    outputStringToUART0(str);
+	//    outputStringToWiredUART(str);
 		if (r == TW_START) {
 			r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
 	//		len = sprintf(str, "\n\r I2C_Write(TSL2561_??_ADDR_WRITE): 0x%x\n\r", r);
-	//		outputStringToUART0(str);
+	//		outputStringToWiredUART(str);
 			if (r == TW_MT_SLA_ACK) {
 				irrChannel = (TSL2561_CMD_BIT | TSL2561_WRD_BIT | sensChannel);
 				// write; a byte command, setting the register to CONTROL = 0x00
 				d = (TSL2561_CMD_BIT | TSL2561_CONTROL);
 				r = I2C_Write(d);
 	//			len = sprintf(str, "\n\r I2C_Write(TSL2561_CMD_BIT | TSL2561_CONTROL): 0x%x\n\r", r);
-	//			outputStringToUART0(str);
+	//			outputStringToWiredUART(str);
 				if (r == TW_MT_DATA_ACK) {
 					d = TSL2561_PWR_ON; // write to CONTROL, power-up code
 					r = I2C_Write(d);
 	//				len = sprintf(str, "\n\r I2C_Write(TSL2561_PWR_ON): 0x%x\n\r", r);
-	//				outputStringToUART0(str);
+	//				outputStringToWiredUART(str);
 					I2C_Stop();
 				} else { // could not write data to device
 					I2C_Stop();
@@ -96,7 +96,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 					return rd->validation;
 				}
 			} else { // could not address device
-//				outputStringToUART0("\n\r sensor not present or not responding\n\r");
+//				outputStringToWiredUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
 				rd->validation = errNoI2CAddressAck;
 				return rd->validation;
@@ -109,11 +109,11 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 		// set up sensitivity, prep to read sensor
 		r = I2C_Start();
 	//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-	//    outputStringToUART0(str);
+	//    outputStringToWiredUART(str);
 		if (r == TW_START) {
 			r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
 	//		len = sprintf(str, "\n\r I2C_Write(TSL2561_??_ADDR_WRITE): 0x%x\n\r", r);
-	//		outputStringToUART0(str);
+	//		outputStringToWiredUART(str);
 			if (r == TW_MT_SLA_ACK) {  // write; a byte command, setting the register to TIMING = 0x01
 				d = (TSL2561_CMD_BIT | TSL2561_TIMING);
 				r = I2C_Write(d);
@@ -121,7 +121,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 					// for testing, use high gain and 402 ms integration time
 					r = I2C_Write(regTimingVal); // write to TIMING, the gain and integration time
 	//				len = sprintf(str, "\n\r I2C_Write(regTimingVal): 0x%x\n\r", r);
-	//				outputStringToUART0(str);
+	//				outputStringToWiredUART(str);
 					I2C_Stop();
 				} else { // could not write data to device
 					I2C_Stop();
@@ -129,7 +129,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 					return rd->validation;
 				}
 			} else { // could not address device
-//				outputStringToUART0("\n\r sensor not present or not responding\n\r");
+//				outputStringToWiredUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
 				rd->validation = errNoI2CAddressAck;
 				return rd->validation;
@@ -142,18 +142,18 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 		// get the irradiance reading
 		r = I2C_Start();
 	//	len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-	//	outputStringToUART0(str);
+	//	outputStringToWiredUART(str);
 		if (r == TW_START) {
 			r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
 	//		len = sprintf(str, "\n\r I2C_Write(TSL2561_??_ADDR_WRITE): 0x%x\n\r", r);
-	//		outputStringToUART0(str);
+	//		outputStringToWiredUART(str);
 			if (r == TW_MT_SLA_ACK) { // write; a byte command, setting the register to the desired channel
 				r = I2C_Write(irrChannel);
 	//			len = sprintf(str, "\n\r I2C_Write(irrChannel): 0x%x\n\r", r);
-	//			outputStringToUART0(str);
+	//			outputStringToWiredUART(str);
 				for (intTmp = 1; intTmp < 10; intTmp++) {  // poll device up to 10 times
 	//				len = sprintf(str, "\n\r  Loop: 0x%x\n\r", intTmp);
-	//				outputStringToUART0(str);
+	//				outputStringToWiredUART(str);
 					r = I2C_Start(); // restart, preparatory to reading
 					r = I2C_Write(irrSensorReadAddr); // address the device, say we are going to read
 	// d = irrSensorReadAddr;
@@ -173,10 +173,10 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 				} // end of polling FOR loop, either zero or value
 				I2C_Stop();
 //				len = sprintf(str, "\n\r reading: %lu\n\r", (unsigned long)(rd->irrWholeWord));
-//				outputStringToUART0(str);
+//				outputStringToWiredUART(str);
 			
 			} else { // could not address device
-//				outputStringToUART0("\n\r sensor not present or not responding\n\r");
+//				outputStringToWiredUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
 				rd->validation = errNoI2CAddressAck;
 				return rd->validation;
@@ -188,22 +188,22 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 		// power down the device
 		r = I2C_Start();
 	//    len = sprintf(str, "\n\r I2C_Start: 0x%x\n\r", r);
-	//    outputStringToUART0(str);
+	//    outputStringToWiredUART(str);
 		if (r == TW_START) {
 			r = I2C_Write(irrSensorWriteAddr); // address the device, say we are going to write
 	//		len = sprintf(str, "\n\r I2C_Write(TSL2561_??_ADDR_WRITE): 0x%x\n\r", r);
-	//		outputStringToUART0(str);
+	//		outputStringToWiredUART(str);
 			if (r == TW_MT_SLA_ACK) {
 				// write; a byte command, setting the register to CONTROL = 0x00
 				d = (TSL2561_CMD_BIT | TSL2561_CONTROL);
 				r = I2C_Write(d);
 	//			len = sprintf(str, "\n\r I2C_Write(TSL2561_CMD_BIT | TSL2561_CONTROL): 0x%x\n\r", r);
-	//			outputStringToUART0(str);
+	//			outputStringToWiredUART(str);
 				if (r == TW_MT_DATA_ACK) {
 					d = TSL2561_PWR_OFF; // write to CONTROL, power-down code
 					r = I2C_Write(d);
 	//				len = sprintf(str, "\n\r I2C_Write(TSL2561_PWR_OFF): 0x%x\n\r", r);
-	//				outputStringToUART0(str);
+	//				outputStringToWiredUART(str);
 					I2C_Stop();
 				} else { // could not write data to device
 					I2C_Stop();
@@ -211,7 +211,7 @@ uint8_t getIrrReading (uint8_t sensPosition, uint8_t sensChannel, irrData *rd) {
 					return rd->validation;
 				}
 			} else { // could not address device
-//				outputStringToUART0("\n\r sensor not present or not responding\n\r");
+//				outputStringToWiredUART("\n\r sensor not present or not responding\n\r");
 				I2C_Stop();
 				rd->validation = errNoI2CAddressAck;
 				return rd->validation;

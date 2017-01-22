@@ -451,9 +451,10 @@ int main(void)
 				break;
 			}
 			
-			if ((gpsFlags.checkGpsToday) && (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) {
-				// alarm has passed GPS check time
-				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
+			if ((gpsFlags.checkGpsToday) // flag to check but has not been serviced
+				&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1) // alarm has passed GPS check time
+				&& (!(gpsFlags.gpsTimeRequested))) { // do not repeat request if one is already out
+					GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 			}
 			
 			// see if it's time to log data

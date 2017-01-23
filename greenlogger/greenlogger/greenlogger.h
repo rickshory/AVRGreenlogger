@@ -92,7 +92,8 @@ typedef volatile union sBF { // status bit flags
 			// done on initialization, reset, time change, and midnight rollover
 		unsigned char reachedFullPower:1; // cell charging achieved high enough voltage to allow 
 			// high-power modules, initializations
-		unsigned char sfBit6:1; // unused
+		unsigned char logSilently:1; // do not give any diagnostics while logging; used during processes
+			// such as data dump and instrument leveling
 		unsigned char sfBit7:1; // unused
 	};
 } sFlags1;

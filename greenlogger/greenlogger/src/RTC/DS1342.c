@@ -1077,6 +1077,9 @@ void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZo
  *  Precondition: date/time starting at pointer, in strict format:
  *  20YY-MM-DD HH:MM:SS (century must be 2000)
  *  use this fn before trying to set the time
+ *  This fn does not check for anything after the date/time
+ * so control can pass other parameters, such as GPS
+ * coordinates, in that following space
  */
 
 uint8_t isValidDateTime(char* p)

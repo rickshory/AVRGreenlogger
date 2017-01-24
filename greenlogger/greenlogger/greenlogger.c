@@ -383,7 +383,7 @@ int main(void)
 			}
 			motionFlags.tapDetected = 0; // clear the flag
 		}
-			
+
 		timeFlags.nextAlarmSet = 0; // flag that current alarm is no longer valid
 
 		while (timeFlags.alarmDetected) { // interrupt that woke from sleep was RTC alarm

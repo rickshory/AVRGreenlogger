@@ -578,6 +578,7 @@ void BT_dataDump(char* stOpt) {
 			if (!rtc_setupNextAlarm(&dt_CurAlarm))
 				timeFlags.nextAlarmSet = 1;
 		}
+		// end of continue logging during data dump
 		
 //			outputStringToBluetoothUART("\n\r");
 		errBTDump = fileExistsForDate(stTryDate);

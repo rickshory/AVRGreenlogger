@@ -658,6 +658,88 @@ int main(void)
 	} // end of main program loop
 } // end of fn main
 
+/**
+ * \brief make a log string
+ *
+ * Create a string that is the series of data values
+ *  to log. That string will be in the buffer 'strLog'.
+ * If the logSilently flag is set, does
+ *  not output any diagnostics to the UARTs
+ *  while creating the string; otherwise echoes
+ *  everything to both UARTs.
+ * Uses many global variables:
+ * Expects the the timestamp to be in dt_CurAlarm
+ * Uses buffers str, strLog, datetime_string
+ * Uses irrReadings
+ * Sets flags isDarkBBDn, isDarkIRDn, isDarkBBUp, isDarkIRUp
+ * The calling routine decides whether to write 
+ *  the created string to the SD card.
+ * Returns an error code, 0= no error.
+ * \
+ *  
+ */
+
+uint8_t makeLogString(void) {
+	int strLen;
+	strcpy(strLog, "\n\r");
+	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\r\n");
+	datetime_getstring(datetime_string, &dt_CurAlarm);
+	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(datetime_string);
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
+		if (!(stateFlags1.logSilently)) {
+			strLen = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+			outputStringToBothUARTs(str);
+		}
+		return 1;
+	} // end of testing if power too low
+	
+	// attempt to assure time zone is synchronized
+	syncTimeZone(); // internally tests if work is already done
+	
+	// read irradiance sensors
+	for (uint8_t i=0; i<4; i++) {
+		uint8_t swDnUp, swBbIr, iTmp0;
+		switch (i) {
+			case 0:
+				swDnUp = TSL2561_DnLooking;
+				swBbIr = TSL2561_CHANNEL_BROADBAND;
+				break;
+			case 1:
+				swDnUp = TSL2561_DnLooking;
+				swBbIr = TSL2561_CHANNEL_INFRARED;
+				break;
+			case 2:
+				swDnUp = TSL2561_UpLooking;
+				swBbIr = TSL2561_CHANNEL_BROADBAND;
+				break;
+			case 3:
+				swDnUp = TSL2561_UpLooking;
+				swBbIr = TSL2561_CHANNEL_INFRARED;
+				break;
+		}
+		iTmp0 = getIrrReading(swDnUp, swBbIr, &irrReadings[i]);
+		if (!iTmp0) {
+			
+		} else {
+			
+		}
+	}
+	/*
+	for (ct = 0; ct < 4; ct++) {
+
+		intTmp1 = getIrrReading(swDnUp, swBbIr, &irrReadings[ct]);
+		if (!intTmp1) {
+			len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
+			} else if (intTmp1 == errNoI2CAddressAck) { // not present or not responding
+			len = sprintf(str, "\t-");
+			} else {
+			len = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", intTmp1);
+		}
+		outputStringToBothUARTs(str);
+	}
+	*/
+}
 
 /**
  * \brief tune system oscillator to 7.3728 MHz, implement 115200 baud
@@ -777,7 +859,8 @@ void outputStringToBothUARTs (char* St) {
  * \brief Show the cell readings
  *
  * Show the series of cell readings
- *
+ * that used to track the moving
+ * average of maximum daily cell charge
  * \
  *  
  */

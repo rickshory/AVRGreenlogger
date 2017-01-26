@@ -681,25 +681,26 @@ int main(void)
 
 uint8_t makeLogString(void) {
 	int strLen;
+	uint8_t iTmp0;
 	strcpy(strLog, "\n\r");
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\r\n");
 	datetime_getstring(datetime_string, &dt_CurAlarm);
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(datetime_string);
-	
+	strcat(strLog, datetime_string);
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
 		if (!(stateFlags1.logSilently)) {
 			strLen = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 			outputStringToBothUARTs(str);
 		}
-		return 1;
+		return 1; // check this
 	} // end of testing if power too low
 	
 	// attempt to assure time zone is synchronized
 	syncTimeZone(); // internally tests if work is already done
 	
-	// read irradiance sensors
+	// attempt to read irradiance sensors
 	for (uint8_t i=0; i<4; i++) {
-		uint8_t swDnUp, swBbIr, iTmp0;
+		uint8_t swDnUp, swBbIr;
 		switch (i) {
 			case 0:
 				swDnUp = TSL2561_DnLooking;
@@ -719,26 +720,79 @@ uint8_t makeLogString(void) {
 				break;
 		}
 		iTmp0 = getIrrReading(swDnUp, swBbIr, &irrReadings[i]);
-		if (!iTmp0) {
-			
-		} else {
-			
+		
+		if (iTmp0) { // some error
+			if (iTmp0 == errNoI2CAddressAck) { // not present or not responding, valid blank
+				if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\t-");
+			} else { // unrecoverable error
+				if (!(stateFlags1.logSilently)) {
+					strLen = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", iTmp0);
+					outputStringToBothUARTs(str);
+				}
+				return 2; // check this, return iTmp0?
+			}
+		} else { // no error getting this reading
+			if (!(stateFlags1.logSilently)) {
+				strLen = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[i].irrWholeWord 
+						* (unsigned long)irrReadings[i].irrMultiplier));
+				outputStringToBothUARTs(str);
+			}
 		}
-	}
-	/*
-	for (ct = 0; ct < 4; ct++) {
-
-		intTmp1 = getIrrReading(swDnUp, swBbIr, &irrReadings[ct]);
-		if (!intTmp1) {
-			len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
-			} else if (intTmp1 == errNoI2CAddressAck) { // not present or not responding
-			len = sprintf(str, "\t-");
-			} else {
-			len = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", intTmp1);
-		}
-		outputStringToBothUARTs(str);
-	}
-	*/
+	} // end of for loop that reads irradiance sensors
+	// got all 4 irradiance readings OK, append them to the log string
+	irradFlags.isDarkBBDn = 0;
+	irradFlags.isDarkIRDn = 0;
+	irradFlags.isDarkBBUp = 0;
+	irradFlags.isDarkIRUp = 0; // default clear
+	for (uint8_t i=0; i<4; i++) { 
+		unsigned long irrVal, irrDarkCutoff;
+		if (irrReadings[i].validation) { // only error that could have got to this point is a valid blank
+			strcat(strLog, "\t");
+			switch (i) { // treat invalid readings as if dark
+				case 0:
+				irradFlags.isDarkBBDn = 1;
+				break;
+				case 1:
+				irradFlags.isDarkIRDn = 1;
+				break;
+				case 2:
+				irradFlags.isDarkBBUp = 1;
+				break;
+				case 3:
+				irradFlags.isDarkIRUp = 1;
+				break;
+			}
+		} else { // a valid reading
+			irrVal = (unsigned long)((unsigned long)irrReadings[i].irrWholeWord 
+				* (unsigned long)irrReadings[i].irrMultiplier);
+			strLen = sprintf(str, "\t%lu", irrVal);
+			strcat(strLog, str);
+			if ((i == 0) || (i == 3)) { // broadband
+				irrDarkCutoff = darkCutOffBB;
+			} else { // infrared
+				irrDarkCutoff = darkCutoffIR;
+			}
+			if (irrVal < irrDarkCutoff) {
+				switch (i) {
+					case 0:
+						irradFlags.isDarkBBDn = 1;
+						break;
+					case 1:
+						irradFlags.isDarkIRDn = 1;
+						break;
+					case 2:
+						irradFlags.isDarkBBUp = 1;
+						break;
+					case 3:
+						irradFlags.isDarkIRUp = 1;
+						break;
+				}
+			} // end of if a reading is below dark threshold
+		} // end of if valid or blank reading
+	} // end of for loop that appends irradiance readings
+	
+	
+	return 0; // got log string OK
 }
 
 /**

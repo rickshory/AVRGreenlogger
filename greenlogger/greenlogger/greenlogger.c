@@ -767,7 +767,7 @@ uint8_t makeLogString(void) {
 				* (unsigned long)irrReadings[i].irrMultiplier);
 			strLen = sprintf(str, "\t%lu", irrVal);
 			strcat(strLog, str);
-			if ((i == 0) || (i == 3)) { // broadband
+			if ((i == 0) || (i == 2)) { // broadband
 				irrDarkCutoff = darkCutOffBB;
 			} else { // infrared
 				irrDarkCutoff = darkCutoffIR;

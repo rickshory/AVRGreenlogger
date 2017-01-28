@@ -232,7 +232,7 @@ int main(void)
 	syncTimeZone();
 	
 	//initialize latest GPS-read time to null, so will compare as
-	// less than any real time and trigger a request for GPS time
+	// less than any real time, and will trigger a request for GPS time
 	dt_LatestGPS.year = 0;
 	dt_LatestGPS.month = 0;
 	dt_LatestGPS.day = 0;
@@ -478,7 +478,11 @@ int main(void)
 				stayRoused(5); // rouse for 0.05 second to flash the pilot light
 				break; 
 			}
+			
+			stateFlags1.logSilently = 0; // show diagnostics while gathering data
+			if (makeLogString()) break;
 
+/*
 			datetime_getstring(datetime_string, &dt_CurAlarm);
 			outputStringToBothUARTs(datetime_string);
 			
@@ -590,7 +594,9 @@ int main(void)
 				strcat(strLog, str);
 			} // end of irradiance sensor validity testing
 
+*/
 			if (timeFlags.timeToLogData) {
+/*
 //				outputStringToWiredUART("\n\r Entered log data routine \n\r");
 				// (previously built irradiance part of log string)
 				
@@ -603,8 +609,9 @@ int main(void)
 				// log cell voltage
 				len = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 				strcat(strLog, str);
-				
-				len = strlen(strLog);
+
+*/				
+				len = strlen(strLog); // 'makeLogString' internally creates log string
 				errSD = writeCharsToSDCard(strLog, len);
 				if (errSD) {
 					tellFileError (errSD);
@@ -613,7 +620,7 @@ int main(void)
 				}
 			} // end of test if time to log data
 			
-			// test if dark or not dark
+			// test if dark or not dark, 'makeLogString' internally sets these flags
 			// if all sensors are less than thresholds, or missing; and system not in Roused state
 			if ((irradFlags.isDarkBBDn) && 
 				    (irradFlags.isDarkIRDn) && 
@@ -636,10 +643,9 @@ int main(void)
 				}
 			} // end of testing for dark or not dark		
 
-
 			// let main loop restore Idle state, after assuring timer interrupts are re-established
 			break; // if did everything, break here
-		} // end of data acquisition segment
+		} // end of data acquisition segment, while AlarmDetected
 				
 		turnSDCardPowerOff();
 		
@@ -669,6 +675,7 @@ int main(void)
  *  everything to both UARTs.
  * Uses many global variables:
  * Expects the the timestamp to be in dt_CurAlarm
+ * Expects the cell voltage in cellVoltageReading
  * Uses buffers str, strLog, datetime_string
  * Uses irrReadings
  * Sets flags isDarkBBDn, isDarkIRDn, isDarkBBUp, isDarkIRUp
@@ -685,11 +692,12 @@ uint8_t makeLogString(void) {
 	strcpy(strLog, "\n\r");
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\r\n");
 	datetime_getstring(datetime_string, &dt_CurAlarm);
-	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(datetime_string);
 	strcat(strLog, datetime_string);
+	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(datetime_string);
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
 		if (!(stateFlags1.logSilently)) {
-			strLen = sprintf(str, "\t power too low to read sensors, %lumV\r\n", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+			strLen = sprintf(str, "\t power too low to read sensors, %lumV\r\n", 
+					(unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 			outputStringToBothUARTs(str);
 		}
 		return 1; // check this
@@ -802,6 +810,10 @@ uint8_t makeLogString(void) {
 	}
 	
 	// log cell voltage
+	// calc cell voltage from ADC reading earlier
+	// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
+	// using internal reference, Vref = 2.56V = 2560mV
+	// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
 	strLen = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 	strcat(strLog, str);
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(str);

@@ -791,6 +791,20 @@ uint8_t makeLogString(void) {
 		} // end of if valid or blank reading
 	} // end of for loop that appends irradiance readings
 	
+	// log temperature
+	// insert spacer, even if can not get temperature reading
+	strcat(strLog, "\t");
+	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\t");
+	if (!(temperature_GetReading(&temperatureReading))) { // got temperature
+		strLen = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
+		strcat(strLog, str);
+		if (!(stateFlags1.logSilently)) outputStringToBothUARTs(str);
+	}
+	
+	// log cell voltage
+	strLen = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+	strcat(strLog, str);
+	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(str);
 	
 	return 0; // got log string OK
 }

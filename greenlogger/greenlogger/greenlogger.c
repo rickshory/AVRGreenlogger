@@ -687,7 +687,7 @@ int main(void)
  */
 
 uint8_t makeLogString(void) {
-	int strLen;
+	int strLn;
 	uint8_t iTmp0;
 	strcpy(strLog, "\n\r");
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\r\n");
@@ -696,7 +696,7 @@ uint8_t makeLogString(void) {
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(datetime_string);
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
 		if (!(stateFlags1.logSilently)) {
-			strLen = sprintf(str, "\t power too low to read sensors, %lumV\r\n", 
+			strLn = sprintf(str, "\t power too low to read sensors, %lumV\r\n", 
 					(unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 			outputStringToBothUARTs(str);
 		}
@@ -734,14 +734,14 @@ uint8_t makeLogString(void) {
 				if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\t-");
 			} else { // unrecoverable error
 				if (!(stateFlags1.logSilently)) {
-					strLen = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", iTmp0);
+					strLn = sprintf(str, "\n\r Could not get reading, err code: %x \n\r", iTmp0);
 					outputStringToBothUARTs(str);
 				}
 				return 2; // check this, return iTmp0?
 			}
 		} else { // no error getting this reading
 			if (!(stateFlags1.logSilently)) {
-				strLen = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[i].irrWholeWord 
+				strLn = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[i].irrWholeWord 
 						* (unsigned long)irrReadings[i].irrMultiplier));
 				outputStringToBothUARTs(str);
 			}
@@ -773,7 +773,7 @@ uint8_t makeLogString(void) {
 		} else { // a valid reading
 			irrVal = (unsigned long)((unsigned long)irrReadings[i].irrWholeWord 
 				* (unsigned long)irrReadings[i].irrMultiplier);
-			strLen = sprintf(str, "\t%lu", irrVal);
+			strLn = sprintf(str, "\t%lu", irrVal);
 			strcat(strLog, str);
 			if ((i == 0) || (i == 2)) { // broadband
 				irrDarkCutoff = darkCutOffBB;
@@ -804,7 +804,7 @@ uint8_t makeLogString(void) {
 	strcat(strLog, "\t");
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\t");
 	if (!(temperature_GetReading(&temperatureReading))) { // got temperature
-		strLen = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
+		strLn = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
 		strcat(strLog, str);
 		if (!(stateFlags1.logSilently)) outputStringToBothUARTs(str);
 	}
@@ -814,7 +814,7 @@ uint8_t makeLogString(void) {
 	// formula from datasheet: V(measured) = adcResult * (1024 / Vref)
 	// using internal reference, Vref = 2.56V = 2560mV
 	// V(measured) = adcResult * 2.5 (units are millivolts, so as to get whole numbers)
-	strLen = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
+	strLn = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 	strcat(strLog, str);
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(str);
 	

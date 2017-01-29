@@ -16,6 +16,7 @@
 // controls reset of the uC in the GPS subsystem
 
 #define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
+//#define DAYS_FOR_MOVING_AVERAGE 2 // special testing version
 
 typedef volatile struct { // used for tracking the cell voltage daily maximum, when
 						// most power is available for tasks whose timing is 

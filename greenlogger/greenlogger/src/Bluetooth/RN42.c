@@ -508,7 +508,12 @@ void BT_dataDump(char* stOpt) {
 			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
 				break;
 			}
+
 			
+			stateFlags1.logSilently = 1; // don't show any diagnostics while gathering data
+			if (makeLogString()) break; // exit on error
+			
+/*
 			// attempt to assure time zone is synchronized
 			syncTimeZone(); // internally tests if work is already done
 			
@@ -564,14 +569,15 @@ void BT_dataDump(char* stOpt) {
 			// log cell voltage
 			len = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
 			strcat(strLog, str);
-				
+
+*/				
 			len = strlen(strLog);
 			errSD = writeCharsToSDCard(strLog, len);
 			if (errSD) {
 				tellFileError (errSD);
-			} 
+			} // end of silent logging, this latest data
 		
-		} // end of data acquisition loop
+		} // end of alarm detected
 		
 		// set next alarm
 		if (!(timeFlags.nextAlarmSet)) {

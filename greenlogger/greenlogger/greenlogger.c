@@ -492,8 +492,7 @@ int main(void)
 			}
 			
 			if ((gpsFlags.checkGpsToday) // flag to check but has not been serviced
-					&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1) // alarm has passed GPS check time
-					&& (!(gpsFlags.gpsTimeRequested))) { // do not repeat request if one is already out
+					&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) { // alarm has passed GPS check time
 				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
 				// e.g. {"GPStime":{"requested":"2017-01-18 22:45:03 +00"}}
 				strcat(strJSON, "\r\n{\"GPStime\":{\"requested\":\"");

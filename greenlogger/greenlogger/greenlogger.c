@@ -429,10 +429,10 @@ int main(void)
 					// {"GPStime":{"pending":"2017-01-17 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
 					strcat(strJSON, "\r\n{\"GPStime\":{\"pending\":\"");
 					datetime_getstring(datetime_string, &dt_CkGPS);
-					strcat(strJSON, str);
+					strcat(strJSON, datetime_string);
 					strcat(strJSON, "\",\"now\":\"");
 					datetime_getstring(datetime_string, &dt_CurAlarm);
-					strcat(strJSON, str);
+					strcat(strJSON, datetime_string);
 					strcat(strJSON, "\"}}\r\n");
 				} else { // see if time to set up a GPS-time request
 					if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
@@ -454,19 +454,19 @@ int main(void)
 						// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
 						strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
 						datetime_getstring(datetime_string, &dt_CkGPS);
-						strcat(strJSON, str);
+						strcat(strJSON, datetime_string);
 						strcat(strJSON, "\",\"now\":\"");
 						datetime_getstring(datetime_string, &dt_CurAlarm);
-						strcat(strJSON, str);
+						strcat(strJSON, datetime_string);
 						strcat(strJSON, "\"}}\r\n");
 					} else { // not time to set up a request yet
 						// e.g {"GPStime":{"notsetup":"2017-01-19 22:45:03 +00","now":"2017-01-18 22:45:03 +00"}}
 						strcat(strJSON, "\r\n{\"GPStime\":{\"notsetup\":\"");
 						datetime_getstring(datetime_string, &dt_LatestGPS);
-						strcat(strJSON, str);
+						strcat(strJSON, datetime_string);
 						strcat(strJSON, "\",\"now\":\"");
 						datetime_getstring(datetime_string, &dt_CurAlarm);
-						strcat(strJSON, str);
+						strcat(strJSON, datetime_string);
 						strcat(strJSON, "\"}}\r\n");					}
 				} // end test whether to access GPS
 			}
@@ -492,9 +492,13 @@ int main(void)
 			}
 			
 			if ((gpsFlags.checkGpsToday) // flag to check but has not been serviced
-				&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1) // alarm has passed GPS check time
-				&& (!(gpsFlags.gpsTimeRequested))) { // do not repeat request if one is already out
-					GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
+					&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1) // alarm has passed GPS check time
+					&& (!(gpsFlags.gpsTimeRequested))) { // do not repeat request if one is already out
+				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
+				// e.g. {"GPStime":{"requested":"2017-01-18 22:45:03 +00"}}
+				strcat(strJSON, "\r\n{\"GPStime\":{\"requested\":\"");
+				datetime_getstring(datetime_string, &dt_CurAlarm);
+				strcat(strJSON, "\"}}\r\n");
 			}
 			
 			// see if it's time to log data

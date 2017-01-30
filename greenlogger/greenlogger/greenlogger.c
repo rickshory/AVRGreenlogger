@@ -426,8 +426,14 @@ int main(void)
 				// test whether to request time from the GPS
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
 					// diagnostics, e.g.
-					// {"GPStime":{"scheduled":"2017-01-17 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
-					
+					// {"GPStime":{"pending":"2017-01-17 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
+					strcat(strJSON, "\r\n{\"GPStime\":{\"pending\":\"");
+					datetime_getstring(datetime_string, &dt_CkGPS);
+					strcat(strJSON, str);
+					strcat(strJSON, "\",\"now\":\"");
+					datetime_getstring(datetime_string, &dt_CurAlarm);
+					strcat(strJSON, str);
+					strcat(strJSON, "\"}}\r\n");
 				} else { // see if time to set up a GPS-time request
 					if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
 							(86400 * DAYS_FOR_MOVING_AVERAGE)))) {
@@ -445,7 +451,23 @@ int main(void)
 							datetime_normalize(&dt_CkGPS);
 						}
 						gpsFlags.checkGpsToday = 1;
-					}
+						// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
+						strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
+						datetime_getstring(datetime_string, &dt_CkGPS);
+						strcat(strJSON, str);
+						strcat(strJSON, "\",\"now\":\"");
+						datetime_getstring(datetime_string, &dt_CurAlarm);
+						strcat(strJSON, str);
+						strcat(strJSON, "\"}}\r\n");
+					} else { // not time to set up a request yet
+						// e.g {"GPStime":{"notsetup":"2017-01-19 22:45:03 +00","now":"2017-01-18 22:45:03 +00"}}
+						strcat(strJSON, "\r\n{\"GPStime\":{\"notsetup\":\"");
+						datetime_getstring(datetime_string, &dt_LatestGPS);
+						strcat(strJSON, str);
+						strcat(strJSON, "\",\"now\":\"");
+						datetime_getstring(datetime_string, &dt_CurAlarm);
+						strcat(strJSON, str);
+						strcat(strJSON, "\"}}\r\n");					}
 				} // end test whether to access GPS
 			}
 			

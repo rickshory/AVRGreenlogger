@@ -43,7 +43,7 @@ uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
 int len, err = 0;
 char str[128]; // generic space for strings to be output
 char stCellReading[128]; // space for cell reading string
-char strJSON[256]; // string for JSON data
+char strJSON[512]; // string for JSON data
 char strHdr[64] = "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r";
 char strLog[64];
 
@@ -397,11 +397,24 @@ int main(void)
 			if ((cellReadingsPtr->timeStamp.day != dt_CurAlarm.day) 
 					|| (cellReadingsPtr->timeStamp.month != dt_CurAlarm.month)
 					|| (cellReadingsPtr->timeStamp.year != dt_CurAlarm.year)) {
-					// date is different, from day rollover, or time change
-				// if previous year is > 2 years different, either was previously 0 (initial
-				//  null value) or from default date (see fn 'rtc_setdefault'); in either case,
-				//  don't track a new date but overwrite the current one
+				// date is different, from day rollover, or time change
+				// temporary diagnostics e.g.
+				// {"movAvgItem":{"was":"0\t1.335\t2017-01-17 22:10:24 -00","now":"1\t1.231\t2017-01-18 22:45:03 +00"}}
+				strcat(strJSON, "\r\n{\"movAvgItem\":{\"was\":\"");
+				len = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));
+				strcat(strJSON, str);
+				chargeInfo_getString(str, cellReadingsPtr);
+				strcat(strJSON, str);
+				/*
+					len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
+				accelData.yWholeWord,  accelData.zWholeWord);
+				datetime_getstring(datetime_string, &dt_RTC);
+				strcat(strJSON, datetime_string);
+				*/
 				if ((dt_CurAlarm.year - cellReadingsPtr->timeStamp.year) > 2) {
+					// if previous year is > 2 years different, either was previously 0 (initial
+					//  null value) or from default date (see fn 'rtc_setdefault'); in either case,
+					//  don't track a new date but overwrite the current one
 					cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
 					datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));
 				} else { // only a regular new date
@@ -410,6 +423,12 @@ int main(void)
 					if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
 								cellReadingsPtr = cellReadings;
 				}
+				strcat(strJSON, "\",\"now\":\"");
+				len = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));
+				strcat(strJSON, str);
+				chargeInfo_getString(str, cellReadingsPtr);
+				strcat(strJSON, str);
+				strcat(strJSON, "\"}}\r\n");
 				// test whether to request time from the GPS
 				if ((!(gpsFlags.checkGpsToday))  // don't flag another till this one serviced
 						&& ((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) > 

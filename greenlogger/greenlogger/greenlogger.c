@@ -394,10 +394,63 @@ int main(void)
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			
+			// test whether to request time from the GPS
+			if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
+						(86400 * DAYS_FOR_MOVING_AVERAGE)))) {
+				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
+/* don't do this; would run on every single alarm
+					// diagnostics, e.g.
+					// {"GPStime":{"pending":"2017-01-17 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
+					strcat(strJSON, "\r\n{\"GPStime\":{\"pending\":\"");
+					datetime_getstring(datetime_string, &dt_CkGPS);
+					strcat(strJSON, datetime_string);
+					strcat(strJSON, "\",\"now\":\"");
+					datetime_getstring(datetime_string, &dt_CurAlarm);
+					strcat(strJSON, datetime_string);
+					strcat(strJSON, "\"}}\r\n");
+*/
+				} else { // set up a GPS-time request
+					// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
+					datetime_copy(&dt_CurAlarm, &dt_CkGPS);
+					// get hour and minute from average
+					uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
+					dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
+					dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
+					dt_CkGPS.second = 0; // don't really matter much
+					dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
+					if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) {
+						// timezone adjust has made the GPS check time earlier than the current alarm
+						(dt_CkGPS.day)++; // move one day ahead
+						datetime_normalize(&dt_CkGPS);
+					}
+					gpsFlags.checkGpsToday = 1;
+					// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
+					strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
+						datetime_getstring(datetime_string, &dt_CkGPS);
+						strcat(strJSON, datetime_string);
+						strcat(strJSON, "\",\"now\":\"");
+						datetime_getstring(datetime_string, &dt_CurAlarm);
+						strcat(strJSON, datetime_string);
+					strcat(strJSON, "\"}}\r\n");
+				} // end test whether to access GPS
+			} else { // not time to set up a request yet
+/* don't do this; would run on every single alarm
+				// e.g {"GPStime":{"notsetup":"2017-01-19 22:45:03 +00","now":"2017-01-18 22:45:03 +00"}}
+				strcat(strJSON, "\r\n{\"GPStime\":{\"notsetup\":\"");
+				datetime_getstring(datetime_string, &dt_LatestGPS);
+				strcat(strJSON, datetime_string);
+				strcat(strJSON, "\",\"now\":\"");
+				datetime_getstring(datetime_string, &dt_CurAlarm);
+				strcat(strJSON, datetime_string);
+				strcat(strJSON, "\"}}\r\n");
+*/
+			}
+			
+			// test if date has changed
 			if ((cellReadingsPtr->timeStamp.day != dt_CurAlarm.day) 
 					|| (cellReadingsPtr->timeStamp.month != dt_CurAlarm.month)
 					|| (cellReadingsPtr->timeStamp.year != dt_CurAlarm.year)) {
-				// date is different, from day rollover, or time change
+				// date is different, because of day rollover or time change
 				// temporary diagnostics e.g.
 				// {"movAvgItem":{"was":"0\t1.335\t2017-01-17 22:10:24 -00","now":"1\t1.231\t2017-01-18 22:45:03 +00"}}
 				strcat(strJSON, "\r\n{\"movAvgItem\":{\"was\":\"");
@@ -416,6 +469,8 @@ int main(void)
 					cellReadingsPtr++;
 					if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
 								cellReadingsPtr = cellReadings;
+					datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));
+					cellReadingsPtr->level = 0; // initialize
 				}
 				strcat(strJSON, "\",\"now\":\"");
 				len = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));
@@ -423,52 +478,6 @@ int main(void)
 				chargeInfo_getString(str, cellReadingsPtr);
 				strcat(strJSON, str);
 				strcat(strJSON, "\"}}\r\n");
-				// test whether to request time from the GPS
-				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
-					// diagnostics, e.g.
-					// {"GPStime":{"pending":"2017-01-17 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
-					strcat(strJSON, "\r\n{\"GPStime\":{\"pending\":\"");
-					datetime_getstring(datetime_string, &dt_CkGPS);
-					strcat(strJSON, datetime_string);
-					strcat(strJSON, "\",\"now\":\"");
-					datetime_getstring(datetime_string, &dt_CurAlarm);
-					strcat(strJSON, datetime_string);
-					strcat(strJSON, "\"}}\r\n");
-				} else { // see if time to set up a GPS-time request
-					if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
-							(86400 * DAYS_FOR_MOVING_AVERAGE)))) {
-						// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
-						datetime_copy(&dt_CurAlarm, &dt_CkGPS);
-						// get hour and minute from average
-						uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
-						dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
-						dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
-						dt_CkGPS.second = 0; // don't really matter much
-						dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
-						if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) {
-							// timezone adjust has made the GPS check time earlier than the current alarm
-							(dt_CkGPS.day)++; // move one day ahead
-							datetime_normalize(&dt_CkGPS);
-						}
-						gpsFlags.checkGpsToday = 1;
-						// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
-						strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
-						datetime_getstring(datetime_string, &dt_CkGPS);
-						strcat(strJSON, datetime_string);
-						strcat(strJSON, "\",\"now\":\"");
-						datetime_getstring(datetime_string, &dt_CurAlarm);
-						strcat(strJSON, datetime_string);
-						strcat(strJSON, "\"}}\r\n");
-					} else { // not time to set up a request yet
-						// e.g {"GPStime":{"notsetup":"2017-01-19 22:45:03 +00","now":"2017-01-18 22:45:03 +00"}}
-						strcat(strJSON, "\r\n{\"GPStime\":{\"notsetup\":\"");
-						datetime_getstring(datetime_string, &dt_LatestGPS);
-						strcat(strJSON, datetime_string);
-						strcat(strJSON, "\",\"now\":\"");
-						datetime_getstring(datetime_string, &dt_CurAlarm);
-						strcat(strJSON, datetime_string);
-						strcat(strJSON, "\"}}\r\n");					}
-				} // end test whether to access GPS
 			}
 			
 			// track the maximum cell voltage for this date
@@ -478,6 +487,7 @@ int main(void)
 //				maxCellVoltageToday = cellVoltageReading.adcWholeWord;
 //				dayPtMaxChargeToday = (60 * dt_CurAlarm.hour) + (dt_CurAlarm.minute);
 			}
+			
 			if (!(stateFlags1.reachedFullPower)) { // if not achieved full power and initialized, skip this data acquisition loop
 				// for testing, set to 10-second interval, so don't have to wait an hour to see if battery charging worked
 				irradFlags.isDark = 0; // remove this line when done testing dead battery re-charging

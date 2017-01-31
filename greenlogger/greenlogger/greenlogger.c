@@ -394,6 +394,12 @@ int main(void)
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			
+			/* Need an algorithm to get GPS time ASAP after startup, if possible.
+			Maybe check a few times within the first hour, but then don't waste the 
+			battery re-trying if not available.
+			Also, in long-term storage detect that GPS is unavailable, and stop trying
+			*/
+			
 			// test whether to request time from the GPS
 			if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
 						(86400 * DAYS_FOR_MOVING_AVERAGE)))) {

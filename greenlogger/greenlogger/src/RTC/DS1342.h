@@ -56,9 +56,9 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead);
 void datetime_normalize(dateTime *t);
 void datetime_getstring(char* dtstr, dateTime *dtp);
 void datetime_getFromUnixString(dateTime *dtp, char* dtstr, bool useGlobalTimeZone);
+void datetime_getDefault(dateTime *t);
 
 void rtc_add1sec(void);
-void rtc_setdefault(void);
 
 uint8_t rtc_setTime (dateTime *t);
 uint8_t rtc_readTime (dateTime *t);

@@ -162,7 +162,7 @@ int main(void)
 		strcat(strJSON, datetime_string);
 		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
 	} else { // RTC year = 0 on power up, clock needs to be set
-		rtc_setdefault();
+		datetime_getDefault(&dt_RTC);
 		if (!rtc_setTime(&dt_RTC)) {
 			rtcStatus = rtcTimeSetToDefault;
 			datetime_getstring(datetime_string, &dt_RTC);
@@ -394,11 +394,14 @@ int main(void)
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			
-			/* Need an algorithm to get GPS time ASAP after startup, if possible.
-			Maybe check a few times within the first hour, but then don't waste the 
-			battery re-trying if not available.
-			Also, in long-term storage detect that GPS is unavailable, and stop trying
-			*/
+			// try to get GPS time soon after startup, but don't waste battery if not available
+			// - Try 5 minutes after first startup
+			// - Try again every 10 minutes for first hour
+			// - Try every two hours first day
+			// - after that drop through to normal checking interval
+			
+			
+			
 			
 			// test whether to request time from the GPS
 			if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
@@ -432,11 +435,11 @@ int main(void)
 					gpsFlags.checkGpsToday = 1;
 					// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
 					strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
-						datetime_getstring(datetime_string, &dt_CkGPS);
-						strcat(strJSON, datetime_string);
-						strcat(strJSON, "\",\"now\":\"");
-						datetime_getstring(datetime_string, &dt_CurAlarm);
-						strcat(strJSON, datetime_string);
+					datetime_getstring(datetime_string, &dt_CkGPS);
+					strcat(strJSON, datetime_string);
+					strcat(strJSON, "\",\"now\":\"");
+					datetime_getstring(datetime_string, &dt_CurAlarm);
+					strcat(strJSON, datetime_string);
 					strcat(strJSON, "\"}}\r\n");
 				} // end test whether to access GPS
 			} else { // not time to set up a request yet
@@ -466,7 +469,7 @@ int main(void)
 				strcat(strJSON, str);
 				if ((dt_CurAlarm.year - cellReadingsPtr->timeStamp.year) > 2) {
 					// if previous year is > 2 years different, either was previously 0 (initial
-					//  null value) or from default date (see fn 'rtc_setdefault'); in either case,
+					//  null value) or from default date (see fn 'datetime_getDefault'); in either case,
 					//  don't track a new date but overwrite the current one
 					cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
 					datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));

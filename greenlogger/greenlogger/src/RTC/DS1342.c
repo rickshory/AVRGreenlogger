@@ -617,16 +617,17 @@ uint8_t rtc_enableSqWave (void) {
  * Default is winter solstice 2011
  *  date/time of the global dateTime struct dt_RTC
  *  to 
- *  2011-12-21 21:59:00 PST, offset 8 hours west from
- *  2011-12-22 05:59:00 UTC
+ *  2011-12-21 21:30:00 PST, offset 8 hours west from
+ *  2011-12-22 05:30:00 UTC
  */
 void datetime_getDefault(dateTime *t) {
 	t->year = 11;
 	t->month = 12;
 	t->day = 21;
-	t->houroffset = -8;
-	t->hour = 21;
-	t->minute = 59; // for testing dead battery re-charging by solar cells,
+	t->houroffset = 0;
+	t->hour = 5;
+	t->minute = 30;
+//	t->minute = 59; // for testing dead battery re-charging by solar cells,
 	// when sufficient charge achieved, initialization loop will run one minute later on hour rollover
 	t->second = 0;
 }

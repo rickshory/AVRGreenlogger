@@ -395,10 +395,40 @@ int main(void)
 			intTmp1 = readCellVoltage(&cellVoltageReading);
 			
 			// try to get GPS time soon after startup, but don't waste battery if not available
-			// - Try 5 minutes after first startup
-			// - Try again every 10 minutes for first hour
-			// - Try every two hours first day
+			// - Try every 2 minutes for first 10 minutes
+			// - Try again every 20 minutes for first hour
+			// - Try every four hours first day
 			// - after that drop through to normal checking interval
+			if (rtcStatus == rtcTimeSetToDefault) {
+				dateTime dtCk;
+				datetime_getDefault(&dtCk);
+				uint32_t secsCt = datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk);
+				switch (secsCt) {
+					case (60 * 2): // 2 minutes
+					case (60 * 4): // 4 minutes
+					case (60 * 6): // 6 minutes
+					case (60 * 8): // 8 minutes
+					case (60 * 10): // 10 minutes
+					case (60 * 20): // 20 minutes
+					case (60 * 40): // 40 minutes
+					case (60 * 60): // 1 hour
+					case (60 * 60 * 4): // 4 hours
+					case (60 * 60 * 8): // 8 hours
+					case (60 * 60 * 12): // 12 hours
+					case (60 * 60 * 16): // 16 hours
+					case (60 * 60 * 20): // 20 hours
+					case (60 * 60 * 24): // 24 hours
+					
+						if (gpsFlags.checkGpsToday) { // by present code structure, this would not be
+							// pending, but try to make fail-safe in case code is rearranged
+							GPS_initTimeRequest();
+						}
+						break;
+					
+					default:
+						break;
+				}
+			}
 			
 			
 			

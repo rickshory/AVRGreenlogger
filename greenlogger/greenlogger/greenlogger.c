@@ -161,6 +161,7 @@ int main(void)
 		rtcStatus = rtcTimeRetained;
 		strcat(strJSON, datetime_string);
 		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
+		initFlags.gpsTimePassedAutoInit = 1; // no need to try to auto-initialize
 	} else { // RTC year = 0 on power up, clock needs to be set
 		datetime_getDefault(&dt_RTC);
 		if (!rtc_setTime(&dt_RTC)) {
@@ -399,7 +400,8 @@ int main(void)
 			// - Try again every 20 minutes for first hour
 			// - Try every four hours first day
 			// - after that drop through to normal checking interval
-			if (rtcStatus == rtcTimeSetToDefault) {
+			if ((!(initFlags.gpsTimePassedAutoInit)) &&
+					(rtcStatus == rtcTimeSetToDefault)) { // 2nd test may be redundant
 				dateTime dtCk;
 				datetime_getDefault(&dtCk);
 				uint32_t secsCt = datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk);
@@ -428,12 +430,17 @@ int main(void)
 					default:
 						break;
 				}
+				// we have tried long enough to auto-initialize
+				if (secsCt > (60 * 60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
 			}
 			
 			
 			
 			
 			// test whether to request time from the GPS
+			if (initFlags.gpsTimePassedAutoInit) {
+				// this won't work. following will try repeatedly and drain the battery
+			}
 			if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
 						(86400 * DAYS_FOR_MOVING_AVERAGE)))) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
@@ -1146,6 +1153,7 @@ void checkForCommands (void) {
 						}
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced
 						gpsFlags.gpsTimeRequestByBluetooth = 0; // end of request by BT
+						initFlags.gpsTimePassedAutoInit = 1; // no longer try to auto-initialize
 					} else { // time was set manually
 						strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
 						outputStringToWiredUART("\r\n");

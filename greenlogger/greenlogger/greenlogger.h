@@ -106,7 +106,10 @@ typedef volatile union iBF { // initialization bit flags
 		unsigned char initUART0:1; // UART0 has been initialized
 		unsigned char initUART1:1; // UART1 has been initialized
 		unsigned char initAccelerometer:1; // Accelerometer has been initialized
-		unsigned char sf2Bit4:1; // unused
+		unsigned char gpsTimePassedAutoInit:1; // GPS-time is no longer in auto-initialization; either
+			// successfully auto-set time from GPS
+			// user set time from GPS
+			// time retained through reset
 		unsigned char sf2Bit5:1; // unused
 		unsigned char sf2Bit6:1; // unused
 		unsigned char sf2Bit7:1; // unused

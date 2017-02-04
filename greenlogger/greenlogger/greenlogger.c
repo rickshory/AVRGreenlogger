@@ -1151,6 +1151,11 @@ void checkForCommands (void) {
 						} else { // only if NOT a test
 							gpsFlags.checkGpsToday = 0; // clear the system-set request flag
 						}
+						if (strlen(tmpStr) > 22) {
+							// extra commands, such as location, may have
+							// been sent with the set-time string
+						}
+						
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced
 						gpsFlags.gpsTimeRequestByBluetooth = 0; // end of request by BT
 						initFlags.gpsTimePassedAutoInit = 1; // no longer try to auto-initialize

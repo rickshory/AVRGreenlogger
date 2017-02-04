@@ -456,7 +456,7 @@ void syncTimeZone (void) {
 			}
 		}
 	}
-	if ((rtcStatus == rtcTimeSetToDefault) || (rtcStatus == rtcTimeManuallySet) || (rtcStatus == rtcHasGPSTime)) {
+	if (rtcStatus >= rtcTimeSetToDefault) {
 		// put timezone to SD card
 		if (!(timeFlags.timeZoneWritten)) { // if not already done
 			errSD = writeTimezoneToSDCard(); // if successful, internally sets timeZoneWritten flag

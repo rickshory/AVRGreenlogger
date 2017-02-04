@@ -401,7 +401,7 @@ int main(void)
 			// - Try every four hours first day
 			// - after that drop through to normal checking interval
 			if ((!(initFlags.gpsTimePassedAutoInit)) &&
-					(rtcStatus == rtcTimeSetToDefault)) { // 2nd test may be redundant
+					(rtcStatus <= rtcTimeSetToDefault)) { // 2nd test may be redundant
 				dateTime dtCk;
 				datetime_getDefault(&dtCk);
 				uint32_t secsCt = datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk);

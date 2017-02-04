@@ -886,7 +886,7 @@ uint8_t datetime_nextDateWithData(char* s, uint8_t forceAhead) {
 //	int lenLocal;
 //	char strLocal[128];
 	char stDateEnd[27], stDateTry[12], stFullPath[14];
-	if ((rtcStatus == rtcTimeNotSet) || (rtcStatus == rtcTimeSetFailed) || (rtcStatus == rtcTimeSetToDefault)) {
+	if (rtcStatus <= rtcTimeSetToDefault) {
 		outputStringToWiredUART("\n\r system time not valid\n\r");
 		return 1;
 	}

@@ -18,6 +18,15 @@
 #define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
 //#define DAYS_FOR_MOVING_AVERAGE 2 // special testing version
 
+typedef volatile struct { // location acquired from GPS
+	double latVal; // value of latitude as double
+	double lonVal; // value of longitude as double
+	// 6 decimal places can store about 1m accuracy at the equator
+	char[12] latStr; // latitude as string, e.g. -89.132435
+	char[12] lonStr; // longitude as string, e.g. -179.132465
+	dateTime timeStamp; // when this location was acquired
+} gpsLocation;
+
 typedef volatile struct { // used for tracking the cell voltage daily maximum, when
 						// most power is available for tasks whose timing is 
 						// flexible, such as reading the GPS

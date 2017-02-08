@@ -69,6 +69,7 @@ extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
 uint16_t previousADCCellVoltageReading = 0;
 uint16_t refDarkVoltage = 0;
+volatile gpsLocation curLocation, prevLocation;
 // for heuristics on when to try getting time from GPS
 uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current day
 uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
@@ -242,7 +243,18 @@ int main(void)
 	dt_LatestGPS.minute = 0;
 	dt_LatestGPS.second = 0;
 	
-	
+	// initialize GPS locations
+	datetime_copy(&dt_LatestGPS, &(curLocation.timeStamp));
+	curLocation.latVal = 0.0; // defaults
+	curLocation.lonVal = 0.0;
+	curLocation.latStr[0] = '\0'; // these flag that the location is undefined
+	curLocation.lonStr[0] = '\0';
+	datetime_copy(&dt_LatestGPS, &(prevLocation.timeStamp));
+	prevLocation.latVal = 0.0;
+	prevLocation.lonVal = 0.0;
+	prevLocation.latStr[0] = '\0';
+	prevLocation.lonStr[0] = '\0';
+		
 	// initialize array that will be used for tracking moving average
 	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		cellReadings[i].level = 0;

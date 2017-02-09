@@ -22,8 +22,8 @@ typedef volatile struct { // location acquired from GPS
 	double latVal; // value of latitude as double
 	double lonVal; // value of longitude as double
 	// 6 decimal places can store about 1m accuracy at the equator
-	char[12] latStr; // latitude as string, e.g. -89.132435
-	char[12] lonStr; // longitude as string, e.g. -179.132465
+	char latStr[12]; // latitude as string, e.g. -89.132435
+	char lonStr[12]; // longitude as string, e.g. -179.132465
 	dateTime timeStamp; // when this location was acquired
 } gpsLocation;
 

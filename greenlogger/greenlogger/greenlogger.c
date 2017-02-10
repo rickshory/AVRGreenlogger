@@ -44,6 +44,7 @@ int len, err = 0;
 char str[128]; // generic space for strings to be output
 char stCellReading[128]; // space for cell reading string
 char strJSON[512]; // string for JSON data
+char strJSONloc[128]; // string for location information, as JSON
 char strHdr[64] = "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r";
 char strLog[64];
 
@@ -94,7 +95,6 @@ unsigned long lngTmp1, lngTmp2;
  */
 int main(void)
 {
-	uint8_t ct, swDnUp, swBbIr;
 	uint8_t errSD, r;
 	strJSON[0] = '\0'; // "erase" the string
 	DDRD &= ~(1<<5); // make the Bluetooth connection monitor pin an input

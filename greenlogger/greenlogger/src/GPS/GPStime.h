@@ -39,5 +39,6 @@ extern inline void GPS_idle(void);
 extern void GPS_initTimeRequest(void);
 extern uint16_t getAverageMinute (dateTime* startOfArrayOfTimes);
 void chargeInfo_getString(char* ciStr, chargeInfo *cip);
+void saveGPSLocation(char* locStr);
 
 #endif /* GPStime_H_ */

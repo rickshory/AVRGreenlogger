@@ -109,3 +109,37 @@ void chargeInfo_getString(char* ciStr, chargeInfo *cip) {
 	datetime_getstring(ciStr + iLen, &(cip->timeStamp));
 	strcat(ciStr, "\r\n");
 }
+
+void saveGPSLocation(char* locStr) {
+	// this will typically receive a string that is tagged on the 
+	// end of a set-time command
+	// the whole string would be e.g.
+	//"t2016-03-19 20:30:01 -08 4523.896300N12204.334200W\n\r\n\r\0";
+	// the received pointer would point to position 24, just after
+	// the timezone, and thus would see
+	//" 4523.896300N12204.334200W\n\r\n\r\0";
+	// if this position has the null terminator, the fn returns without doing anything
+	// if this position has any space character, the fn ignores them and moves on
+	// in the rest of the string, the fn expects fixed-width fields packed from NMEA data
+	// 2 numeric characters that are the whole degrees of latitude (padded with leading zeros)
+	// 2 numeric characters that are the whole minutes of latitude (padded with leading zeros)
+	// decimal point character
+	// 6 decimal characters that are the fractional degrees latitude (always padded out to 6 digits with trailing zeros)
+	// 1 character that is either 'N' for north latitude or 'S' for south latitude
+	// 3 numeric characters that are the whole degrees of longitude (padded with leading zeros)
+	// 2 numeric characters that are the whole minutes of longitude (padded with leading zeros)
+	// decimal point character
+	// 6 decimal characters that are the fractional degrees longitude (always padded out to 6 digits with trailing zeros)
+	// 1 character that is either 'E' for east longitude or 'W' for west longitude
+	
+	// if fn gets a valid location, sets the flags "gpsGotLocation" and "gpsNewLocation"
+	// if so, works on the globals "curLocation" and "prevLocation"
+	// if "curLocation" was previously initialized, copies that to "prevLocation" (allows one level of undo)
+	// puts parsed location into "curLocation"
+	// uses time from global "dt_LatestGPS"
+	// set us the string "strJSONloc" for writing to SD card e.g.
+	// {"Locations":[{"Priority":"Latest", "Latitude":"45.489230", "Longitude":"-122.094380", "TimeAcquired":"2017-02-10 10:47:20 +00"}, {"Priority":"Previous", "Latitude":"45.489140", "Longitude":"-122.093040", "TimeAcquired":"2017-01-31 14:12:10 +00"}]}
+	// datum is always WGS84
+
+	
+}

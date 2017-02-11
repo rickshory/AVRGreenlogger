@@ -33,7 +33,8 @@ extern volatile uint8_t stateFlags2;
 
 extern int len;
 extern char str[128]; // generic space for strings to be output
-extern char strJSON[256]; // string for JSON data
+extern char strJSON[512]; // string for JSON data
+extern char strJSONloc[256]; // string for location data
 extern char strHdr[64];
 
 extern volatile dateTime dt_RTC;

@@ -24,6 +24,9 @@
 
 extern volatile adcData cellVoltageReading;
 extern volatile gFlags gpsFlags;
+extern volatile gpsLocation curLocation, prevLocation;
+extern volatile dateTime dt_LatestGPS;
+extern char strJSONloc[256];
 
 /**
  * \brief assures GPS subsystem is idle
@@ -140,6 +143,73 @@ void saveGPSLocation(char* locStr) {
 	// set us the string "strJSONloc" for writing to SD card e.g.
 	// {"Locations":[{"Priority":"Latest", "Latitude":"45.489230", "Longitude":"-122.094380", "TimeAcquired":"2017-02-10 10:47:20 +00"}, {"Priority":"Previous", "Latitude":"45.489140", "Longitude":"-122.093040", "TimeAcquired":"2017-01-31 14:12:10 +00"}]}
 	// datum is always WGS84
+	char *p;
+	char tmpStr[12];
+	double lat, lon, tmpD;
+	int strLen;
+	p = locStr;
+	if (&p == '\0') return;
+	while (&p == ' ') {
+		p++;
+		if (&p == '\0') return;
+	}
+	if (strlen(p) < 25) return; // not long enough to be valid data
+	strncpy(tmpStr, p, 2); // get whole degrees of latitude
+	tmpStr[2] = '\0';
+	lat = strtod(tmpStr, '\0');
+	if (lat > 90.0) return; // latitude out of range
+	p += 2;
+	strncpy(tmpStr, p, 9); // get minutes of latitude
+	tmpStr[9] = '\0';
+	tmpD = strtod(tmpStr, '\0');
+	if (tmpD > 60.0) return; // latitude minutes out of range
+	lat += (tmpD / 60.0); // complete the numeric latitude
+	if (lat > 90.0) return; // check latitude one more time
+	p += 9;
+	if (!((&p == 'N') | (&p == 'S'))) return; // must be 'N' or 'S', for north/south latitude
+	if (&p == 'S') lat *= -1; // south latitude is negative
+	p++;
 
+	strncpy(tmpStr, p, 3); // get whole degrees of longitude
+	tmpStr[3] = '\0';
+	lon = strtod(tmpStr, '\0');
+	if (lon > 180.0) return; // longitude out of range
+	p += 3;
+	strncpy(tmpStr, p, 9); // get minutes of longitude
+	tmpStr[9] = '\0';
+	tmpD = strtod(tmpStr, '\0');
+	if (tmpD > 60.0) return; // longitude minutes out of range
+	lon += (tmpD / 60.0); // complete the numeric longitude
+	if (lon > 180.0) return; // check longitude one more time
+	p += 9;
+	if (!((&p == 'E') | (&p == 'W'))) return; // must be 'E' or 'W', for east/west longitude
+	if (&p == 'W') lon *= -1; // west longitude is negative
+	// ignore any characters after valid fields
 	
+	// valid lat/lon; store
+	if (curLocation.timeStamp.month != 0) { // "curLocation" was previously initialized
+		// copy to "prevLocation"
+		// if we ever do this more than once, make it a separate fn
+		prevLocation.latVal = curLocation.latVal;
+		prevLocation.lonVal = curLocation.lonVal;
+		strcpy(prevLocation.latStr, curLocation.latStr);
+		strcpy(prevLocation.lonStr, curLocation.lonStr);
+		datetime_copy(&(curLocation.timeStamp) , &(prevLocation.timeStamp));
+	}
+	// store lat/lon in "curLocation"
+	curLocation.latVal = lat;
+	curLocation.lonVal = lon;
+	strLen = sprintf(curLocation.latStr, "%.6f", lat);
+	strLen = sprintf(curLocation.lonStr, "%.6f", lon);
+	datetime_copy(&(prevLocation.timeStamp), &dt_LatestGPS);
+	
+	// generate the JSON string
+	// {"Locations":[{"Priority":"Latest", "Latitude":"45.489230", "Longitude":"-122.094380", "TimeAcquired":"2017-02-10 10:47:20 +00"}, {"Priority":"Previous", "Latitude":"45.489140", "Longitude":"-122.093040", "TimeAcquired":"2017-01-31 14:12:10 +00"}]}
+	strcpy(strJSONloc,"{\"Locations\":[{\"Priority\":\"Latest\", \"Latitude\":\"");
+	// TODO finish this
+	// set the flags
+	gpsFlags.gpsGotLocation = 1;
+	gpsFlags.gpsNewLocation = 1;
+	
+
 }

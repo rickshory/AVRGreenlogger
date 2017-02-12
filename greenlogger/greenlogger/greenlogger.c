@@ -18,6 +18,7 @@
 #include <string.h>
 #include "greenlogger.h"
 #include <inttypes.h>
+#include "Bluetooth/RN42.h"
 #include "SDcard/ff.h"
 #include "SDcard/diskio.h"
 #include "diagnostics/diagnostics.h"

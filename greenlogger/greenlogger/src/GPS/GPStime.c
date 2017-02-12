@@ -144,7 +144,7 @@ void saveGPSLocation(char* locStr) {
 	// {"Locations":[{"Priority":"Latest", "Latitude":"45.489230", "Longitude":"-122.094380", "TimeAcquired":"2017-02-10 10:47:20 +00"}, {"Priority":"Previous", "Latitude":"45.489140", "Longitude":"-122.093040", "TimeAcquired":"2017-01-31 14:12:10 +00"}]}
 	// datum is always WGS84
 	char *p;
-	char tmpStr[12];
+	char tmpStr[26];
 	double lat, lon, tmpD;
 	int strLen;
 	p = locStr;
@@ -205,8 +205,25 @@ void saveGPSLocation(char* locStr) {
 	
 	// generate the JSON string
 	// {"Locations":[{"Priority":"Latest", "Latitude":"45.489230", "Longitude":"-122.094380", "TimeAcquired":"2017-02-10 10:47:20 +00"}, {"Priority":"Previous", "Latitude":"45.489140", "Longitude":"-122.093040", "TimeAcquired":"2017-01-31 14:12:10 +00"}]}
-	strcpy(strJSONloc,"{\"Locations\":[{\"Priority\":\"Latest\", \"Latitude\":\"");
-	// TODO finish this
+	strcpy(strJSONloc, "{\"Locations\":[{\"Priority\":\"Latest\", \"Latitude\":\"");
+	strcat(strJSONloc, curLocation.latStr);
+	strcat(strJSONloc, "\", \"Longitude\":\"");
+	strcat(strJSONloc, curLocation.lonStr);
+	strcat(strJSONloc, "\", \"TimeAcquired\":\"");
+	datetime_getstring(tmpStr, &(curLocation.timeStamp));
+	strcat(strJSONloc, tmpStr);
+	strcat(strJSONloc, "\"}");
+	if (prevLocation.timeStamp.month != 0) { // "prevLocation" has a value
+		strcpy(strJSONloc, "{\"Priority\":\"Previous\", \"Latitude\":\"");
+		strcat(strJSONloc, prevLocation.latStr);
+		strcat(strJSONloc, "\", \"Longitude\":\"");
+		strcat(strJSONloc, prevLocation.lonStr);
+		strcat(strJSONloc, "\", \"TimeAcquired\":\"");
+		datetime_getstring(tmpStr, &(prevLocation.timeStamp));
+		strcat(strJSONloc, tmpStr);
+		strcat(strJSONloc, "\"}");
+	}
+	strcat(strJSONloc, "]}");
 	// set the flags
 	gpsFlags.gpsGotLocation = 1;
 	gpsFlags.gpsNewLocation = 1;

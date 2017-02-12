@@ -1163,9 +1163,12 @@ void checkForCommands (void) {
 						} else { // only if NOT a test
 							gpsFlags.checkGpsToday = 0; // clear the system-set request flag
 						}
-						if (strlen(tmpStr) > 22) {
-							// extra commands, such as location, may have
-							// been sent with the set-time string
+						if (strlen(tmpStr) >= 25) {
+							// there may be extra data, such as location
+							saveGPSLocation(tmpStr + 24); // attempt to extract lat/lon
+							if (gpsFlags.gpsNewLocation) {
+								outputStringToBluetoothUART(strJSONloc);
+							}
 						}
 						
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced

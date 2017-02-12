@@ -121,8 +121,8 @@ void saveGPSLocation(char* locStr) {
 	// the received pointer would point to position 24, just after
 	// the timezone, and thus would see
 	//" 4523.896300N12204.334200W\n\r\n\r\0";
-	// if this position has the null terminator, the fn returns without doing anything
-	// if this position has any space character, the fn ignores them and moves on
+	// if the pointer hits any space characters, the fn ignores them and moves on
+	// if the pointer hits a null terminator, the fn returns without doing anything
 	// in the rest of the string, the fn expects fixed-width fields packed from NMEA data
 	// 2 numeric characters that are the whole degrees of latitude (padded with leading zeros)
 	// 2 numeric characters that are the whole minutes of latitude (padded with leading zeros)

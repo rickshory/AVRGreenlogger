@@ -79,17 +79,18 @@ void GPS_initTimeRequest(void) {
 	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high	
 }
 
-uint16_t getAverageMinute (dateTime *startOfArrayOfTimes) {
-	dateTime *curTime;
+uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
+	chargeInfo *curReading;
 	int16_t minutesFromTime;
 	double minuteRadians, sumSine = 0, sumCosine = 0;
 	for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
-		curTime = startOfArrayOfTimes + i;
-		if (curTime->day > 0) { // day=0 flags that this is not a filled-in item
+		curReading = startOfArrayOfReadings + i;
+		if (curReading->timeStamp.day > 0) { // day=0 flags that this is not a filled-in item
 			// get minutes
 			// adjust by hour offset to always treat as if Universal Time
 			// range zero to 1440, can be negative after offset by time zone
-			minutesFromTime = (curTime->hour - curTime->houroffset) * 60 + curTime->minute;
+			minutesFromTime = ((curReading->timeStamp.hour) - (curReading->timeStamp.houroffset)) 
+					* 60 + (curReading->timeStamp.minute);
 			// map to 2Pi radians
 			double minuteRadians = 2 * M_PI * minutesFromTime / 1440;
 			sumSine += sin(minuteRadians);

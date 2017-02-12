@@ -37,7 +37,7 @@ typedef volatile struct { // used for tracking the cell voltage daily maximum, w
 
 extern inline void GPS_idle(void);
 extern void GPS_initTimeRequest(void);
-extern uint16_t getAverageMinute (dateTime* startOfArrayOfTimes);
+extern uint16_t getAverageMinute (chargeInfo* startOfArrayOfReadings);
 void chargeInfo_getString(char* ciStr, chargeInfo *cip);
 void saveGPSLocation(char* locStr);
 

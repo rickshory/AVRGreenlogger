@@ -148,10 +148,10 @@ void saveGPSLocation(char* locStr) {
 	double lat, lon, tmpD;
 	int strLen;
 	p = locStr;
-	if (&p == '\0') return;
-	while (&p == ' ') {
+	if (*p == '\0') return;
+	while (*p == ' ') {
 		p++;
-		if (&p == '\0') return;
+		if (*p == '\0') return;
 	}
 	if (strlen(p) < 25) return; // not long enough to be valid data
 	strncpy(tmpStr, p, 2); // get whole degrees of latitude
@@ -166,8 +166,8 @@ void saveGPSLocation(char* locStr) {
 	lat += (tmpD / 60.0); // complete the numeric latitude
 	if (lat > 90.0) return; // check latitude one more time
 	p += 9;
-	if (!((&p == 'N') | (&p == 'S'))) return; // must be 'N' or 'S', for north/south latitude
-	if (&p == 'S') lat *= -1; // south latitude is negative
+	if (!((*p == 'N') | (*p == 'S'))) return; // must be 'N' or 'S', for north/south latitude
+	if (*p == 'S') lat *= -1; // south latitude is negative
 	p++;
 
 	strncpy(tmpStr, p, 3); // get whole degrees of longitude
@@ -182,8 +182,8 @@ void saveGPSLocation(char* locStr) {
 	lon += (tmpD / 60.0); // complete the numeric longitude
 	if (lon > 180.0) return; // check longitude one more time
 	p += 9;
-	if (!((&p == 'E') | (&p == 'W'))) return; // must be 'E' or 'W', for east/west longitude
-	if (&p == 'W') lon *= -1; // west longitude is negative
+	if (!((*p == 'E') | (*p == 'W'))) return; // must be 'E' or 'W', for east/west longitude
+	if (*p == 'W') lon *= -1; // west longitude is negative
 	// ignore any characters after valid fields
 	
 	// valid lat/lon; store

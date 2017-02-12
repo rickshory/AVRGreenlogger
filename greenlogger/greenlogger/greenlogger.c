@@ -447,9 +447,6 @@ int main(void)
 				if (secsCt > (60ul * 60ul * 24ul)) initFlags.gpsTimePassedAutoInit = 1;
 			}
 			
-			
-			
-			
 			// test whether to request time from the GPS
 			if (initFlags.gpsTimePassedAutoInit) {
 				// this won't work. following will try repeatedly and drain the battery

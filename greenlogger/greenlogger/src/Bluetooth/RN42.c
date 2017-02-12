@@ -6,7 +6,7 @@
  */ 
 
 #include <inttypes.h>
-#include "RN42.h"
+#include "../Bluetooth/RN42.h"
 #include "../I2C/I2C.h"
 #include "../greenlogger.h"
 #include "../RTC/DS1342.h"

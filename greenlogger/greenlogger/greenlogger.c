@@ -428,10 +428,11 @@ int main(void)
 					case (60 * 60): // 1 hour
 					case (60 * 60 * 4): // 4 hours
 					case (60 * 60 * 8): // 8 hours
-					case (60 * 60 * 12): // 12 hours
-					case (60 * 60 * 16): // 16 hours
-					case (60 * 60 * 20): // 20 hours
-					case (60 * 60 * 24): // 24 hours
+					// following give 'integer overflow' warning unless cast to Unsigned Long
+					case (60ul * 60ul * 12ul): // 12 hours
+					case (60ul * 60ul * 16ul): // 16 hours
+					case (60ul * 60ul * 20ul): // 20 hours
+					case (60ul * 60ul * 24ul): // 24 hours
 					
 						if (gpsFlags.checkGpsToday) { // by present code structure, this would not be
 							// pending, but try to make fail-safe in case code is rearranged
@@ -443,7 +444,7 @@ int main(void)
 						break;
 				}
 				// we have tried long enough to auto-initialize
-				if (secsCt > (60 * 60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
+				if (secsCt > (60ul * 60ul * 24ul)) initFlags.gpsTimePassedAutoInit = 1;
 			}
 			
 			

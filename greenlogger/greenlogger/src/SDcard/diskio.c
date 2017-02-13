@@ -140,6 +140,171 @@ BYTE fileExists (char* stFileFullpath) {
 	return retVal;
 }
 
+
+/**
+ * \brief Writes log string to the SD card
+ *
+ *  This function writes the string from the passed char
+ * pointer to the file specified by the year, month, and
+ * day of the passed string.
+ *  The string always begins with the timestamp e.g.
+ * 2012-07-09 08:40:00
+ *  The containing folder is named 'yy-mm' where 'yy' is
+ * the last two digits of the year (for example '12' in
+ * the year '2012') and 'mm' is the month (for example '07'
+ * for July).
+ *  The file is named 'dd.TXT', where 'dd' is the day of 
+ * the month, for example '09' for the ninth.
+ *  This function automatically creates the folders and files
+ * as needed, and appends to files that already exist.
+ *  If the file is new, the function first writes the 
+ * instrument metadata, and the column headers. Also 
+ * other metadata, such as clock set events, and
+ * GPS location, if flagged to do so.
+ * \note 
+ * 
+ */
+
+BYTE writeLogStringToSDCard (char* stLog) {
+	FATFS FileSystemObject;
+	FRESULT res;         // FatFs function common result code
+	FILINFO fno;        // [OUT] FILINFO structure
+	char stDir[6], stFile[20];
+	BYTE sLen, retVal = sdOK, fileIsNew = 0;
+	unsigned int bytesWritten;
+	
+	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+		return sdPowerTooLowForSDCard; // cell voltage is below threshold to safely write card
+	}
+	
+	if(f_mount(0, &FileSystemObject)!=FR_OK) {
+		return sdMountFail;
+		//  flag error
+//		len = sprintf(str, "\n\r f_mount failed: 0x%x\n\r", 0);
+//		outputStringToWiredUART(str);
+	}
+
+	DSTATUS driveStatus = disk_initialize(0);
+
+	if(driveStatus & STA_NOINIT ||
+		driveStatus & STA_NODISK ||
+		driveStatus & STA_PROTECT) {
+			retVal = sdInitFail;
+			goto unmountVolume;
+//	flag error.
+//	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
+//	outputStringToWiredUART(str);
+	}
+	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
+	res = f_mkdir(stDir);
+	if (!((res == FR_OK) || (res == FR_EXIST))) {
+		retVal = sdMkDirFail;
+		goto unmountVolume;
+//		len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
+//		outputStringToWiredUART(str);	
+	}
+	
+	FIL logFile;
+	//
+	//works
+	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
+	// working on this section -->
+	
+	res = f_stat(stFile, &fno); // test whether file for this date exists yet
+	if (res == FR_NO_FILE) { 
+		fileIsNew = 1; // when file is opened, in next step, it will be a new file
+	}	
+	
+	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
+		retVal = sdFileOpenFail;
+		goto unmountVolume;
+//		len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
+//		outputStringToWiredUART(str);
+	//flag error
+	}
+	
+	if (fileIsNew) {
+		FIL hdrFile;      // File object, source to copy from
+		BYTE buffer[512];   // File copy buffer
+		UINT br, bw;         // File read/write count
+		// try to open the Header file; serves as a test that it exists
+		if(f_open(&hdrFile, "HEADER.TXT", FA_OPEN_EXISTING | FA_READ)==FR_OK) { 
+			// copy header into new file
+			for (;;) {
+				res = f_read(&hdrFile, buffer, sizeof buffer, &br);  // Read a chunk of source file
+				if (res || br == 0) break; // error or eof
+				res = f_write(&logFile, buffer, br, &bw);            // Write it to the destination file
+				if (res || bw < br) break; // error or disk full
+			}
+			// close header file
+			f_close(&hdrFile);
+		}	
+	}
+	
+// <-- to here
+
+	// Move to end of the file to append data
+	if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
+		retVal = sdFileSeekFail;
+		goto closeFile;
+	}
+
+	// if flagged, insert any JSON messages
+	if (stateFlags1.writeJSONMsg){
+		sLen = strlen(strJSON);
+		if (f_write(&logFile, strJSON, sLen, &bytesWritten) != FR_OK) {
+			retVal = sdFileWriteFail;
+			goto closeFile;
+		}
+		stateFlags1.writeJSONMsg = 0; // clear flag, write only once
+		strJSON[0] = '\0'; // "erase" the string
+		if (bytesWritten < sLen) { // probably strJSON is corrupted; proceed next time with string and flag cleared
+			// at least allow normal logging to resume
+			retVal = sdFileWritePartial;
+			goto closeFile;
+		}			
+	}
+	// if flagged, insert column headers
+	if (stateFlags1.writeDataHeaders){
+		stateFlags1.writeDataHeaders = 0; // clear flag, attempt to write only once
+//		sLen = sprintf(str, "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r");
+		sLen = strlen(strHdr);
+		if (f_write(&logFile, strHdr, sLen, &bytesWritten) != FR_OK) {
+			retVal = sdFileWriteFail;
+			goto closeFile;
+		}
+		if (bytesWritten < sLen) {
+			retVal = sdFileWritePartial;
+			goto closeFile;
+		}
+	}
+	
+	sLen = strlen(stLog);
+	if (f_write(&logFile, stLog, sLen, &bytesWritten) != FR_OK) {
+		retVal = sdFileWriteFail;
+		goto closeFile;
+	}
+	
+	if (bytesWritten < sLen) {
+		retVal = sdFileWritePartial;
+		goto closeFile;
+	}
+	
+//		len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
+//		outputStringToWiredUART(str);
+	//Flush the write buffer with f_sync(&logFile);
+
+// retVal = sdOK;
+
+	//Close and unmount.
+	closeFile:
+	f_close(&logFile);
+	unmountVolume:
+	f_mount(0,0);
+	return retVal;
+}
+
+
 /**
  * \brief Writes N characters to the SD card
  *

@@ -28,10 +28,12 @@ DSTATUS Stat = STA_NOINIT;	// Disk status
 
 extern volatile sFlags1 stateFlags1;
 extern volatile tFlags timeFlags;
+extern volatile gFlags gpsFlags;
 extern volatile uint8_t rtcStatus;
 extern volatile uint8_t stateFlags2;
 
 extern int len;
+extern char strLog[64]; // a string of data to log, created by fn 'makeLogString'
 extern char str[128]; // generic space for strings to be output
 extern char strJSON[512]; // string for JSON data
 extern char strJSONloc[256]; // string for location data
@@ -144,9 +146,9 @@ BYTE fileExists (char* stFileFullpath) {
 /**
  * \brief Writes log string to the SD card
  *
- *  This function writes the string from the passed char
- * pointer to the file specified by the year, month, and
- * day of the passed string.
+ *  This function writes the global string 'strLog'
+ * to the file specified by the year, month, and
+ * day contained in 'strLog'.
  *  The string always begins with the timestamp e.g.
  * 2012-07-09 08:40:00
  *  The containing folder is named 'yy-mm' where 'yy' is
@@ -165,7 +167,7 @@ BYTE fileExists (char* stFileFullpath) {
  * 
  */
 
-BYTE writeLogStringToSDCard (char* stLog) {
+BYTE writeLogStringToSDCard (void) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
 	FILINFO fno;        // [OUT] FILINFO structure
@@ -195,7 +197,11 @@ BYTE writeLogStringToSDCard (char* stLog) {
 //	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
 //	outputStringToWiredUART(str);
 	}
-	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
+	//strLog e.g.:
+	// 2012-07-09 08:40:00 -08	42	17	2738	545	19	1360
+	strncpy(stDir, strLog + 2, 5); // make folder name
+	stDir[5] = '\0';
+//	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
 	res = f_mkdir(stDir);
 	if (!((res == FR_OK) || (res == FR_EXIST))) {
 		retVal = sdMkDirFail;
@@ -207,12 +213,19 @@ BYTE writeLogStringToSDCard (char* stLog) {
 	FIL logFile;
 	//
 	//works
-	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
-	// working on this section -->
+//	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
+	
+	// build file name yy-mm/dd.txt, e.g. "12-07/09.txt"
+	strcpy(stFile, stDir);
+	strcat(stFile, "/");
+	strncpy(stFile, strLog + 8, 2);
+	stFile[8] = '\0'; // may not be necessary
+	strcat(stFile, ".txt");
 	
 	res = f_stat(stFile, &fno); // test whether file for this date exists yet
 	if (res == FR_NO_FILE) { 
 		fileIsNew = 1; // when file is opened, in next step, it will be a new file
+		stateFlags1.writeDataHeaders = 1;
 	}	
 	
 	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
@@ -240,8 +253,6 @@ BYTE writeLogStringToSDCard (char* stLog) {
 			f_close(&hdrFile);
 		}	
 	}
-	
-// <-- to here
 
 	// Move to end of the file to append data
 	if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
@@ -264,6 +275,22 @@ BYTE writeLogStringToSDCard (char* stLog) {
 			goto closeFile;
 		}			
 	}
+	
+	if ((fileIsNew & gpsFlags.gpsGotLocation) | gpsFlags.gpsNewLocation) {
+		sLen = strlen(strJSONloc);
+		if (f_write(&logFile, strJSONloc, sLen, &bytesWritten) != FR_OK) {
+			retVal = sdFileWriteFail;
+			goto closeFile;
+		}
+		gpsFlags.gpsNewLocation = 0; // clear flag, write only if new loc or new file
+		strJSONloc[0] = '\0'; // "erase" the string
+		if (bytesWritten < sLen) { // probably strJSONloc is corrupted; proceed next
+			// time with string and flag cleared; at least allow normal logging to resume
+			retVal = sdFileWritePartial;
+			goto closeFile;
+		}
+	}
+	
 	// if flagged, insert column headers
 	if (stateFlags1.writeDataHeaders){
 		stateFlags1.writeDataHeaders = 0; // clear flag, attempt to write only once
@@ -279,8 +306,9 @@ BYTE writeLogStringToSDCard (char* stLog) {
 		}
 	}
 	
-	sLen = strlen(stLog);
-	if (f_write(&logFile, stLog, sLen, &bytesWritten) != FR_OK) {
+	// write the data
+	sLen = strlen(strLog);
+	if (f_write(&logFile, strLog, sLen, &bytesWritten) != FR_OK) {
 		retVal = sdFileWriteFail;
 		goto closeFile;
 	}

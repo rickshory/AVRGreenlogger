@@ -15,8 +15,8 @@
 #define GPS_SUBSYSTEM_CTRL 1 // bit 1 of PortB, of this uC
 // controls reset of the uC in the GPS subsystem
 
-#define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
-//#define DAYS_FOR_MOVING_AVERAGE 2 // special testing version
+//#define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
+#define DAYS_FOR_MOVING_AVERAGE 2 // special testing version
 
 typedef volatile struct { // location acquired from GPS
 	double latVal; // value of latitude as double

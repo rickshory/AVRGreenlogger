@@ -513,8 +513,9 @@ void BT_dataDump(char* stOpt) {
 			stateFlags1.logSilently = 1; // don't show any diagnostics while gathering data
 			if (makeLogString()) break; // exit on error
 							
-			len = strlen(strLog);
-			errSD = writeCharsToSDCard(strLog, len);
+//			len = strlen(strLog);
+//			errSD = writeCharsToSDCard(strLog, len);
+			errSD = writeLogStringToSDCard();
 			if (errSD) {
 				tellFileError (errSD);
 			} // end of silent logging, this latest data

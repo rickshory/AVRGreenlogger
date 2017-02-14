@@ -512,65 +512,7 @@ void BT_dataDump(char* stOpt) {
 			
 			stateFlags1.logSilently = 1; // don't show any diagnostics while gathering data
 			if (makeLogString()) break; // exit on error
-			
-/*
-			// attempt to assure time zone is synchronized
-			syncTimeZone(); // internally tests if work is already done
-			
-			datetime_getstring(datetime_string, &dt_CurAlarm);
-
-			// read irradiance sensors
-			for (ct = 0; ct < 4; ct++) {
-				switch (ct)
-				{
-				case 0:
-					swDnUp = TSL2561_DnLooking;
-					swBbIr = TSL2561_CHANNEL_BROADBAND;
-					break;
-				case 1:
-					swDnUp = TSL2561_DnLooking;
-					swBbIr = TSL2561_CHANNEL_INFRARED;
-					break;
-				case 2:
-					swDnUp = TSL2561_UpLooking;
-					swBbIr = TSL2561_CHANNEL_BROADBAND;
-					break;
-				case 3:
-					swDnUp = TSL2561_UpLooking;
-					swBbIr = TSL2561_CHANNEL_INFRARED;
-					break;
-				}
-				intTmp1 = getIrrReading(swDnUp, swBbIr, &irrReadings[ct]);
-
-			} // end of irradiance sensor 'for' loop
-			intTmp1 = temperature_GetReading(&temperatureReading);
-			// build log string
-			strcpy(strLog, "\n\r");
-			strcat(strLog, datetime_string);
-			irradFlags.isDarkBBDn = 0;
-			irradFlags.isDarkIRDn = 0;
-			irradFlags.isDarkBBUp = 0;
-			irradFlags.isDarkIRUp = 0; // default clear
-			for (ct = 0; ct < 4; ct++) { // generate irradiance readings
-				if (!(irrReadings[ct].validation)) {
-					len = sprintf(str, "\t%lu", (unsigned long)((unsigned long)irrReadings[ct].irrWholeWord * (unsigned long)irrReadings[ct].irrMultiplier));
-				} else { // no valid data for this reading
-					len = sprintf(str, "\t");
-				}
-				strcat(strLog, str);
-			} // end of preparing irradiance section
-
-			// log temperature
-			if (!temperatureReading.verification)
-				len = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
-			else
-				len = sprintf(str, "\t");
-			strcat(strLog, str);
-			// log cell voltage
-			len = sprintf(str, "\t%lu\n\r", (unsigned long)(2.5 * (unsigned long)(cellVoltageReading.adcWholeWord)));
-			strcat(strLog, str);
-
-*/				
+							
 			len = strlen(strLog);
 			errSD = writeCharsToSDCard(strLog, len);
 			if (errSD) {

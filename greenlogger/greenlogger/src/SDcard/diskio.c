@@ -197,10 +197,6 @@ BYTE writeLogStringToSDCard (void) {
 	stDir[0] = '\0'; // initialize
 	strncpy(stDir, strLog + 4, 5); // make folder name e.g. "12-07"
 	stDir[5] = '\0';
-	
-	outputStringToBothUARTs("Directory: ");
-	outputStringToBothUARTs(stDir);
-
 	res = f_mkdir(stDir);
 	if (!((res == FR_OK) || (res == FR_EXIST))) {
 		retVal = sdMkDirFail;
@@ -213,9 +209,6 @@ BYTE writeLogStringToSDCard (void) {
 	stFile[5] = '/'; // change "12-07-09" to "12-07/09"
 	stFile[8] = '\0';
 	strcat(stFile, ".txt"); // finish e.g. "12-07/09.txt"
-	
-	outputStringToBothUARTs("\n\rFile: ");
-	outputStringToBothUARTs(stFile);
 	
 	res = f_stat(stFile, &fno); // test whether file for this date exists yet
 	if (res == FR_NO_FILE) { 

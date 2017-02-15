@@ -171,6 +171,7 @@ BYTE writeLogStringToSDCard (void) {
 	FATFS FileSystemObject;
 	FRESULT res;         // FatFs function common result code
 	FILINFO fno;        // [OUT] FILINFO structure
+	FIL logFile; // the file to log to
 	char stDir[6], stFile[20];
 	BYTE sLen, retVal = sdOK, fileIsNew = 0;
 	unsigned int bytesWritten;
@@ -191,36 +192,22 @@ BYTE writeLogStringToSDCard (void) {
 			retVal = sdInitFail;
 			goto unmountVolume;
 	}
-	//strLog e.g.:
+	//strLog e.g. (begins with "\n\r", allow for these extra 2 bytes):
 	// 2012-07-09 08:40:00 -08	42	17	2738	545	19	1360
-	// strLog begins with "\n\r", allow for these extra 2 bytes
-	strncpy(stDir, strLog + 4, 5); // make folder name
-	stDir[0] = strLog[4]; // make folder name
+	strncpy(stDir, strLog + 4, 5); // make folder name e.g. "12-07"
 	stDir[5] = '\0';
-	outputStringToBothUARTs("Directory: ");
-	outputStringToBothUARTs(stDir);
-//	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
+
 	res = f_mkdir(stDir);
 	if (!((res == FR_OK) || (res == FR_EXIST))) {
 		retVal = sdMkDirFail;
 		goto unmountVolume;
 	}
-	
-	FIL logFile;
-	//
-	//works
-//	sLen = sprintf(stFile, "%02d-%02d/%02d.txt", dt_CurAlarm.year, dt_CurAlarm.month, dt_CurAlarm.day);
-	
-	// build file name yy-mm/dd.txt, e.g. "12-07/09.txt"
-	strcpy(stFile, stDir);
-	stFile[5] = '/';
-	stFile[6] = strLog[10];
-	stFile[7] = strLog[11];
+
+	// build file name yy-mm/dd.txt
+	strncpy(stDir, strLog + 4, 8); // copy e.g. "12-07-09"
+	stFile[5] = '/'; // change "12-07-09" to "12-07/09"
 	stFile[8] = '\0';
-	strcat(stFile, ".txt");
-	
-	outputStringToBothUARTs("\n\rFile: ");
-	outputStringToBothUARTs(stFile);
+	strcat(stFile, ".txt"); // finish e.g. "12-07/09.txt"
 	
 	res = f_stat(stFile, &fno); // test whether file for this date exists yet
 	if (res == FR_NO_FILE) { 

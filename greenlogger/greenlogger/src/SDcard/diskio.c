@@ -199,15 +199,20 @@ BYTE writeLogStringToSDCard (void) {
 	}
 	//strLog e.g.:
 	// 2012-07-09 08:40:00 -08	42	17	2738	545	19	1360
-	strncpy(stDir, strLog + 2, 5); // make folder name
+	// strLog begins with "\n\r", allow for these extra 2 bytes
+	stDir[0] = strLog[4]; // make folder name
+	stDir[1] = strLog[5];
+	stDir[2] = strLog[6];
+	stDir[3] = strLog[7];
+	stDir[4] = strLog[8];
 	stDir[5] = '\0';
+	outputStringToBothUARTs("Directory: ");
+	outputStringToBothUARTs(stDir);
 //	sLen = sprintf(stDir, "%02d-%02d", dt_CurAlarm.year, dt_CurAlarm.month);
 	res = f_mkdir(stDir);
 	if (!((res == FR_OK) || (res == FR_EXIST))) {
 		retVal = sdMkDirFail;
 		goto unmountVolume;
-//		len = sprintf(str, "\n\r f_mkdir failed: 0x%x\n\r", 0);
-//		outputStringToWiredUART(str);	
 	}
 	
 	FIL logFile;
@@ -217,10 +222,14 @@ BYTE writeLogStringToSDCard (void) {
 	
 	// build file name yy-mm/dd.txt, e.g. "12-07/09.txt"
 	strcpy(stFile, stDir);
-	strcat(stFile, "/");
-	strncpy(stFile, strLog + 8, 2);
+	stFile[5] = '/';
+	stFile[6] = strLog[10];
+	stFile[7] = strLog[11];
 	stFile[8] = '\0'; // may not be necessary
 	strcat(stFile, ".txt");
+	
+	outputStringToBothUARTs("\n\rFile: ");
+	outputStringToBothUARTs(stFile);
 	
 	res = f_stat(stFile, &fno); // test whether file for this date exists yet
 	if (res == FR_NO_FILE) { 

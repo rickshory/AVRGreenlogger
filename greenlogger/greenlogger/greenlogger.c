@@ -964,6 +964,7 @@ void checkForCommands (void) {
 				 case 'G': case 'g': { // get time from GPS
 					 // for testing, manually initiate a get-time request from GPS
 					 gpsFlags.gpsReqTest = 1; // this is a manually initiated test, not from the system
+					 gpsFlags.gpsTimeRequested = 0; // allow manual request to override
 					 GPS_initTimeRequest();
 					 break;
 				 }					 

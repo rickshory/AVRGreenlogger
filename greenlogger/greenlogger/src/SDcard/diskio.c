@@ -194,6 +194,7 @@ BYTE writeLogStringToSDCard (void) {
 	}
 	//strLog e.g. (begins with "\n\r", allow for these extra 2 bytes):
 	// 2012-07-09 08:40:00 -08	42	17	2738	545	19	1360
+	stDir[0] = '\0'; // initialize
 	strncpy(stDir, strLog + 4, 5); // make folder name e.g. "12-07"
 	stDir[5] = '\0';
 	
@@ -207,7 +208,8 @@ BYTE writeLogStringToSDCard (void) {
 	}
 
 	// build file name yy-mm/dd.txt
-	strncpy(stDir, strLog + 4, 8); // copy e.g. "12-07-09"
+	stFile[0] = '\0'; // initialize
+	strncpy(stFile, strLog + 4, 8); // copy e.g. "12-07-09"
 	stFile[5] = '/'; // change "12-07-09" to "12-07/09"
 	stFile[8] = '\0';
 	strcat(stFile, ".txt"); // finish e.g. "12-07/09.txt"

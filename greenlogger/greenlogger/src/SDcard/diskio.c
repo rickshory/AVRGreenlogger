@@ -181,9 +181,6 @@ BYTE writeLogStringToSDCard (void) {
 	
 	if(f_mount(0, &FileSystemObject)!=FR_OK) {
 		return sdMountFail;
-		//  flag error
-//		len = sprintf(str, "\n\r f_mount failed: 0x%x\n\r", 0);
-//		outputStringToWiredUART(str);
 	}
 
 	DSTATUS driveStatus = disk_initialize(0);
@@ -193,18 +190,12 @@ BYTE writeLogStringToSDCard (void) {
 		driveStatus & STA_PROTECT) {
 			retVal = sdInitFail;
 			goto unmountVolume;
-//	flag error.
-//	len = sprintf(str, "\n\r disk_initialize failed; driveStatus: 0x%x\n\r", driveStatus);
-//	outputStringToWiredUART(str);
 	}
 	//strLog e.g.:
 	// 2012-07-09 08:40:00 -08	42	17	2738	545	19	1360
 	// strLog begins with "\n\r", allow for these extra 2 bytes
+	strncpy(stDir, strLog + 4, 5); // make folder name
 	stDir[0] = strLog[4]; // make folder name
-	stDir[1] = strLog[5];
-	stDir[2] = strLog[6];
-	stDir[3] = strLog[7];
-	stDir[4] = strLog[8];
 	stDir[5] = '\0';
 	outputStringToBothUARTs("Directory: ");
 	outputStringToBothUARTs(stDir);
@@ -225,7 +216,7 @@ BYTE writeLogStringToSDCard (void) {
 	stFile[5] = '/';
 	stFile[6] = strLog[10];
 	stFile[7] = strLog[11];
-	stFile[8] = '\0'; // may not be necessary
+	stFile[8] = '\0';
 	strcat(stFile, ".txt");
 	
 	outputStringToBothUARTs("\n\rFile: ");
@@ -240,9 +231,6 @@ BYTE writeLogStringToSDCard (void) {
 	if(f_open(&logFile, stFile, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)!=FR_OK) {
 		retVal = sdFileOpenFail;
 		goto unmountVolume;
-//		len = sprintf(str, "\n\r f_open failed: 0x%x\n\r", 0);
-//		outputStringToWiredUART(str);
-	//flag error
 	}
 	
 	if (fileIsNew) {
@@ -327,12 +315,6 @@ BYTE writeLogStringToSDCard (void) {
 		goto closeFile;
 	}
 	
-//		len = sprintf(str, "\n\r test file written: 0x%x\n\r", 0);
-//		outputStringToWiredUART(str);
-	//Flush the write buffer with f_sync(&logFile);
-
-// retVal = sdOK;
-
 	//Close and unmount.
 	closeFile:
 	f_close(&logFile);

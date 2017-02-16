@@ -18,13 +18,13 @@
 #include "../GPS/GPStime.h"
 #include <util/twi.h>
 
-char btCmdBuffer[commandBufferLen];
+char btCmdBuffer[COMMAND_BUFFER_LENGTH];
 char *btCmdBufferPtr;
 uint8_t errSD;
 
 extern volatile uint8_t machineState;
 extern volatile uint16_t timer3val;
-extern char commandBuffer[commandBufferLen];
+extern char commandBuffer[COMMAND_BUFFER_LENGTH];
 extern char *commandBufferPtr;
 extern char str[128]; // generic space for strings to be output
 extern char strLog[64];
@@ -187,7 +187,7 @@ uint16_t cyPerRTCSqWave(void) {
 
 void checkForBTCommands (void) {
 	char c;
-	char stTmp[commandBufferLen];
+	char stTmp[COMMAND_BUFFER_LENGTH];
 	if (!BT_connected()) return;
 
 	if (!(btFlags.btWasConnected)) { // new connection
@@ -226,7 +226,7 @@ void checkForBTCommands (void) {
 				 }					 
 				
 				 case 'V': case 'v': { // show firmware version
-					 outputStringToBothUARTs(versionString);
+					 outputStringToBothUARTs(VERSION_STRING);
 					 break;
 				 }
 
@@ -410,7 +410,7 @@ void checkForBTCommands (void) {
 			btCmdBuffer[0] = '\0'; // "empty" the command buffer
 			btCmdBufferPtr = btCmdBuffer;
 		} else { // some other character
-			if (btCmdBufferPtr < (btCmdBuffer + commandBufferLen - 1)) { // if there is room
+			if (btCmdBufferPtr < (btCmdBuffer + COMMAND_BUFFER_LENGTH - 1)) { // if there is room
 				if (btCmdBufferPtr == btCmdBuffer) { // if first input
 					outputStringToBluetoothUART("\r\n\r\n> "); // show the user a blank line & prompt
 				}

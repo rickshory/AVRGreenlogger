@@ -15,9 +15,9 @@
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"
 
-#define commandBufferLen 30
+#define COMMAND_BUFFER_LENGTH 64
 
-#define versionString "\r\n Ver 4.03\t 2017-01-18\r\n "
+#define VERSION_STRING "\r\n Ver 4.03\t 2017-01-18\r\n "
 
 // ADC reading * 2.5 = mV
 #define CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS 520 // corresponds to 1300mV, sufficient for high drain functions like GPS

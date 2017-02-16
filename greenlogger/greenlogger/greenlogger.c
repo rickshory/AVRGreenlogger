@@ -53,7 +53,7 @@ char strLog[64];
 const char test_string[] = "Count \n";
 char num_string[20];
 char datetime_string[25];
-char commandBuffer[commandBufferLen];
+char commandBuffer[COMMAND_BUFFER_LENGTH];
 char *commandBufferPtr;
 
 volatile sFlags1 stateFlags1 = {0};
@@ -970,7 +970,7 @@ void checkForCommands (void) {
 				 }					 
 				
 				 case 'V': case 'v': { // show firmware version
-					 outputStringToBothUARTs(versionString);
+					 outputStringToBothUARTs(VERSION_STRING);
 					 break;
 				 }					 
 
@@ -980,7 +980,7 @@ void checkForCommands (void) {
 					// Presently, a set-time command from the GPS could not come in by Bluetooth, but 
 					// a request to the GPS could be sent by Bluetooth. In that case, user is probably
 					// monitoring Bluetooth modem, UART1, and so diagnostics should go there
-					char tmpStr[commandBufferLen];
+					char tmpStr[COMMAND_BUFFER_LENGTH];
 					strcpy(tmpStr, commandBuffer + 1);
 					if (!isValidDateTime(tmpStr)) {
 						if (gpsFlags.gpsTimeRequestByBluetooth) {
@@ -1230,7 +1230,7 @@ void checkForCommands (void) {
          } else { // some other character
              // ignore repeated linefeed (or linefeed following carriage return) or carriage return
              if (!((c == 0x0a) || (c == 0x0a))) { 
-                 if (commandBufferPtr < (commandBuffer + commandBufferLen - 1)) // if there is room
+                 if (commandBufferPtr < (commandBuffer + COMMAND_BUFFER_LENGTH - 1)) // if there is room
                      *commandBufferPtr++ = c; // append char to the command buffer
              }
          } // done parsing character

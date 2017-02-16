@@ -154,36 +154,63 @@ void saveGPSLocation(char* locStr) {
 		p++;
 		if (*p == '\0') return;
 	}
-	if (strlen(p) < 25) return; // not long enough to be valid data
+	if (strlen(p) < 25) {
+		outputStringToBothUARTs("\r\n GPS string not long enough to parse \r\n");
+		return; // not long enough to be valid data
+	}
 	strncpy(tmpStr, p, 2); // get whole degrees of latitude
 	tmpStr[2] = '\0';
 	lat = strtod(tmpStr, '\0');
-	if (lat > 90.0) return; // latitude out of range
+	if (lat > 90.0) {
+		outputStringToBothUARTs("\r\n GPS latitude >90 \r\n");
+		return; // latitude out of range
+	} 
 	p += 2;
 	strncpy(tmpStr, p, 9); // get minutes of latitude
 	tmpStr[9] = '\0';
 	tmpD = strtod(tmpStr, '\0');
-	if (tmpD > 60.0) return; // latitude minutes out of range
+	if (tmpD > 60.0) {
+		outputStringToBothUARTs("\r\n GPS latitude minutes >60 \r\n");
+		return; // latitude minutes out of range
+	} 
 	lat += (tmpD / 60.0); // complete the numeric latitude
-	if (lat > 90.0) return; // check latitude one more time
+	if (lat > 90.0) {
+		outputStringToBothUARTs("\r\n GPS latitude final check >90 \r\n");
+		return; // check latitude one more time
+	} 
 	p += 9;
-	if (!((*p == 'N') | (*p == 'S'))) return; // must be 'N' or 'S', for north/south latitude
+	if (!((*p == 'N') | (*p == 'S'))) {
+		outputStringToBothUARTs("\r\n GPS latitude letter not 'N' or 'S' \r\n");
+		return; // must be 'N' or 'S', for north/south latitude
+	} 
 	if (*p == 'S') lat *= -1; // south latitude is negative
 	p++;
 
 	strncpy(tmpStr, p, 3); // get whole degrees of longitude
 	tmpStr[3] = '\0';
 	lon = strtod(tmpStr, '\0');
-	if (lon > 180.0) return; // longitude out of range
+	if (lon > 180.0) {
+		outputStringToBothUARTs("\r\n GPS latitude >180 \r\n");
+		return; // longitude out of range
+	} 
 	p += 3;
 	strncpy(tmpStr, p, 9); // get minutes of longitude
 	tmpStr[9] = '\0';
 	tmpD = strtod(tmpStr, '\0');
-	if (tmpD > 60.0) return; // longitude minutes out of range
+	if (tmpD > 60.0) {
+		outputStringToBothUARTs("\r\n GPS longitude minutes >60 \r\n");
+		return; // longitude minutes out of range
+	} 
 	lon += (tmpD / 60.0); // complete the numeric longitude
-	if (lon > 180.0) return; // check longitude one more time
+	if (lon > 180.0) {
+		outputStringToBothUARTs("\r\n GPS longitude final check >180 \r\n");
+		return; // check longitude one more time
+	} 
 	p += 9;
-	if (!((*p == 'E') | (*p == 'W'))) return; // must be 'E' or 'W', for east/west longitude
+	if (!((*p == 'E') | (*p == 'W'))) {
+		outputStringToBothUARTs("\r\n GPS longitude letter not 'E' or 'W' \r\n");
+		return; // must be 'E' or 'W', for east/west longitude
+	}
 	if (*p == 'W') lon *= -1; // west longitude is negative
 	// ignore any characters after valid fields
 	
@@ -225,6 +252,11 @@ void saveGPSLocation(char* locStr) {
 		strcat(strJSONloc, "\"}");
 	}
 	strcat(strJSONloc, "]}");
+	
+	outputStringToBothUARTs("\r\n");
+	outputStringToBothUARTs(strJSONloc);
+	outputStringToBothUARTs("\r\n");
+	
 	// set the flags
 	gpsFlags.gpsGotLocation = 1;
 	gpsFlags.gpsNewLocation = 1;

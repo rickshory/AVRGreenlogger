@@ -216,11 +216,20 @@ void saveGPSLocation(char* locStr) {
 	outputStringToBothUARTs("\r\n");
 	lon = strtod(tmpStr, '\0');
 	if (lon > 180.0) {
-		outputStringToBothUARTs("\r\n GPS latitude >180 \r\n");
+		outputStringToBothUARTs("\r\n GPS longitude >180 \r\n");
 		outputStringToBothUARTs(locStr);
 		outputStringToBothUARTs("\r\n");
 		return; // longitude out of range
 	} 
+	
+	stLen = sprintf(tmpStr, "%d", lon);
+	outputStringToBothUARTs("\r\n whole number longitude (%d): ");
+	outputStringToBothUARTs(tmpStr);
+
+	stLen = sprintf(tmpStr, "%d", (int)lon);
+	outputStringToBothUARTs("\r\n whole number int longitude (%d): ");
+	outputStringToBothUARTs(tmpStr);
+	
 	p += 3;
 	strncpy(tmpStr, p, 9); // get minutes of longitude
 	tmpStr[9] = '\0';
@@ -259,6 +268,24 @@ void saveGPSLocation(char* locStr) {
 	stLen = sprintf(tmpStr, "%1.6f", lon);
 	outputStringToBothUARTs("\r\n longitude (%1.6f): ");
 	outputStringToBothUARTs(tmpStr);
+
+	stLen = sprintf(tmpStr, "%0.6f", lon);
+	outputStringToBothUARTs("\r\n longitude (%0.6f): ");
+	outputStringToBothUARTs(tmpStr);
+	
+	stLen = sprintf(tmpStr, "%lf", lon);
+	outputStringToBothUARTs("\r\n longitude (%lf): ");
+	outputStringToBothUARTs(tmpStr);
+
+	stLen = sprintf(tmpStr, "%Lf", lon);
+	outputStringToBothUARTs("\r\n longitude (%Lf): ");
+	outputStringToBothUARTs(tmpStr);
+
+	stLen = sprintf(tmpStr, "%d", lon);
+	outputStringToBothUARTs("\r\n longitude (%d): ");
+	outputStringToBothUARTs(tmpStr);
+
+
 	outputStringToBothUARTs("\r\n");
 	// ignore any characters after valid fields
 	
@@ -272,6 +299,13 @@ void saveGPSLocation(char* locStr) {
 		strcpy(prevLocation.lonStr, curLocation.lonStr);
 		datetime_copy(&(curLocation.timeStamp) , &(prevLocation.timeStamp));
 	}
+	
+	// to make floating point numbers appear correctly in Studio 7:
+	// Project > Properties > Toolchain > AVR/GNU Linker > General
+	//  X Use vprintf library(-Wl,-u,vfprintf)
+	// Project > Properties > Toolchain > AVR/GNU Linker > Miscellaneous
+	//  Other Linker Flags: -lprintf_flt
+	
 	// store lat/lon in "curLocation"
 	curLocation.latVal = lat;
 	curLocation.lonVal = lon;

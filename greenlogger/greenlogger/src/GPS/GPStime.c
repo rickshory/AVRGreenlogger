@@ -164,6 +164,9 @@ void saveGPSLocation(char* locStr) {
 	}
 	strncpy(tmpStr, p, 2); // get whole degrees of latitude
 	tmpStr[2] = '\0';
+	outputStringToBothUARTs("\r\n whole degrees of latitude: ");
+	outputStringToBothUARTs(tmpStr);
+	outputStringToBothUARTs("\r\n");
 	lat = strtod(tmpStr, '\0');
 	if (lat > 90.0) {
 		outputStringToBothUARTs("\r\n GPS latitude >90 \r\n");
@@ -174,6 +177,9 @@ void saveGPSLocation(char* locStr) {
 	p += 2;
 	strncpy(tmpStr, p, 9); // get minutes of latitude
 	tmpStr[9] = '\0';
+	outputStringToBothUARTs("\r\n minutes of latitude: ");
+	outputStringToBothUARTs(tmpStr);
+	outputStringToBothUARTs("\r\n");
 	tmpD = strtod(tmpStr, '\0');
 	if (tmpD > 60.0) {
 		outputStringToBothUARTs("\r\n GPS latitude minutes >60 \r\n");
@@ -197,9 +203,17 @@ void saveGPSLocation(char* locStr) {
 	} 
 	if (*p == 'S') lat *= -1; // south latitude is negative
 	p++;
+	
+	stLen = sprintf(tmpStr, "%.6f", lat);
+	outputStringToBothUARTs("\r\n latitude: ");
+	outputStringToBothUARTs(tmpStr);
+	outputStringToBothUARTs("\r\n");
 
 	strncpy(tmpStr, p, 3); // get whole degrees of longitude
 	tmpStr[3] = '\0';
+	outputStringToBothUARTs("\r\n whole degrees of longitude: ");
+	outputStringToBothUARTs(tmpStr);
+	outputStringToBothUARTs("\r\n");
 	lon = strtod(tmpStr, '\0');
 	if (lon > 180.0) {
 		outputStringToBothUARTs("\r\n GPS latitude >180 \r\n");
@@ -210,6 +224,9 @@ void saveGPSLocation(char* locStr) {
 	p += 3;
 	strncpy(tmpStr, p, 9); // get minutes of longitude
 	tmpStr[9] = '\0';
+	outputStringToBothUARTs("\r\n minutes of longitude: ");
+	outputStringToBothUARTs(tmpStr);
+	outputStringToBothUARTs("\r\n");
 	tmpD = strtod(tmpStr, '\0');
 	if (tmpD > 60.0) {
 		outputStringToBothUARTs("\r\n GPS longitude minutes >60 \r\n");
@@ -232,6 +249,17 @@ void saveGPSLocation(char* locStr) {
 		return; // must be 'E' or 'W', for east/west longitude
 	}
 	if (*p == 'W') lon *= -1; // west longitude is negative
+		
+	stLen = sprintf(tmpStr, "%.6f", lon);
+	outputStringToBothUARTs("\r\n longitude (%.6f): ");
+	outputStringToBothUARTs(tmpStr);
+	stLen = sprintf(tmpStr, "%f", lon);
+	outputStringToBothUARTs("\r\n longitude (%f): ");
+	outputStringToBothUARTs(tmpStr);
+	stLen = sprintf(tmpStr, "%1.6f", lon);
+	outputStringToBothUARTs("\r\n longitude (%1.6f): ");
+	outputStringToBothUARTs(tmpStr);
+	outputStringToBothUARTs("\r\n");
 	// ignore any characters after valid fields
 	
 	// valid lat/lon; store
@@ -247,8 +275,8 @@ void saveGPSLocation(char* locStr) {
 	// store lat/lon in "curLocation"
 	curLocation.latVal = lat;
 	curLocation.lonVal = lon;
-	stLen = sprintf(curLocation.latStr, "%.6f", lat);
-	stLen = sprintf(curLocation.lonStr, "%.6f", lon);
+	stLen = sprintf(curLocation.latStr, "%1.6f", lat);
+	stLen = sprintf(curLocation.lonStr, "%1.6f", lon);
 	datetime_copy(&(prevLocation.timeStamp), &dt_LatestGPS);
 	
 	// generate the JSON string

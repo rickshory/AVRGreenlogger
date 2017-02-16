@@ -1028,6 +1028,7 @@ void checkForCommands (void) {
 						// for now, assume that's where this came from
 						strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
 						rtcStatus = rtcHasGPSTime;
+						
 						datetime_copy(&dt_tmp, &dt_LatestGPS);
 						if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
 							showCellReadings();

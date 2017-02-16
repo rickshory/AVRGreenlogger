@@ -147,7 +147,7 @@ void saveGPSLocation(char* locStr) {
 	char *p;
 	char tmpStr[26];
 	double lat, lon, tmpD;
-	int strLen;
+	int stLen;
 	p = locStr;
 	if (*p == '\0') return;
 	while (*p == ' ') {
@@ -155,9 +155,11 @@ void saveGPSLocation(char* locStr) {
 		if (*p == '\0') return;
 	}
 	if (strlen(p) < 25) {
-		outputStringToBothUARTs("\r\n GPS string not long enough to parse \r\n");
-		outputStringToBothUARTs(locStr);
 		outputStringToBothUARTs("\r\n");
+		outputStringToBothUARTs(locStr);
+		stLen = sprintf(tmpStr, "\r\n Length: %d \r\n", strlen(p));
+		outputStringToBothUARTs("\r\n GPS string not long enough to parse \r\n");
+		outputStringToBothUARTs(tmpStr);
 		return; // not long enough to be valid data
 	}
 	strncpy(tmpStr, p, 2); // get whole degrees of latitude
@@ -245,8 +247,8 @@ void saveGPSLocation(char* locStr) {
 	// store lat/lon in "curLocation"
 	curLocation.latVal = lat;
 	curLocation.lonVal = lon;
-	strLen = sprintf(curLocation.latStr, "%.6f", lat);
-	strLen = sprintf(curLocation.lonStr, "%.6f", lon);
+	stLen = sprintf(curLocation.latStr, "%.6f", lat);
+	stLen = sprintf(curLocation.lonStr, "%.6f", lon);
 	datetime_copy(&(prevLocation.timeStamp), &dt_LatestGPS);
 	
 	// generate the JSON string

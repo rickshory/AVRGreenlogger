@@ -26,6 +26,7 @@ extern volatile adcData cellVoltageReading;
 extern volatile gFlags gpsFlags;
 extern volatile gpsLocation curLocation, prevLocation;
 extern volatile dateTime dt_LatestGPS;
+extern volatile uint16_t gpsTimeReqCountdown;
 extern char strJSONloc[256];
 
 /**
@@ -54,18 +55,21 @@ inline void GPS_idle(void)
  */
 void GPS_initTimeRequest(void) {
 	if (gpsFlags.gpsTimeRequested) return; // don't duplicate request while one is pending
-	
 	// check if enough power to get time from GPS
 	uint8_t intTmp1 = readCellVoltage(&cellVoltageReading);
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_OK_FOR_GPS) {
 		outputStringToBothUARTs("\r\n power too low for GPS get-time request \r\n");
 		return;
 	}
-	
 	outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
 	stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
 	gpsFlags.gpsTimeRequested = 1; // for now, use this to distinguish any
 	// time-set command that comes back as being from the GPS
+	cli(); // temporarily disable interrupts to prevent Timer3 from
+	// changing the count partway through
+	gpsTimeReqCountdown = 18000; // set a timeout of 3 minutes;
+	// after that, gpsFlags.gpsTimeRequested will be cleared
+	sei();
 	PORTB &= ~(1<<GPS_SUBSYSTEM_CTRL); // set low
 	// uC in GPS subsystem, at Vcc 3V, needs a 700ns low-going pulse for definite reset
 	// each clock cycle of this uC, at 8MHz, is 125ns

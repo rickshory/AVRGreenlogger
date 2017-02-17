@@ -36,6 +36,7 @@ volatile uint8_t iTmp;
 volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blinker
 volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sleep
 volatile uint16_t btCountdown = 0; // timer for trying Bluetooth connection
+volatile uint16_t gpsTimeReqCountdown = 0; // timeout for GPS time request
 volatile uint16_t timer3val;
 
 volatile
@@ -1262,6 +1263,16 @@ void heartBeat (void)
 	
 	if (btCountdown > rouseCountdown)
 		rouseCountdown = btCountdown; // stay roused at least as long as trying to get a BT connection
+
+	if (gpsTimeReqCountdown > rouseCountdown)
+	rouseCountdown = gpsTimeReqCountdown; // stay roused at least as long as GPS time reqest is active		
+		// gpsTimeReqCountdown
+		
+	t = gpsTimeReqCountdown;
+	if (t) gpsTimeReqCountdown = --t;
+	
+	if (!gpsTimeReqCountdown) gpsFlags.gpsTimeRequestByBluetooth = 0; // BT request terminate
+	
 
 	t = btCountdown;
 	if (t) btCountdown = --t;

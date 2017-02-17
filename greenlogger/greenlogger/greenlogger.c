@@ -418,26 +418,27 @@ int main(void)
 					(rtcStatus <= rtcTimeSetToDefault)) { // 2nd test may be redundant
 				dateTime dtCk;
 				datetime_getDefault(&dtCk);
-				uint32_t secsCt = datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk);
-				switch (secsCt) {
-					case (60 * 2): // 2 minutes
-					case (60 * 4): // 4 minutes
-					case (60 * 6): // 6 minutes
-					case (60 * 8): // 8 minutes
-					case (60 * 10): // 10 minutes
-					case (60 * 20): // 20 minutes
-					case (60 * 40): // 40 minutes
-					case (60 * 60): // 1 hour
-					case (60 * 60 * 4): // 4 hours
-					case (60 * 60 * 8): // 8 hours
-					// following give 'integer overflow' warning unless cast to Unsigned Long
-					case (60ul * 60ul * 12ul): // 12 hours
-					case (60ul * 60ul * 16ul): // 16 hours
-					case (60ul * 60ul * 20ul): // 20 hours
-					case (60ul * 60ul * 24ul): // 24 hours
+				uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
+				switch (minsCt) {
+					case (2): // 2 minutes
+					case (4): // 4 minutes
+					case (6): // 6 minutes
+					case (8): // 8 minutes
+					case (10): // 10 minutes
+					case (20): // 20 minutes
+					case (40): // 40 minutes
+					case (60): // 1 hour
+					case (60 * 4): // 4 hours
+					case (60 * 8): // 8 hours
+					case (60 * 12): // 12 hours
+					case (60 * 16): // 16 hours
+					case (60 * 20): // 20 hours
+					case (60 * 24): // 24 hours
 					
 						if (gpsFlags.checkGpsToday) { // by present code structure, this would not be
 							// pending, but try to make fail-safe in case code is rearranged
+							// following requests should not collide or stack because fn below disallows
+							// until 3-minute timeout
 							GPS_initTimeRequest();
 						}
 						break;
@@ -446,7 +447,7 @@ int main(void)
 						break;
 				}
 				// we have tried long enough to auto-initialize
-				if (secsCt > (60ul * 60ul * 24ul)) initFlags.gpsTimePassedAutoInit = 1;
+				if (minsCt > (60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
 			}
 			
 			// test whether to request time from the GPS

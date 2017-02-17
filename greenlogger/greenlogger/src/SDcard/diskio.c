@@ -258,7 +258,12 @@ BYTE writeLogStringToSDCard (void) {
 			// at least allow normal logging to resume
 			retVal = sdFileWritePartial;
 			goto closeFile;
-		}			
+		}
+		// Move to end of the file to append further data
+		if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
+			retVal = sdFileSeekFail;
+			goto closeFile;
+		}
 	}
 	
 	if ((fileIsNew & gpsFlags.gpsGotLocation) | gpsFlags.gpsNewLocation) {
@@ -274,6 +279,11 @@ BYTE writeLogStringToSDCard (void) {
 			retVal = sdFileWritePartial;
 			goto closeFile;
 		}
+		// Move to end of the file to append further data
+		if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
+			retVal = sdFileSeekFail;
+			goto closeFile;
+		}		
 	}
 	
 	// if flagged, insert column headers
@@ -287,6 +297,11 @@ BYTE writeLogStringToSDCard (void) {
 		}
 		if (bytesWritten < sLen) {
 			retVal = sdFileWritePartial;
+			goto closeFile;
+		}
+		// Move to end of the file to append further data
+		if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
+			retVal = sdFileSeekFail;
 			goto closeFile;
 		}
 	}

@@ -43,7 +43,7 @@ typedef volatile struct { // always assumes century is 20; year 2000 to 2099
 
 void rtc_init(void);
 //extern char* rtc_getstring(char* dtstr, DateTime dt);
-void datetime_copy(dateTime *from, dateTime *to);
+void datetime_copy(dateTime *to, dateTime *from);
 uint32_t datetime_totalsecs (dateTime *t);
 int8_t datetime_compare(dateTime *t1, dateTime *t2);
 void datetime_addSeconds(dateTime *t, uint8_t s);

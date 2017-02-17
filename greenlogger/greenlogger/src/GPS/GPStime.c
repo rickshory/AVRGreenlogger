@@ -245,8 +245,8 @@ void saveGPSLocation(char* locStr) {
 		prevLocation.lonVal = curLocation.lonVal;
 		strcpy(prevLocation.latStr, curLocation.latStr);
 		strcpy(prevLocation.lonStr, curLocation.lonStr);
-		// datetime_copy is from/to
-		datetime_copy(&(curLocation.timeStamp) , &(prevLocation.timeStamp));
+		// datetime_copy is to/from
+		datetime_copy(&(prevLocation.timeStamp), &(curLocation.timeStamp) );
 	}
 	
 	// to make floating point numbers appear correctly in Studio 7:
@@ -260,8 +260,8 @@ void saveGPSLocation(char* locStr) {
 	curLocation.lonVal = lon;
 	stLen = sprintf(curLocation.latStr, "%.6f", lat);
 	stLen = sprintf(curLocation.lonStr, "%.6f", lon);
-	// datetime_copy is from/to
-	datetime_copy(&dt_LatestGPS, &(curLocation.timeStamp));
+	// datetime_copy is to/from
+	datetime_copy(&(curLocation.timeStamp), &dt_LatestGPS);
 	
 	// generate the JSON string
 	// {"Locations":[{"Priority":"Latest", "Latitude":"45.489230", "Longitude":"-122.094380", "TimeAcquired":"2017-02-10 10:47:20 +00"}, {"Priority":"Previous", "Latitude":"45.489140", "Longitude":"-122.093040", "TimeAcquired":"2017-01-31 14:12:10 +00"}]}

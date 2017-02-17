@@ -505,7 +505,7 @@ uint8_t rtc_setupNextAlarm(dateTime *pDt) {
 			n = rtc_enableAlarm1();
 			if (n) return n;
 			else {
-				datetime_copy(&dt, pDt);
+				datetime_copy(pDt, &dt);
 				pDt->houroffset = timeZoneOffset;
 				enableRTCInterrupt();
 				return 0;
@@ -686,9 +686,11 @@ void rtc_add1sec(void)
  * \brief Copies one dateTime struct to another
  *
  * This function takes pointers to 2 dateTime structs,
- *  and copies the first to the second
+ *  and copies the second to the first
+ *  This order like "equals" where the item being assigned is first
+ * and the one being assigned from comes after
  */
-void datetime_copy(dateTime *from, dateTime *to) {
+void datetime_copy(dateTime *to, dateTime *from) {
 	to->year = from->year;
 	to->month = from->month;
 	to->day = from->day;

@@ -246,12 +246,12 @@ int main(void)
 	dt_LatestGPS.second = 0;
 	
 	// initialize GPS locations
-	datetime_copy(&dt_LatestGPS, &(curLocation.timeStamp));
+	datetime_copy(&(curLocation.timeStamp), &dt_LatestGPS);
 	curLocation.latVal = 0.0; // defaults
 	curLocation.lonVal = 0.0;
 	curLocation.latStr[0] = '\0'; // these flag that the location is undefined
 	curLocation.lonStr[0] = '\0';
-	datetime_copy(&dt_LatestGPS, &(prevLocation.timeStamp));
+	datetime_copy(&(prevLocation.timeStamp), &dt_LatestGPS);
 	prevLocation.latVal = 0.0;
 	prevLocation.lonVal = 0.0;
 	prevLocation.latStr[0] = '\0';
@@ -470,7 +470,7 @@ int main(void)
 */
 				} else { // set up a GPS-time request
 					// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
-					datetime_copy(&dt_CurAlarm, &dt_CkGPS);
+					datetime_copy(&dt_CkGPS, &dt_CurAlarm);
 					// get hour and minute from average
 					uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
 					dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
@@ -522,13 +522,13 @@ int main(void)
 					//  null value) or from default date (see fn 'datetime_getDefault'); in either case,
 					//  don't track a new date but overwrite the current one
 					cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
-					datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));
+					datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
 				} else { // only a regular new date
 					// point to the next position to fill in the readings array
 					cellReadingsPtr++;
 					if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
 								cellReadingsPtr = cellReadings;
-					datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));
+					datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
 					cellReadingsPtr->level = 0; // initialize
 				}
 				strcat(strJSON, "\",\"now\":\"");
@@ -542,9 +542,7 @@ int main(void)
 			// track the maximum cell voltage for this date
 			if (cellVoltageReading.adcWholeWord > cellReadingsPtr->level) {
 				cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
-				datetime_copy(&dt_CurAlarm, &(cellReadingsPtr->timeStamp));
-//				maxCellVoltageToday = cellVoltageReading.adcWholeWord;
-//				dayPtMaxChargeToday = (60 * dt_CurAlarm.hour) + (dt_CurAlarm.minute);
+				datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
 			}
 			
 			if (!(stateFlags1.reachedFullPower)) { // if not achieved full power and initialized, skip this data acquisition loop
@@ -1031,7 +1029,7 @@ void checkForCommands (void) {
 						strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
 						rtcStatus = rtcHasGPSTime;
 						
-						datetime_copy(&dt_tmp, &dt_LatestGPS);
+						datetime_copy(&dt_LatestGPS, &dt_tmp);
 						if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
 							showCellReadings();
 							gpsFlags.gpsReqTest = 0; // test is over

@@ -284,11 +284,7 @@ void saveGPSLocation(char* locStr) {
 		strcat(strJSONloc, "\"}");
 	}
 	strcat(strJSONloc, "]}");
-	
-	outputStringToBothUARTs("\r\n");
-	outputStringToBothUARTs(strJSONloc);
-	outputStringToBothUARTs("\r\n");
-	
+
 	// set the flags
 	gpsFlags.gpsGotLocation = 1;
 	gpsFlags.gpsNewLocation = 1;

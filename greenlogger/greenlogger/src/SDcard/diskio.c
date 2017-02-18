@@ -192,8 +192,9 @@ BYTE writeLogStringToSDCard (void) {
 			retVal = sdInitFail;
 			goto unmountVolume;
 	}
-	//strLog e.g. (begins with "\n\r", allow for these extra 2 bytes):
+	//strLog e.g.:
 	// 2012-07-09 08:40:00 -08	42	17	2738	545	19	1360
+	// begins with "\n\r", allow for these extra 2 bytes
 	stDir[0] = '\0'; // initialize
 	strncpy(stDir, strLog + 4, 5); // make folder name e.g. "12-07"
 	stDir[5] = '\0';

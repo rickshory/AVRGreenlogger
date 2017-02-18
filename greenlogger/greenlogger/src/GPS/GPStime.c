@@ -30,19 +30,6 @@ extern volatile uint16_t gpsTimeReqCountdown;
 extern char strJSONloc[256];
 
 /**
- * \brief assures GPS subsystem is idle
- *
- * PortB, bit 1 controls reset to the GPS subsystem,
- * brief low causes reset, and initiates a time request sequence
- * high = no reset, idle
- */
-inline void GPS_idle(void)
-{
-	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high; no reset
-}
-
-
-/**
  * \brief send GPS time-request signal
  *
  * Send low-going reset pulse to external uC, to

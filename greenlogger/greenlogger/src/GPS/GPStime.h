@@ -35,7 +35,18 @@ typedef volatile struct { // used for tracking the cell voltage daily maximum, w
 
 } chargeInfo;
 
-extern inline void GPS_idle(void);
+/**
+ * \brief assures GPS subsystem is idle
+ *
+ * PortB, bit 1 controls reset to the GPS subsystem,
+ * brief low causes reset, and initiates a time request sequence
+ * high = no reset, idle
+ */
+static inline void GPS_idle(void)
+{
+	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high; no reset
+}
+
 extern void GPS_initTimeRequest(void);
 extern uint16_t getAverageMinute (chargeInfo* startOfArrayOfReadings);
 void chargeInfo_getString(char* ciStr, chargeInfo *cip);

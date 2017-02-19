@@ -204,6 +204,7 @@ void disableAccelInterrupt(void);
 void enableRTCInterrupt(void);
 void disableRTCInterrupt(void);
 void showCellReadings(void);
+void getCellReadingsIntoStrJSON(void);
 uint8_t makeLogString(void);
 
 #endif /* GREENLOGGER_H_ */

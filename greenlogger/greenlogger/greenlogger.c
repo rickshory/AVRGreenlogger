@@ -656,7 +656,7 @@ int main(void)
  *  while creating the string; otherwise echoes
  *  everything to both UARTs.
  * Uses many global variables:
- * Expects the the timestamp to be in dt_CurAlarm
+ * Expects the timestamp to be in dt_CurAlarm
  * Expects the cell voltage in cellVoltageReading
  * Uses buffers str, strLog, datetime_string
  * Uses irrReadings
@@ -921,7 +921,7 @@ void outputStringToBothUARTs (char* St) {
  * \brief Show the cell readings
  *
  * Show the series of cell readings
- * that used to track the moving
+ * that are used to track the moving
  * average of maximum daily cell charge
  * \
  *  
@@ -934,6 +934,31 @@ void showCellReadings(void) {
 		outputStringToBothUARTs(stCellReading);
 	}
 	outputStringToBothUARTs("\r\nDone with cell readings\r\n");
+}
+
+/**
+ * \brief Get the cell readings into strJSON
+ *
+ * Get the series of cell readings
+ * that are used to track the moving
+ * average of maximum daily cell charge
+ * into strJSON.
+ * Intended use for temporary diagnostics, with
+ * strJSON starting empty, and the calling routing
+ * erasing strJSON again after using it
+ * \
+ *  
+ */
+void getCellReadingsIntoStrJSON(void) {
+	strcat(strJSON,"{\"cellreadings\":{\n\r");
+	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
+		// get diagnostics on the readings being stored for the moving average
+		chargeInfo_getString(stCellReading, &(cellReadings[i]));
+		strcat(strJSON,stCellReading);
+		strcat("\n\r");
+	}
+	// not proper JSON, but good enough for diagnostics
+	strcat(strJSON,"\"}}\n\r");
 }
 
 /**

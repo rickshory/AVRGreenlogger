@@ -80,8 +80,8 @@ uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
 			// get minutes
 			// adjust by hour offset to always treat as if Universal Time
 			// range zero to 1440, can be negative after offset by time zone
-			minutesFromTime = ((curReading->timeStamp.hour) - (curReading->timeStamp.houroffset)) 
-					* 60 + (curReading->timeStamp.minute);
+			minutesFromTime = (((curReading->timeStamp.hour) - (curReading->timeStamp.houroffset)) 
+					* 60) + (curReading->timeStamp.minute);
 			// map to 2Pi radians
 			double minuteRadians = 2 * M_PI * minutesFromTime / 1440;
 			sumSine += sin(minuteRadians);

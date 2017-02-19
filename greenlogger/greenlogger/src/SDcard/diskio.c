@@ -286,6 +286,25 @@ BYTE writeLogStringToSDCard (void) {
 			retVal = sdFileSeekFail;
 			goto closeFile;
 		}
+		
+		// insert the latest GPS time
+		getLatestGpsTimeIntoStrJSON();
+		sLen = strlen(strJSON);
+		if (f_write(&logFile, strJSON, sLen, &bytesWritten) != FR_OK) {
+			retVal = sdFileWriteFail;
+			goto closeFile;
+		}
+		strJSON[0] = '\0'; // 'erase' strJSON
+		if (bytesWritten < sLen) { // probably strJSON was corrupted; proceed next
+			// time with string and flag cleared; at least allow normal logging to resume
+			retVal = sdFileWritePartial;
+			goto closeFile;
+		}
+		// Move to end of the file to append further data
+		if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
+			retVal = sdFileSeekFail;
+			goto closeFile;
+		}		
 	}
 	
 	if ((fileIsNew & gpsFlags.gpsGotLocation) | gpsFlags.gpsNewLocation) {

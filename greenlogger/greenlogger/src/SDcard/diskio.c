@@ -274,7 +274,8 @@ BYTE writeLogStringToSDCard (void) {
 			goto closeFile;
 		}
 		gpsFlags.gpsNewLocation = 0; // clear flag, write only if new loc or new file
-		strJSONloc[0] = '\0'; // "erase" the string
+		// don't erase the string; retain it for future days
+		// fn 'saveGPSLocation' will rebuild it when needed
 		if (bytesWritten < sLen) { // probably strJSONloc is corrupted; proceed next
 			// time with string and flag cleared; at least allow normal logging to resume
 			retVal = sdFileWritePartial;

@@ -270,7 +270,7 @@ void saveGPSLocation(char* locStr) {
 		strcat(strJSONloc, tmpStr);
 		strcat(strJSONloc, "\"}");
 	}
-	strcat(strJSONloc, "]}\r\n");
+	strcat(strJSONloc, "]}\r\n\r\n");
 
 	// set the flags
 	gpsFlags.gpsGotLocation = 1;

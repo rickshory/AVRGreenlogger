@@ -537,6 +537,7 @@ int main(void)
 				chargeInfo_getString(str, cellReadingsPtr);
 				strcat(strJSON, str);
 				strcat(strJSON, "\"}}\r\n");
+				stateFlags1.writeJSONMsg = 1;
 			}
 			
 			// track the maximum cell voltage for this date

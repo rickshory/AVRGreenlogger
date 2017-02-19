@@ -450,6 +450,14 @@ int main(void)
 				if (minsCt > (60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
 			}
 			
+			// more diagnostics
+			if (gpsFlags.checkGpsToday) {
+				outputStringToBothUARTs("'checkGpsToday' flagged, and pending at: ");
+				datetime_getstring(datetime_string, &dt_CkGPS);
+				outputStringToBothUARTs(datetime_string);
+				outputStringToBothUARTs("\n\r");
+			}
+			
 			// test whether to request time from the GPS
 			if (initFlags.gpsTimePassedAutoInit) {
 				// this won't work. following will try repeatedly and drain the battery
@@ -457,6 +465,18 @@ int main(void)
 			if ((uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
 						(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)))) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
+					int l;
+					char s[64];
+					outputStringToBothUARTs("'checkGpsToday' flagged, and time passed\n\r");
+					outputStringToBothUARTs("pending at: ");
+					datetime_getstring(datetime_string, &dt_CkGPS);
+					outputStringToBothUARTs(datetime_string);
+					outputStringToBothUARTs("\n\r");
+					l = sprintf(s, "%ul seconds overdue\n\r", 
+						(unsigned long)(((uint32_t)((datetime_totalsecs(&dt_CurAlarm) 
+						- (datetime_totalsecs(&dt_LatestGPS)) 
+						- (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE))))));
+					outputStringToBothUARTs(s);
 /* don't do this; would run on every single alarm
 					// diagnostics, e.g.
 					// {"GPStime":{"pending":"2017-01-17 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}

@@ -450,6 +450,23 @@ int main(void)
 				if (minsCt > (60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
 			}
 			
+			// temporary diagnostics
+			{
+				int l;
+				char s[64], t[32];
+				l = sprintf(s, " target seconds: %ul\n\r",
+					(unsigned long)(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE));
+				outputStringToBothUARTs(s);
+				l = sprintf(s, "elapsed seconds: %ul\n\r",
+					(unsigned long)((uint32_t)((datetime_totalsecs(&dt_CurAlarm)
+					- (datetime_totalsecs(&dt_LatestGPS))))));
+				outputStringToBothUARTs(s);
+				datetime_getstring(t, &dt_LatestGPS);
+				l = sprintf(s, "latest GPS time: %s\n\r", t);
+				outputStringToBothUARTs(s);
+			}
+			
+			
 			// more diagnostics
 			if (gpsFlags.checkGpsToday) {
 				outputStringToBothUARTs("'checkGpsToday' flagged, and pending at: ");

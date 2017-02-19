@@ -511,6 +511,7 @@ int main(void)
 					datetime_getstring(datetime_string, &dt_CurAlarm);
 					strcat(strJSON, datetime_string);
 					strcat(strJSON, "\"}}\r\n");
+					stateFlags1.writeJSONMsg = 1;
 				} // end test whether to access GPS
 			} else { // not time to set up a request yet
 /* don't do this; would run on every single alarm
@@ -586,6 +587,7 @@ int main(void)
 				strcat(strJSON, "\r\n{\"GPStime\":{\"requested\":\"");
 				datetime_getstring(datetime_string, &dt_CurAlarm);
 				strcat(strJSON, "\"}}\r\n");
+				stateFlags1.writeJSONMsg = 1;
 			}
 			
 			// see if it's time to log data

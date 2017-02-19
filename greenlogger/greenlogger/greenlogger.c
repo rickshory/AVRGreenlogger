@@ -1071,28 +1071,28 @@ void checkForCommands (void) {
                 case 'L': case 'l': 
 				{ // experimenting with the accelerometer Leveling functions
 					uint8_t rs, val;
-//					outputStringToWiredUART("\r\n about to initialize ADXL345\r\n");
+//					outputStringToBothUARTs("\r\n about to initialize ADXL345\r\n");
 //					rs = initializeADXL345();
 //					if (rs) {
 //						len = sprintf(str, "\n\r initialize failed: %d\n\r", rs);
-//						outputStringToWiredUART(str);
+//						outputStringToBothUARTs(str);
 //						break;
 //					}
-//					outputStringToWiredUART("\r\n ADXL345 initialized\r\n");
+//					outputStringToBothUARTs("\r\n ADXL345 initialized\r\n");
 
 					// bring out of low power mode
 					// use 100Hz for now ; bit 4 set = reduced power, higher noise
 					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x0a);
 					if (rs) {
 						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
-						outputStringToWiredUART(str);
+						outputStringToBothUARTs(str);
 						break;
 					}
 //					for (iTmp = 1; iTmp < 6; iTmp++) { // try reading bit 7, INT_SOURCE.DATA_READY
 //						rs = readADXL345Register(ADXL345_REG_INT_SOURCE, &val);
 //						if (rs) {
 //							len = sprintf(str, "\n\r could not read ADXL345_REG_INT_SOURCE: %d\n\r", rs);
-//							outputStringToWiredUART(str);
+//							outputStringToBothUARTs(str);
 //							break;
 //						}
 //						if (val & (1 << 7)) {
@@ -1100,27 +1100,27 @@ void checkForCommands (void) {
 //						} else {
 //							len = sprintf(str, "\n\r INT_SOURCE.DATA_READY clear: 0x%x\n\r", val);
 //						}							
-//						outputStringToWiredUART(str);
+//						outputStringToBothUARTs(str);
 //					}
 
 
-//					outputStringToWiredUART("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
+//					outputStringToBothUARTs("\r\n set ADXL345_REG_BW_RATE, 0x0a \r\n");
 					if (readADXL345Axes (&accelData)) {
-						outputStringToWiredUART("\r\n could not get ADXL345 data\r\n");
+						outputStringToBothUARTs("\r\n could not get ADXL345 data\r\n");
 						break;
 					}
 					// set low power bit (4) and 25Hz sampling rate, for 40uA current
 					rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x18);
 					if (rs) {
 						len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
-						outputStringToWiredUART(str);
+						outputStringToBothUARTs(str);
 						break;
 					}
 //				len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", (unsigned int)((int)x1 << 8 | (int)x0),
 //						  (unsigned int)((int)y1 << 8 | (int)y0),  (unsigned int)((int)z1 << 8 | (int)z0));
 					len = sprintf(str, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
 						accelData.yWholeWord,  accelData.zWholeWord);
-						outputStringToWiredUART(str);
+						outputStringToBothUARTs(str);
                     break;
                 }
 

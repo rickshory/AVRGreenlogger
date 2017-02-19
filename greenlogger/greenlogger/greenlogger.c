@@ -976,11 +976,18 @@ void getCellReadingsIntoStrJSON(void) {
  */
 void getLatestGpsTimeIntoStrJSON(void) {
 	char s[64];
+	uint32_t d;
+	int l;
 	strcat(strJSON,"{\"latestGPStime\":{\n\r");
 	datetime_getstring(s, &dt_LatestGPS);
 	strcat(strJSON, s);
 	strcat(strJSON, "\n\r");
-	
+	d = (uint32_t)(datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)));
+	l = sprintf(s, "%lu elapsed\n\r", (unsigned long)d);
+	strcat(strJSON, s);
+	d = (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE);
+	l = sprintf(s, "%lu target\n\r", (unsigned long)d);
+	strcat(strJSON, s);
 	// not proper JSON, but good enough for diagnostics
 	strcat(strJSON,"\"}}\n\r");
 }

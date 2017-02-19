@@ -454,8 +454,8 @@ int main(void)
 			if (initFlags.gpsTimePassedAutoInit) {
 				// this won't work. following will try repeatedly and drain the battery
 			}
-			if (((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
-						(86400 * DAYS_FOR_MOVING_AVERAGE)))) {
+			if ((uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
+						(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)))) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
 /* don't do this; would run on every single alarm
 					// diagnostics, e.g.
@@ -951,16 +951,40 @@ void showCellReadings(void) {
  *  
  */
 void getCellReadingsIntoStrJSON(void) {
+	char s[128];
 	strcat(strJSON,"{\"cellreadings\":{\n\r");
 	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		// get diagnostics on the readings being stored for the moving average
-		chargeInfo_getString(stCellReading, &(cellReadings[i]));
-		strcat(strJSON, stCellReading);
+		chargeInfo_getString(s, &(cellReadings[i]));
+		strcat(strJSON, s);
 		strcat(strJSON, "\n\r");
 	}
 	// not proper JSON, but good enough for diagnostics
 	strcat(strJSON,"\"}}\n\r");
 }
+
+/**
+ * \brief Get latest GPS time into strJSON
+ *
+ * Get dt_LatestGPS
+ * into strJSON.
+ * Intended use for temporary diagnostics, with
+ * strJSON starting empty, and the calling routing
+ * erasing strJSON again after using it
+ * \
+ *  
+ */
+void getLatestGpsTimeIntoStrJSON(void) {
+	char s[64];
+	strcat(strJSON,"{\"latestGPStime\":{\n\r");
+	datetime_getstring(s, &dt_LatestGPS);
+	strcat(strJSON, s);
+	strcat(strJSON, "\n\r");
+	
+	// not proper JSON, but good enough for diagnostics
+	strcat(strJSON,"\"}}\n\r");
+}
+
 
 /**
  * \brief Check the UART0 for commands

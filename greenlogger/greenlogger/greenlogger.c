@@ -954,8 +954,8 @@ void getCellReadingsIntoStrJSON(void) {
 	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		// get diagnostics on the readings being stored for the moving average
 		chargeInfo_getString(stCellReading, &(cellReadings[i]));
-		strcat(strJSON,stCellReading);
-		strcat("\n\r");
+		strcat(strJSON, stCellReading);
+		strcat(strJSON, "\n\r");
 	}
 	// not proper JSON, but good enough for diagnostics
 	strcat(strJSON,"\"}}\n\r");

@@ -259,6 +259,7 @@ void checkForBTCommands (void) {
 					timeZoneOffset = dt_tmp.houroffset;
 					timeFlags.timeZoneWritten = 0; // flag that time zone needs to be written
 					syncTimeZone(); // attempt to write the time zone; will retry later if e.g. power too low
+					gpsFlags.checkGpsToday = 0; // un-flag this on any time change, force to re-test
 					break;
 				}
 				

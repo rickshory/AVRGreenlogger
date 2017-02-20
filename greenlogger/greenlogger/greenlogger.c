@@ -1161,8 +1161,9 @@ void checkForCommands (void) {
 						outputStringToWiredUART("\r\n");
 						rtcStatus = rtcTimeManuallySet;
 					}
-					stateFlags1.writeTimeChangeMsg = 1; // log JSON message on next SD card write
+					stateFlags1.writeTimeChangeMsg = 1; // log JSON Time Change message on next SD card write
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
+					gpsFlags.checkGpsToday = 0; // un-flag this on any time change, force to re-test
 					
 					outputStringToWiredUART(strHdr);
 					if (!rtc_setupNextAlarm(&dt_CurAlarm)) timeFlags.nextAlarmSet = 1;

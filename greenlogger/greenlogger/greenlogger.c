@@ -45,7 +45,8 @@ uint8_t Timer1, Timer2, intTmp1;	/* 100Hz decrement timer */
 int len, err = 0;
 char str[128]; // generic space for strings to be output
 char stCellReading[128]; // space for cell reading string
-char strJSON[512]; // string for JSON data
+char strJSON[512]; // string for generalized JSON data
+char strJSONtc[256]; // string for time change information, as JSON
 char strJSONloc[256]; // string for location information, as JSON
 char strHdr[64] = "\n\rTimestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)\n\r";
 char strLog[64];
@@ -155,27 +156,27 @@ int main(void)
 	initFlags.initI2C = 1;
 		
 	intTmp1 = rtc_readTime(&dt_RTC);
-	strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+	strcat(strJSONtc, "\r\n{\"timechange\":{\"from\":\"");
 	datetime_getstring(datetime_string, &dt_RTC);
-	strcat(strJSON, datetime_string);
-	strcat(strJSON, "\",\"to\":\"");
+	strcat(strJSONtc, datetime_string);
+	strcat(strJSONtc, "\",\"to\":\"");
 	
 	if (dt_RTC.year) { // 0 on power up, otherwise must already have been set
 		rtcStatus = rtcTimeRetained;
-		strcat(strJSON, datetime_string);
-		strcat(strJSON, "\",\"by\":\"retained\"}}\r\n");
+		strcat(strJSONtc, datetime_string);
+		strcat(strJSONtc, "\",\"by\":\"retained\"}}\r\n");
 		initFlags.gpsTimePassedAutoInit = 1; // no need to try to auto-initialize
 	} else { // RTC year = 0 on power up, clock needs to be set
 		datetime_getDefault(&dt_RTC);
 		if (!rtc_setTime(&dt_RTC)) {
 			rtcStatus = rtcTimeSetToDefault;
 			datetime_getstring(datetime_string, &dt_RTC);
-			strcat(strJSON, datetime_string);
-			strcat(strJSON, "\",\"by\":\"default\"}}\r\n");
+			strcat(strJSONtc, datetime_string);
+			strcat(strJSONtc, "\",\"by\":\"default\"}}\r\n");
 		} else {
 			rtcStatus = rtcTimeSetFailed;
-			strcat(strJSON, datetime_string);
-			strcat(strJSON, "\",\"by\":\"failure\"}}\r\n");
+			strcat(strJSONtc, datetime_string);
+			strcat(strJSONtc, "\",\"by\":\"failure\"}}\r\n");
 		}
 	}
 	stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write	
@@ -1003,7 +1004,7 @@ void showCellReadings(void) {
  */
 void getCellReadingsIntoStrJSON(void) {
 	char s[128];
-	strcat(strJSON,"{\"cellreadings\":{\n\r");
+	strcat(strJSON,"{\"cellreadings\":{\n\r\n\r");
 	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		// get diagnostics on the readings being stored for the moving average
 		chargeInfo_getString(s, &(cellReadings[i]));
@@ -1011,7 +1012,7 @@ void getCellReadingsIntoStrJSON(void) {
 		strcat(strJSON, "\n\r");
 	}
 	// not proper JSON, but good enough for diagnostics
-	strcat(strJSON,"\"}}\n\r");
+	strcat(strJSON,"\"}}\n\r\n\r");
 }
 
 /**
@@ -1106,10 +1107,10 @@ void checkForCommands (void) {
 						}
 						break;
 					}
-					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+					strcat(strJSONtc, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_RTC);
 					datetime_getstring(datetime_string, &dt_RTC);
-					strcat(strJSON, datetime_string);
+					strcat(strJSONtc, datetime_string);
 
 					if (gpsFlags.gpsTimeRequestByBluetooth) {
 						outputStringToBluetoothUART("\r\n Time changed, by GPS, from ");
@@ -1120,9 +1121,9 @@ void checkForCommands (void) {
 					}
 					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
 					rtc_setTime(&dt_tmp);
-					strcat(strJSON, "\",\"to\":\"");
+					strcat(strJSONtc, "\",\"to\":\"");
 					datetime_getstring(datetime_string, &dt_tmp);
-					strcat(strJSON, datetime_string);
+					strcat(strJSONtc, datetime_string);
 					if (gpsFlags.gpsTimeRequestByBluetooth) {
 						outputStringToBluetoothUART(" to ");
 						outputStringToBluetoothUART(datetime_string);
@@ -1134,7 +1135,7 @@ void checkForCommands (void) {
 					}
 					if (gpsFlags.gpsTimeRequested) { // set-time signal was requested from GPS
 						// for now, assume that's where this came from
-						strcat(strJSON, "\",\"by\":\"GPS\"}}\r\n");
+						strcat(strJSONtc, "\",\"by\":\"GPS\"}}\r\n");
 						rtcStatus = rtcHasGPSTime;
 						
 						datetime_copy(&dt_LatestGPS, &dt_tmp);
@@ -1154,7 +1155,7 @@ void checkForCommands (void) {
 						gpsFlags.checkGpsToday = 0; // time is set by GPS, clear any pending request
 						initFlags.gpsTimePassedAutoInit = 1; // no longer try to auto-initialize
 					} else { // time was set manually
-						strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
+						strcat(strJSONtc, "\",\"by\":\"hand\"}}\r\n");
 						outputStringToWiredUART("\r\n");
 						rtcStatus = rtcTimeManuallySet;
 					}

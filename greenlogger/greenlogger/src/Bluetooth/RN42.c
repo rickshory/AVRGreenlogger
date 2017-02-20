@@ -28,10 +28,9 @@ extern char commandBuffer[COMMAND_BUFFER_LENGTH];
 extern char *commandBufferPtr;
 extern char str[128]; // generic space for strings to be output
 extern char strLog[64];
-extern char strJSON[256]; // string for JSON data
+extern char strJSONtc[256]; // string for JSON data
 extern volatile uint8_t Timer1, Timer2, intTmp1;
 extern volatile dateTime dt_RTC, dt_CurAlarm, dt_tmp, dt_LatestGPS; //, dt_NextAlarm
-extern char datetime_string[25];
 extern volatile sFlags1 stateFlags1;
 extern volatile bFlags btFlags;
 extern volatile tFlags timeFlags;
@@ -231,23 +230,24 @@ void checkForBTCommands (void) {
 						outputStringToBluetoothUART("\r\n Invalid hour offset\r\n");
 						break;
 					}
+					char ts[25];
 					outputStringToBluetoothUART("\r\n Time changed from ");
-					strcat(strJSON, "\r\n{\"timechange\":{\"from\":\"");
+					strcat(strJSONtc, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_RTC);
-					datetime_getstring(datetime_string, &dt_RTC);
-					strcat(strJSON, datetime_string);
-					outputStringToBluetoothUART(datetime_string);
+					datetime_getstring(ts, &dt_RTC);
+					strcat(strJSONtc, ts);
+					outputStringToBluetoothUART(ts);
 					datetime_getFromUnixString(&dt_tmp, stTmp, 0);
 					rtc_setTime(&dt_tmp);
-					strcat(strJSON, "\",\"to\":\"");
+					strcat(strJSONtc, "\",\"to\":\"");
 					outputStringToBluetoothUART(" to ");
-					datetime_getstring(datetime_string, &dt_tmp);
-					strcat(strJSON, datetime_string);
-					outputStringToBluetoothUART(datetime_string);
+					datetime_getstring(ts, &dt_tmp);
+					strcat(strJSONtc, ts);
+					outputStringToBluetoothUART(ts);
 /*	presently, a set-time command from the GPS could not come in by Bluetooth, though a
      request to the GPS to send the command could go out by Bluetooth
 */
-					strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");
+					strcat(strJSONtc, "\",\"by\":\"hand\"}}\r\n");
 					outputStringToBluetoothUART("\r\n");
 					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write

@@ -434,30 +434,36 @@ int main(void)
 					case (60 * 16): // 16 hours
 					case (60 * 20): // 20 hours
 					case (60 * 24): // 24 hours
+						// following requests should not collide or stack because
+						// fn below disallows until 3-minute timeout
+						GPS_initTimeRequest();
+					/*
 					
 						if (gpsFlags.checkGpsToday) { // by present code structure, this would not be
 							// pending, but try to make fail-safe in case code is rearranged
-							// following requests should not collide or stack because fn below disallows
-							// until 3-minute timeout
+							
 							GPS_initTimeRequest();
 						}
+						*/
 						break;
 					
 					default:
+						// we have tried long enough to auto-initialize
+						if (minsCt > (60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
 						break;
 				}
-				// we have tried long enough to auto-initialize
-				if (minsCt > (60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
-			}
+				
+				
+			} // end of if (initFlags.gpsTimePassedAutoInit == 0)
 			
 			// temporary diagnostics
 			{
 				int l;
 				char s[64], t[32];
-				l = sprintf(s, " target seconds: %ul\n\r",
+				l = sprintf(s, " target seconds: %u\n\r",
 					(unsigned long)(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE));
 				outputStringToBothUARTs(s);
-				l = sprintf(s, "elapsed seconds: %ul\n\r",
+				l = sprintf(s, "elapsed seconds: %u\n\r",
 					(unsigned long)((uint32_t)((datetime_totalsecs(&dt_CurAlarm)
 					- (datetime_totalsecs(&dt_LatestGPS))))));
 				outputStringToBothUARTs(s);
@@ -489,7 +495,7 @@ int main(void)
 					datetime_getstring(datetime_string, &dt_CkGPS);
 					outputStringToBothUARTs(datetime_string);
 					outputStringToBothUARTs("\n\r");
-					l = sprintf(s, "%ul seconds overdue\n\r", 
+					l = sprintf(s, "%u seconds overdue\n\r", 
 						(unsigned long)(((uint32_t)((datetime_totalsecs(&dt_CurAlarm) 
 						- (datetime_totalsecs(&dt_LatestGPS)) 
 						- (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE))))));
@@ -1129,8 +1135,6 @@ void checkForCommands (void) {
 						if (gpsFlags.gpsReqTest) { // this was a manually initiated test request, not from the system
 							showCellReadings();
 							gpsFlags.gpsReqTest = 0; // test is over
-						} else { // only if NOT a test
-							gpsFlags.checkGpsToday = 0; // clear the system-set request flag
 						}
 						if (strlen(tmpStr) >= 25) {
 							// there may be extra data, such as location
@@ -1139,9 +1143,9 @@ void checkForCommands (void) {
 								outputStringToBluetoothUART(strJSONloc);
 							}
 						}
-						
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced
 						gpsFlags.gpsTimeRequestByBluetooth = 0; // end of request by BT
+						gpsFlags.checkGpsToday = 0; // time is set by GPS, clear any pending request
 						initFlags.gpsTimePassedAutoInit = 1; // no longer try to auto-initialize
 					} else { // time was set manually
 						strcat(strJSON, "\",\"by\":\"hand\"}}\r\n");

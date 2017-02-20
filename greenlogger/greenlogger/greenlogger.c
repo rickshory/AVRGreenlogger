@@ -420,7 +420,7 @@ int main(void)
 			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
 
 
-			if ((minsCt <= (60 * 24)) & (initFlags.gpsTimeAutoInit == 0) & (rtcStatus <= rtcTimeSetToDefault)) {
+			if ((minsCt <= (60 * 24)) && (initFlags.gpsTimeAutoInit == 0)) {
 				{ // temporary diagnostics
 					int l;
 					char s[64];
@@ -496,9 +496,6 @@ int main(void)
 			}
 			
 			// test whether to request time from the GPS
-			if (initFlags.gpsTimeAutoInit) {
-				// this won't work. following will try repeatedly and drain the battery
-			}
 			if ((uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
 						(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)))) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
@@ -526,29 +523,31 @@ int main(void)
 					strcat(strJSON, "\"}}\r\n");
 */
 				} else { // set up a GPS-time request
-					// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
-					datetime_copy(&dt_CkGPS, &dt_CurAlarm);
-					// get hour and minute from average
-					uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
-					dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
-					dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
-					dt_CkGPS.second = 0; // don't really matter much
-					dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
-					if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) {
-						// timezone adjust has made the GPS check time earlier than the current alarm
-						(dt_CkGPS.day)++; // move one day ahead
-						datetime_normalize(&dt_CkGPS);
+					if (initFlags.gpsTimeAutoInit) { // wait till we have tried to auto-initialize
+						// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
+						datetime_copy(&dt_CkGPS, &dt_CurAlarm);
+						// get hour and minute from average
+						uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
+						dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
+						dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
+						dt_CkGPS.second = 0; // don't really matter much
+						dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
+						if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) {
+							// timezone adjust has made the GPS check time earlier than the current alarm
+							(dt_CkGPS.day)++; // move one day ahead
+							datetime_normalize(&dt_CkGPS);
+						}
+						gpsFlags.checkGpsToday = 1;
+						// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
+						strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
+						datetime_getstring(datetime_string, &dt_CkGPS);
+						strcat(strJSON, datetime_string);
+						strcat(strJSON, "\",\"now\":\"");
+						datetime_getstring(datetime_string, &dt_CurAlarm);
+						strcat(strJSON, datetime_string);
+						strcat(strJSON, "\"}}\r\n");
+						stateFlags1.writeJSONMsg = 1;
 					}
-					gpsFlags.checkGpsToday = 1;
-					// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
-					strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
-					datetime_getstring(datetime_string, &dt_CkGPS);
-					strcat(strJSON, datetime_string);
-					strcat(strJSON, "\",\"now\":\"");
-					datetime_getstring(datetime_string, &dt_CurAlarm);
-					strcat(strJSON, datetime_string);
-					strcat(strJSON, "\"}}\r\n");
-					stateFlags1.writeJSONMsg = 1;
 				} // end test whether to access GPS
 			} else { // not time to set up a request yet
 /* don't do this; would run on every single alarm

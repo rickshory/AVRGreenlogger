@@ -261,7 +261,7 @@ void saveGPSLocation(char* locStr) {
 	strcat(strJSONloc, tmpStr);
 	strcat(strJSONloc, "\"}");
 	if (prevLocation.timeStamp.month != 0) { // "prevLocation" has a value
-		strcpy(strJSONloc, "{\"Priority\":\"Previous\", \"Latitude\":\"");
+		strcat(strJSONloc, "{\"Priority\":\"Previous\", \"Latitude\":\"");
 		strcat(strJSONloc, prevLocation.latStr);
 		strcat(strJSONloc, "\", \"Longitude\":\"");
 		strcat(strJSONloc, prevLocation.lonStr);

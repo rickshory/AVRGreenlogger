@@ -179,7 +179,7 @@ int main(void)
 			strcat(strJSONtc, "\",\"by\":\"failure\"}}\r\n");
 		}
 	}
-	stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write	
+	stateFlags1.writeTimeChangeMsg = 1; // log JSON Time Change message on next SD card write	
 	timeFlags.nextAlarmSet = 0; // alarm not set yet
 	irradFlags.isDark = 1; // set the Dark flag, default till full-power initializations passed
 
@@ -711,7 +711,7 @@ int main(void)
  * Uses many global variables:
  * Expects the timestamp to be in dt_CurAlarm
  * Expects the cell voltage in cellVoltageReading
- * Uses buffers str, strLog, datetime_string
+ * Uses buffers str, strLog
  * Uses irrReadings
  * Sets flags isDarkBBDn, isDarkIRDn, isDarkBBUp, isDarkIRUp
  * The calling routine decides whether to write 
@@ -724,11 +724,12 @@ int main(void)
 uint8_t makeLogString(void) {
 	int strLn;
 	uint8_t iTmp0;
+	char ts[25];
 	strcpy(strLog, "\n\r");
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\r\n");
-	datetime_getstring(datetime_string, &dt_CurAlarm);
-	strcat(strLog, datetime_string);
-	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(datetime_string);
+	datetime_getstring(ts, &dt_CurAlarm);
+	strcat(strLog, ts);
+	if (!(stateFlags1.logSilently)) outputStringToBothUARTs(ts);
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_READ_DATA) {
 		if (!(stateFlags1.logSilently)) {
 			strLn = sprintf(str, "\t power too low to read sensors, %lumV\r\n", 
@@ -1090,6 +1091,7 @@ void checkForCommands (void) {
 					// a request to the GPS could be sent by Bluetooth. In that case, user is probably
 					// monitoring Bluetooth modem, UART1, and so diagnostics should go there
 					char tmpStr[COMMAND_BUFFER_LENGTH];
+					char jts[25];
 					strcpy(tmpStr, commandBuffer + 1);
 					if (!isValidDateTime(tmpStr)) {
 						if (gpsFlags.gpsTimeRequestByBluetooth) {
@@ -1109,28 +1111,28 @@ void checkForCommands (void) {
 					}
 					strcat(strJSONtc, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_RTC);
-					datetime_getstring(datetime_string, &dt_RTC);
-					strcat(strJSONtc, datetime_string);
+					datetime_getstring(jts, &dt_RTC);
+					strcat(strJSONtc, jts);
 
 					if (gpsFlags.gpsTimeRequestByBluetooth) {
 						outputStringToBluetoothUART("\r\n Time changed, by GPS, from ");
-						outputStringToBluetoothUART(datetime_string);
+						outputStringToBluetoothUART(jts);
 					} else {
 						outputStringToWiredUART("\r\n Time changed from ");
-						outputStringToWiredUART(datetime_string);
+						outputStringToWiredUART(jts);
 					}
 					datetime_getFromUnixString(&dt_tmp, tmpStr, 0);
 					rtc_setTime(&dt_tmp);
 					strcat(strJSONtc, "\",\"to\":\"");
-					datetime_getstring(datetime_string, &dt_tmp);
-					strcat(strJSONtc, datetime_string);
+					datetime_getstring(jts, &dt_tmp);
+					strcat(strJSONtc, jts);
 					if (gpsFlags.gpsTimeRequestByBluetooth) {
 						outputStringToBluetoothUART(" to ");
-						outputStringToBluetoothUART(datetime_string);
+						outputStringToBluetoothUART(jts);
 						outputStringToBluetoothUART("\r\n");					
 					} else {
 						outputStringToWiredUART(" to ");
-						outputStringToWiredUART(datetime_string);
+						outputStringToWiredUART(jts);
 						outputStringToWiredUART("\r\n");
 					}
 					if (gpsFlags.gpsTimeRequested) { // set-time signal was requested from GPS
@@ -1159,7 +1161,7 @@ void checkForCommands (void) {
 						outputStringToWiredUART("\r\n");
 						rtcStatus = rtcTimeManuallySet;
 					}
-					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write
+					stateFlags1.writeTimeChangeMsg = 1; // log JSON message on next SD card write
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
 					
 					outputStringToWiredUART(strHdr);

@@ -249,7 +249,7 @@ void checkForBTCommands (void) {
 */
 					strcat(strJSONtc, "\",\"by\":\"hand\"}}\r\n");
 					outputStringToBluetoothUART("\r\n");
-					stateFlags1.writeJSONMsg = 1; // log JSON message on next SD card write
+					stateFlags1.writeTimeChangeMsg = 1; // log the Time Change JSON message on next SD card write
 					stateFlags1.writeDataHeaders = 1; // log data column headers on next SD card write
 					rtcStatus = rtcTimeManuallySet;
 					outputStringToBluetoothUART(strHdr);

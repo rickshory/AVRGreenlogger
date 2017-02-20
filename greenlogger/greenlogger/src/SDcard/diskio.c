@@ -36,6 +36,7 @@ extern int len;
 extern char strLog[64]; // a string of data to log, created by fn 'makeLogString'
 extern char str[128]; // generic space for strings to be output
 extern char strJSON[512]; // string for JSON data
+extern char strJSONtc[256]; // string for Time Change data
 extern char strJSONloc[256]; // string for location data
 extern char strHdr[64];
 
@@ -245,8 +246,29 @@ BYTE writeLogStringToSDCard (void) {
 		retVal = sdFileSeekFail;
 		goto closeFile;
 	}
+	
+	// if flagged, insert any Time Change JSON messages
+	if (stateFlags1.writeTimeChangeMsg){
+		sLen = strlen(strJSONtc);
+		if (f_write(&logFile, strJSONtc, sLen, &bytesWritten) != FR_OK) {
+			retVal = sdFileWriteFail;
+			goto closeFile;
+		}
+		stateFlags1.writeTimeChangeMsg = 0; // clear flag, write only once
+		strJSONtc[0] = '\0'; // "erase" the string
+		if (bytesWritten < sLen) { // probably strJSON is corrupted; proceed next time with string and flag cleared
+			// at least allow normal logging to resume
+			retVal = sdFileWritePartial;
+			goto closeFile;
+		}
+		// Move to end of the file to append further data
+		if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
+			retVal = sdFileSeekFail;
+			goto closeFile;
+		}
+	}	
 
-	// if flagged, insert any JSON messages
+	// if flagged, insert any generalized JSON messages
 	if (stateFlags1.writeJSONMsg){
 		sLen = strlen(strJSON);
 		if (f_write(&logFile, strJSON, sLen, &bytesWritten) != FR_OK) {
@@ -266,7 +288,7 @@ BYTE writeLogStringToSDCard (void) {
 			goto closeFile;
 		}
 	}
-	
+
 	if (fileIsNew) { // temporary diagnostics
 		// insert the list of cell readings
 		getCellReadingsIntoStrJSON();

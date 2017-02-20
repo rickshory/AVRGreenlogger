@@ -94,7 +94,7 @@ typedef volatile union sBF { // status bit flags
 			// high-power modules, initializations
 		unsigned char logSilently:1; // do not give any diagnostics while logging; used during processes
 			// such as data dump and instrument leveling
-		unsigned char sfBit7:1; // unused
+		unsigned char writeTimeChangeMsg:1; // there is a Time Change message to log
 	};
 } sFlags1;
 

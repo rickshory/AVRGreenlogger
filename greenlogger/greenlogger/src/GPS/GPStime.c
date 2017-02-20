@@ -41,7 +41,10 @@ extern char strJSONloc[256];
  * receive that command.
  */
 void GPS_initTimeRequest(void) {
-	if (gpsFlags.gpsTimeRequested) return; // don't duplicate request while one is pending
+	if (gpsFlags.gpsTimeRequested) {
+		outputStringToBothUARTs("\r\n 'gpsTimeRequested' already set, 'GPS_initTimeRequest' skipped \r\n");
+		return; // don't duplicate request while one is pending
+	} 
 	// check if enough power to get time from GPS
 	uint8_t intTmp1 = readCellVoltage(&cellVoltageReading);
 	if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_OK_FOR_GPS) {
@@ -276,5 +279,4 @@ void saveGPSLocation(char* locStr) {
 	gpsFlags.gpsGotLocation = 1;
 	gpsFlags.gpsNewLocation = 1;
 	
-
 }

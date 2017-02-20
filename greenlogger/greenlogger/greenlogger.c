@@ -165,7 +165,7 @@ int main(void)
 		rtcStatus = rtcTimeRetained;
 		strcat(strJSONtc, datetime_string);
 		strcat(strJSONtc, "\",\"by\":\"retained\"}}\r\n");
-		initFlags.gpsTimePassedAutoInit = 1; // no need to try to auto-initialize
+//		initFlags.gpsTimeAutoInit = 1; // no need to try to auto-initialize
 	} else { // RTC year = 0 on power up, clock needs to be set
 		datetime_getDefault(&dt_RTC);
 		if (!rtc_setTime(&dt_RTC)) {
@@ -418,14 +418,15 @@ int main(void)
 			dateTime dtCk;
 			datetime_getDefault(&dtCk);
 			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
-			{ // temporary diagnostics
-				int l;
-				char s[64];
-				l = sprintf(s, "%u minutes elapsed\n\r", minsCt);
-				outputStringToBothUARTs(s);
-			}
-			if ((!(initFlags.gpsTimePassedAutoInit)) &&
-					(rtcStatus <= rtcTimeSetToDefault)) { // 2nd test may be redundant
+
+
+			if ((minsCt <= (60 * 24)) & (initFlags.gpsTimeAutoInit == 0) & (rtcStatus <= rtcTimeSetToDefault)) {
+				{ // temporary diagnostics
+					int l;
+					char s[64];
+					l = sprintf(s, "%u minutes elapsed\n\r", minsCt);
+					outputStringToBothUARTs(s);
+				}
 				switch (minsCt) {
 					case (2): // 2 minutes
 					case (4): // 4 minutes
@@ -441,6 +442,12 @@ int main(void)
 					case (60 * 16): // 16 hours
 					case (60 * 20): // 20 hours
 					case (60 * 24): // 24 hours
+						{ // temporary diagnostics
+							int l;
+							char s[64];
+							l = sprintf(s, "About to call 'GPS_initTimeRequest' on minute %u\n\r", minsCt);
+							outputStringToBothUARTs(s);
+						}
 						// following requests should not collide or stack because
 						// fn below disallows until 3-minute timeout
 						GPS_initTimeRequest();
@@ -456,12 +463,12 @@ int main(void)
 					
 					default:
 						// we have tried long enough to auto-initialize
-						if (minsCt > (60 * 24)) initFlags.gpsTimePassedAutoInit = 1;
+						if (minsCt > (60 * 24)) initFlags.gpsTimeAutoInit = 1; // not presently reachable
 						break;
 				}
 				
 				
-			} // end of if (initFlags.gpsTimePassedAutoInit == 0)
+			} // end of if (initFlags.gpsTimeAutoInit == 0)
 			
 			// temporary diagnostics
 			{
@@ -489,7 +496,7 @@ int main(void)
 			}
 			
 			// test whether to request time from the GPS
-			if (initFlags.gpsTimePassedAutoInit) {
+			if (initFlags.gpsTimeAutoInit) {
 				// this won't work. following will try repeatedly and drain the battery
 			}
 			if ((uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
@@ -1155,7 +1162,7 @@ void checkForCommands (void) {
 						gpsFlags.gpsTimeRequested = 0; // request has been serviced
 						gpsFlags.gpsTimeRequestByBluetooth = 0; // end of request by BT
 						gpsFlags.checkGpsToday = 0; // time is set by GPS, clear any pending request
-						initFlags.gpsTimePassedAutoInit = 1; // no longer try to auto-initialize
+						initFlags.gpsTimeAutoInit = 1; // no longer try to auto-initialize
 					} else { // time was set manually
 						strcat(strJSONtc, "\",\"by\":\"hand\"}}\r\n");
 						outputStringToWiredUART("\r\n");

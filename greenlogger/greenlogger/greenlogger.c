@@ -414,11 +414,17 @@ int main(void)
 			// - Try again every 20 minutes for first hour
 			// - Try every four hours first day
 			// - after that drop through to normal checking interval
+			dateTime dtCk;
+			datetime_getDefault(&dtCk);
+			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
+			{ // temporary diagnostics
+				int l;
+				char s[64];
+				l = sprintf(s, "%u minutes elapsed\n\r", minsCt);
+				outputStringToBothUARTs(s);
+			}
 			if ((!(initFlags.gpsTimePassedAutoInit)) &&
 					(rtcStatus <= rtcTimeSetToDefault)) { // 2nd test may be redundant
-				dateTime dtCk;
-				datetime_getDefault(&dtCk);
-				uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
 				switch (minsCt) {
 					case (2): // 2 minutes
 					case (4): // 4 minutes

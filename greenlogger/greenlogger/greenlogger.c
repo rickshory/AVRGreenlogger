@@ -1374,15 +1374,17 @@ void heartBeat (void)
 		rouseCountdown = btCountdown; // stay roused at least as long as trying to get a BT connection
 
 	if (gpsTimeReqCountdown > rouseCountdown)
-	rouseCountdown = gpsTimeReqCountdown; // stay roused at least as long as GPS time reqest is active		
+	rouseCountdown = gpsTimeReqCountdown; // stay roused at least as long as GPS time request is active		
 		// gpsTimeReqCountdown
 		
 	t = gpsTimeReqCountdown;
 	if (t) gpsTimeReqCountdown = --t;
 	
-	if (!gpsTimeReqCountdown) gpsFlags.gpsTimeRequestByBluetooth = 0; // BT request terminate
+	if (!gpsTimeReqCountdown) {
+		gpsFlags.gpsTimeRequested = 0; // GPS time request terminate
+		gpsFlags.gpsTimeRequestByBluetooth = 0; // BT request terminate
+	} 
 	
-
 	t = btCountdown;
 	if (t) btCountdown = --t;
 	if (!btCountdown)

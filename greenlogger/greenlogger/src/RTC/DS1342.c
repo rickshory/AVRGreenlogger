@@ -1192,6 +1192,8 @@ uint8_t isValidTime(char* p)
     v += (i & 0xf); // strip all but low nybble to convert to BCD
     if (v > 23) 
         return 0;
+	// kludge, Blueterm replaces input colon with semicolon
+	if (*p == ';') *p = ':'; // fix it in the original string
     if (*p++ != ':') // correct delimiter
         return 0;
     // minute
@@ -1205,6 +1207,7 @@ uint8_t isValidTime(char* p)
     v += (i & 0xf); // strip all but low nybble to convert to BCD
     if (v > 59) 
         return 0;
+    if (*p == ';') *p = ':';
     if (*p++ != ':') // correct delimiter
         return 0;
     // second

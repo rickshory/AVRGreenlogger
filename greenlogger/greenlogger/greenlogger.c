@@ -424,7 +424,7 @@ int main(void)
 				{ // temporary diagnostics
 					int l;
 					char s[64];
-					l = sprintf(s, "%u minutes elapsed\n\r", minsCt);
+					l = sprintf(s, "%d minutes elapsed\n\r", minsCt);
 					outputStringToBothUARTs(s);
 				}
 				switch (minsCt) {
@@ -445,7 +445,7 @@ int main(void)
 						{ // temporary diagnostics
 							int l;
 							char s[64];
-							l = sprintf(s, "About to call 'GPS_initTimeRequest' on minute %u\n\r", minsCt);
+							l = sprintf(s, "About to call 'GPS_initTimeRequest' on minute %d\n\r", minsCt);
 							outputStringToBothUARTs(s);
 						}
 						// following requests should not collide or stack because
@@ -474,24 +474,26 @@ int main(void)
 			{
 				int l;
 				char s[64], t[32];
-				l = sprintf(s, " target seconds: %u\n\r",
+				l = sprintf(s, " target seconds: %lu\n\r",
 					(unsigned long)(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE));
 				outputStringToBothUARTs(s);
-				l = sprintf(s, "elapsed seconds: %u\n\r",
+				l = sprintf(s, "elapsed seconds: %lu\n\r",
 					(unsigned long)((uint32_t)((datetime_totalsecs(&dt_CurAlarm)
 					- (datetime_totalsecs(&dt_LatestGPS))))));
 				outputStringToBothUARTs(s);
 				datetime_getstring(t, &dt_LatestGPS);
-				l = sprintf(s, "latest GPS time: %s\n\r", t);
-				outputStringToBothUARTs(s);
+				outputStringToBothUARTs("latest GPS time: ");
+				outputStringToBothUARTs(t);
+				outputStringToBothUARTs("\n\r");
 			}
 			
 			
 			// more diagnostics
 			if (gpsFlags.checkGpsToday) {
+				char t[32];
 				outputStringToBothUARTs("'checkGpsToday' flagged, and pending at: ");
-				datetime_getstring(datetime_string, &dt_CkGPS);
-				outputStringToBothUARTs(datetime_string);
+				datetime_getstring(t, &dt_CkGPS);
+				outputStringToBothUARTs(t);
 				outputStringToBothUARTs("\n\r");
 			}
 			
@@ -506,7 +508,7 @@ int main(void)
 					datetime_getstring(datetime_string, &dt_CkGPS);
 					outputStringToBothUARTs(datetime_string);
 					outputStringToBothUARTs("\n\r");
-					l = sprintf(s, "%u seconds overdue\n\r", 
+					l = sprintf(s, "%lu seconds overdue\n\r", 
 						(unsigned long)(((uint32_t)((datetime_totalsecs(&dt_CurAlarm) 
 						- (datetime_totalsecs(&dt_LatestGPS)) 
 						- (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE))))));
@@ -693,11 +695,11 @@ int main(void)
 		if (stateFlags1.reachedFullPower) { // another full-power-only segment
 			if (!BT_connected()) { // timeout diagnostics if no Bluetooth connection
 				if (stateFlags1.isRoused) {
-					len = sprintf(str, "\r\n sleep in %u seconds\r\n", (rouseCountdown/100));
+					len = sprintf(str, "\r\n sleep in %d seconds\r\n", (rouseCountdown/100));
 					outputStringToWiredUART(str);
 				}
 				if (BT_powered()) {
-					len = sprintf(str, "\r\n BT off in %u seconds\r\n", (btCountdown/100));
+					len = sprintf(str, "\r\n BT off in %d seconds\r\n", (btCountdown/100));
 					outputStringToWiredUART(str);
 				}	
 			}

@@ -27,6 +27,7 @@ extern volatile gFlags gpsFlags;
 extern volatile gpsLocation curLocation, prevLocation;
 extern volatile dateTime dt_LatestGPS;
 extern volatile uint16_t gpsTimeReqCountdown;
+extern char commandBuffer[COMMAND_BUFFER_LENGTH];
 extern char strJSONloc[256];
 
 /**
@@ -70,7 +71,9 @@ void GPS_initTimeRequest(void) {
 		// program flow
 		asm volatile ("nop");
 	}
-	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high	
+	PORTB |= (1<<GPS_SUBSYSTEM_CTRL); // set high
+	// 'erase' the command buffer, prep to receiving the set-time signal there
+	commandBuffer[0] = '\0';
 }
 
 uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {

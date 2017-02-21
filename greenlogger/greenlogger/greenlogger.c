@@ -1115,7 +1115,7 @@ void checkForCommands (void) {
 						}
 						break;
 					}
-					strcat(strJSONtc, "\r\n{\"timechange\":{\"from\":\"");
+					strcpy(strJSONtc, "\r\n{\"timechange\":{\"from\":\"");
 					intTmp1 = rtc_readTime(&dt_RTC);
 					datetime_getstring(jts, &dt_RTC);
 					strcat(strJSONtc, jts);

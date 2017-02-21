@@ -74,6 +74,7 @@ volatile extern adcData cellVoltageReading;
 uint16_t previousADCCellVoltageReading = 0;
 uint16_t refDarkVoltage = 0;
 volatile gpsLocation curLocation, prevLocation;
+uint32_t gpsSecsElapsed; // seconds elapsed since latest GPS reading
 // for heuristics on when to try getting time from GPS
 uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current day
 uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
@@ -466,8 +467,6 @@ int main(void)
 						if (minsCt > (60 * 24)) initFlags.gpsTimeAutoInit = 1; // not presently reachable
 						break;
 				}
-				
-				
 			} // end of if (initFlags.gpsTimeAutoInit == 0)
 			
 			// temporary diagnostics
@@ -487,7 +486,6 @@ int main(void)
 				outputStringToBothUARTs("\n\r");
 			}
 			
-			
 			// more diagnostics
 			if (gpsFlags.checkGpsToday) {
 				char t[32];
@@ -498,8 +496,8 @@ int main(void)
 			}
 			
 			// test whether to request time from the GPS
-			if ((uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)) >
-						(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)))) {
+			gpsSecsElapsed = (uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
+			if (gpsSecsElapsed > (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
 					int l;
 					char s[64];
@@ -509,9 +507,7 @@ int main(void)
 					outputStringToBothUARTs(datetime_string);
 					outputStringToBothUARTs("\n\r");
 					l = sprintf(s, "%lu seconds overdue\n\r", 
-						(unsigned long)(((uint32_t)((datetime_totalsecs(&dt_CurAlarm) 
-						- (datetime_totalsecs(&dt_LatestGPS)) 
-						- (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE))))));
+						(unsigned long)(gpsSecsElapsed - (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)));
 					outputStringToBothUARTs(s);
 /* don't do this; would run on every single alarm
 					// diagnostics, e.g.
@@ -524,7 +520,7 @@ int main(void)
 					strcat(strJSON, datetime_string);
 					strcat(strJSON, "\"}}\r\n");
 */
-				} else { // set up a GPS-time request
+				} else { // gpsFlags.checkGpsToday not yet set, set up a GPS-time request
 					if (initFlags.gpsTimeAutoInit) { // wait till we have tried to auto-initialize
 						// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
 						datetime_copy(&dt_CkGPS, &dt_CurAlarm);
@@ -547,6 +543,19 @@ int main(void)
 						strcat(strJSON, "\",\"now\":\"");
 						datetime_getstring(datetime_string, &dt_CurAlarm);
 						strcat(strJSON, datetime_string);
+						strcat(strJSON, "\"}}\r\n");
+						stateFlags1.writeJSONMsg = 1;
+					} else { // gpsTimeAutoInit == 0
+						int l;
+						char n[16];
+						strcat(strJSON, "\r\n{\"GPStime\":{\"dueButNotSetup\":\"");
+						strcat(strJSON, "gpsTimeAutoInit == 0\n\r");
+						strcat(strJSON, "\",\"secsSinceGPSReading\":\"");
+						l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed));
+						strcat(strJSON, n);
+						strcat(strJSON, "\",\"secsPastDue\":\"");
+						l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed- (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)));
+						strcat(strJSON, n);
 						strcat(strJSON, "\"}}\r\n");
 						stateFlags1.writeJSONMsg = 1;
 					}

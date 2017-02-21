@@ -420,13 +420,13 @@ int main(void)
 			datetime_getDefault(&dtCk);
 			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
 
-
 			if ((minsCt <= (60 * 24)) && (initFlags.gpsTimeAutoInit == 0)) {
 				{ // temporary diagnostics
 					int l;
 					char s[64];
 					l = sprintf(s, "%d minutes elapsed\n\r", minsCt);
 					outputStringToBothUARTs(s);
+					(void)l; // avoid compiler warning
 				}
 				switch (minsCt) {
 					case (2): // 2 minutes
@@ -448,6 +448,7 @@ int main(void)
 							char s[64];
 							l = sprintf(s, "About to call 'GPS_initTimeRequest' on minute %d\n\r", minsCt);
 							outputStringToBothUARTs(s);
+							(void)l; // avoid compiler warning
 						}
 						// following requests should not collide or stack because
 						// fn below disallows until 3-minute timeout
@@ -484,6 +485,7 @@ int main(void)
 				outputStringToBothUARTs("latest GPS time: ");
 				outputStringToBothUARTs(t);
 				outputStringToBothUARTs("\n\r");
+				(void)l; // avoid compiler warning
 			}
 			
 			// more diagnostics
@@ -509,6 +511,7 @@ int main(void)
 					l = sprintf(s, "%lu seconds overdue\n\r", 
 						(unsigned long)(gpsSecsElapsed - (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)));
 					outputStringToBothUARTs(s);
+					(void)l; // avoid compiler warning
 /* don't do this; would run on every single alarm
 					// diagnostics, e.g.
 					// {"GPStime":{"pending":"2017-01-17 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
@@ -558,6 +561,7 @@ int main(void)
 						strcat(strJSON, n);
 						strcat(strJSON, "\"}}\r\n");
 						stateFlags1.writeJSONMsg = 1;
+						(void)l; // avoid compiler warning
 					}
 				} // end test whether to access GPS
 			} else { // not time to set up a request yet
@@ -1060,6 +1064,7 @@ void getLatestGpsTimeIntoStrJSON(void) {
 	strcat(strJSON, s);
 	// not proper JSON, but good enough for diagnostics
 	strcat(strJSON,"\"}}\n\r");
+	(void)l; // avoid compiler warning
 }
 
 

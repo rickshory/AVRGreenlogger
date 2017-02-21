@@ -75,6 +75,8 @@ uint16_t previousADCCellVoltageReading = 0;
 uint16_t refDarkVoltage = 0;
 volatile gpsLocation curLocation, prevLocation;
 uint32_t gpsSecsElapsed; // seconds elapsed since latest GPS reading
+// target, seconds since latest GPS check, to schedule GPS time again
+uint32_t secsCtToCkGpsTime = DAYS_FOR_MOVING_AVERAGE * 86400ul; 
 // for heuristics on when to try getting time from GPS
 uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current day
 uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
@@ -475,7 +477,7 @@ int main(void)
 				int l;
 				char s[64], t[32];
 				l = sprintf(s, " target seconds: %lu\n\r",
-					(unsigned long)(uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE));
+					(unsigned long)secsCtToCkGpsTime);
 				outputStringToBothUARTs(s);
 				l = sprintf(s, "elapsed seconds: %lu\n\r",
 					(unsigned long)((uint32_t)((datetime_totalsecs(&dt_CurAlarm)
@@ -499,7 +501,7 @@ int main(void)
 			
 			// test whether to request time from the GPS
 			gpsSecsElapsed = (uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
-			if (gpsSecsElapsed > (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)) {
+			if (gpsSecsElapsed > secsCtToCkGpsTime) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
 					int l;
 					char s[64];
@@ -509,7 +511,7 @@ int main(void)
 					outputStringToBothUARTs(datetime_string);
 					outputStringToBothUARTs("\n\r");
 					l = sprintf(s, "%lu seconds overdue\n\r", 
-						(unsigned long)(gpsSecsElapsed - (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)));
+						(unsigned long)(gpsSecsElapsed - secsCtToCkGpsTime));
 					outputStringToBothUARTs(s);
 					(void)l; // avoid compiler warning
 /* don't do this; would run on every single alarm
@@ -557,7 +559,7 @@ int main(void)
 						l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed));
 						strcat(strJSON, n);
 						strcat(strJSON, "\",\"secsPastDue\":\"");
-						l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed- (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE)));
+						l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed - secsCtToCkGpsTime));
 						strcat(strJSON, n);
 						strcat(strJSON, "\"}}\r\n");
 						stateFlags1.writeJSONMsg = 1;
@@ -1059,8 +1061,7 @@ void getLatestGpsTimeIntoStrJSON(void) {
 	d = (uint32_t)(datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)));
 	l = sprintf(s, "%lu elapsed\n\r", (unsigned long)d);
 	strcat(strJSON, s);
-	d = (uint32_t)(86400ul * DAYS_FOR_MOVING_AVERAGE);
-	l = sprintf(s, "%lu target\n\r", (unsigned long)d);
+	l = sprintf(s, "%lu target\n\r", (unsigned long)secsCtToCkGpsTime);
 	strcat(strJSON, s);
 	// not proper JSON, but good enough for diagnostics
 	strcat(strJSON,"\"}}\n\r");

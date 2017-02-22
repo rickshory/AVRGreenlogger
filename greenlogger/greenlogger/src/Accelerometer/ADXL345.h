@@ -94,5 +94,6 @@ uint8_t findADXL345 (void);
 uint8_t initializeADXL345 (void);
 uint8_t clearAnyADXL345TapInterrupt (void);
 uint8_t readADXL345Axes (volatile accelAxisData *d);
+uint8_t getAvAccelReadings (volatile accelAxisData *avD);
 
 #endif /* ADXL345_H_ */

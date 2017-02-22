@@ -217,6 +217,19 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
 } // end of clearAnyADXL345TapInterrupt
 
 
+/**
+ * \brief average accelerometer readings
+ *
+ * Gets 64 readings from the accelerometer and
+ *  averages them
+ *
+ * \note 
+ */
+
+uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
+	return 0;
+}
+
 /*****************************************
 * read Accelerometer, for system leveling
 *****************************************/

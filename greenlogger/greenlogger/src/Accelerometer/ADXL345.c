@@ -220,13 +220,31 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
 /**
  * \brief average accelerometer readings
  *
- * Gets 64 readings from the accelerometer and
- *  averages them
+ * Gets multiple readings from the accelerometer and
+ *  averages them.
+ * Number of readings is determined by
+ *  ACCEL_SAMPLES_TO_AVERAGE_PWR_2
  *
  * \note 
  */
 
 uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
+	int32_t sumOfXReadings = 0, sumOfYReadings = 0, sumOfZReadings = 0;
+	/*
+		// set initial conditions; 
+	// 
+	// 64 conversions = ms
+	// 32 conversions = ms
+	// 16 conversions = ms
+	// 8 conversions = ms
+	uint8_t samplesToAverage = (1<<ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
+	for (uint8_t ct=0; ct<samplesToAverage; ct++) {	
+		
+			sumOfXReadings += d.xWholeWord;
+		} // finished getting all the readings we are going to average
+		// shift right to divide by 2-to-the-power and create the average
+		return (int16_t)(sumOfXReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
+	*/
 	return 0;
 }
 

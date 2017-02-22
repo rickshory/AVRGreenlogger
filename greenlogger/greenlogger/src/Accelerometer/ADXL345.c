@@ -229,9 +229,18 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
  */
 
 uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
+	uint8_t rs, val;
+	char str[64];
+	accelAxisData d;
 	int32_t sumOfXReadings = 0, sumOfYReadings = 0, sumOfZReadings = 0;
-	/*
-		// set initial conditions; 
+	// set initial conditions
+	rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x0a);
+	if (rs) {
+		len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
+		outputStringToBluetoothUART(str);
+		return rs;
+	}
+	
 	// 
 	// 64 conversions = ms
 	// 32 conversions = ms
@@ -239,12 +248,28 @@ uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
 	// 8 conversions = ms
 	uint8_t samplesToAverage = (1<<ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
 	for (uint8_t ct=0; ct<samplesToAverage; ct++) {	
-		
-			sumOfXReadings += d.xWholeWord;
-		} // finished getting all the readings we are going to average
-		// shift right to divide by 2-to-the-power and create the average
-		return (int16_t)(sumOfXReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
-	*/
+		if (readADXL345Axes (&d)) {
+			outputStringToBluetoothUART("\r\n could not get ADXL345 data\r\n");
+			return 100; // TODO fix this to make more sense
+		}
+		sumOfXReadings += d.xWholeWord;
+		sumOfYReadings += d.yWholeWord;
+		sumOfZReadings += d.zWholeWord;
+	} // finished getting all the readings we are going to average
+	// shift right to divide by 2-to-the-power and create the average
+	// TODO check that this works for negative numbers
+	avD->xWholeWord = (int16_t)(sumOfXReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
+	avD->yWholeWord = (int16_t)(sumOfYReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
+	avD->zWholeWord = (int16_t)(sumOfZReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
+	
+	// tie up
+	// set low power bit (4) and 25Hz sampling rate, for 40uA current
+	rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x18);
+	if (rs) {
+		len = sprintf(str, "\n\r could not set ADXL345_REG_BW_RATE: %d\n\r", rs);
+		outputStringToBluetoothUART(str);
+		return rs;
+	}
 	return 0;
 }
 

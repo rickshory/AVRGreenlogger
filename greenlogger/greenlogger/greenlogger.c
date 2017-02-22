@@ -483,8 +483,8 @@ int main(void)
 					(unsigned long)((uint32_t)((datetime_totalsecs(&dt_CurAlarm)
 					- (datetime_totalsecs(&dt_LatestGPS))))));
 				outputStringToBothUARTs(s);
-				datetime_getstring(t, &dt_LatestGPS);
 				outputStringToBothUARTs("latest GPS time: ");
+				datetime_getstring(t, &dt_LatestGPS);
 				outputStringToBothUARTs(t);
 				outputStringToBothUARTs("\n\r");
 				(void)l; // avoid compiler warning

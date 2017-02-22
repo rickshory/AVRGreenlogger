@@ -74,9 +74,9 @@ volatile extern adcData cellVoltageReading;
 uint16_t previousADCCellVoltageReading = 0;
 uint16_t refDarkVoltage = 0;
 volatile gpsLocation curLocation, prevLocation;
-uint32_t gpsSecsElapsed; // seconds elapsed since latest GPS reading
+int32_t gpsSecsElapsed; // seconds elapsed since latest GPS reading
 // target, seconds since latest GPS check, to schedule GPS time again
-uint32_t secsCtToCkGpsTime = DAYS_FOR_MOVING_AVERAGE * 86400ul; 
+int32_t secsCtToCkGpsTime = DAYS_FOR_MOVING_AVERAGE * 86400ul; 
 // for heuristics on when to try getting time from GPS
 uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current day
 uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
@@ -476,11 +476,11 @@ int main(void)
 			{
 				int l;
 				char s[64], t[32];
-				l = sprintf(s, " target seconds: %lu\n\r",
-					(unsigned long)secsCtToCkGpsTime);
+				l = sprintf(s, " target seconds: %.0f\n\r",
+					(double)secsCtToCkGpsTime);
 				outputStringToBothUARTs(s);
-				l = sprintf(s, "elapsed seconds: %lu\n\r",
-					(unsigned long)((uint32_t)((datetime_totalsecs(&dt_CurAlarm)
+				l = sprintf(s, "elapsed seconds: %.0f\n\r",
+					(double)((int32_t)((datetime_totalsecs(&dt_CurAlarm)
 					- (datetime_totalsecs(&dt_LatestGPS))))));
 				outputStringToBothUARTs(s);
 				outputStringToBothUARTs("latest GPS time: ");
@@ -500,7 +500,7 @@ int main(void)
 			}
 			
 			// test whether to request time from the GPS
-			gpsSecsElapsed = (uint32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
+			gpsSecsElapsed = (int32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
 			if (gpsSecsElapsed > secsCtToCkGpsTime) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
 					int l;
@@ -510,8 +510,8 @@ int main(void)
 					datetime_getstring(datetime_string, &dt_CkGPS);
 					outputStringToBothUARTs(datetime_string);
 					outputStringToBothUARTs("\n\r");
-					l = sprintf(s, "%lu seconds overdue\n\r", 
-						(unsigned long)(gpsSecsElapsed - secsCtToCkGpsTime));
+					l = sprintf(s, "%.0f seconds overdue\n\r", 
+						(double)(gpsSecsElapsed - secsCtToCkGpsTime));
 					outputStringToBothUARTs(s);
 					(void)l; // avoid compiler warning
 /* don't do this; would run on every single alarm
@@ -558,10 +558,10 @@ int main(void)
 							strcat(strJSON, "\r\n{\"GPStime\":{\"dueButNotSetup\":\"");
 							strcat(strJSON, "gpsTimeAutoInit == 0\n\r");
 							strcat(strJSON, "\",\"secsSinceGPSReading\":\"");
-							l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed));
+							l = sprintf(n, "%.0f\n\r", (double)(gpsSecsElapsed));
 							strcat(strJSON, n);
 							strcat(strJSON, "\",\"secsPastDue\":\"");
-							l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed - secsCtToCkGpsTime));
+							l = sprintf(n, "%.0f\n\r", (double)(gpsSecsElapsed - secsCtToCkGpsTime));
 							strcat(strJSON, n);
 							strcat(strJSON, "\"}}\r\n");
 							stateFlags1.writeJSONMsg = 1;
@@ -1055,16 +1055,16 @@ void getCellReadingsIntoStrJSON(void) {
  */
 void getLatestGpsTimeIntoStrJSON(void) {
 	char s[64];
-	uint32_t d;
+	int32_t d;
 	int l;
 	strcat(strJSON,"{\"latestGPStime\":{\n\r");
 	datetime_getstring(s, &dt_LatestGPS);
 	strcat(strJSON, s);
 	strcat(strJSON, "\n\r");
-	d = (uint32_t)(datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)));
-	l = sprintf(s, "%lu elapsed\n\r", (unsigned long)d);
+	d = (int32_t)(datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)));
+	l = sprintf(s, "%.0f elapsed\n\r", (double)d);
 	strcat(strJSON, s);
-	l = sprintf(s, "%lu target\n\r", (unsigned long)secsCtToCkGpsTime);
+	l = sprintf(s, "%.0f target\n\r", (double)secsCtToCkGpsTime);
 	strcat(strJSON, s);
 	// not proper JSON, but good enough for diagnostics
 	strcat(strJSON,"\"}}\n\r");

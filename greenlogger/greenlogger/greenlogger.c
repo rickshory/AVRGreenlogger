@@ -551,19 +551,22 @@ int main(void)
 						strcat(strJSON, "\"}}\r\n");
 						stateFlags1.writeJSONMsg = 1;
 					} else { // gpsTimeAutoInit == 0
-						int l;
-						char n[16];
-						strcat(strJSON, "\r\n{\"GPStime\":{\"dueButNotSetup\":\"");
-						strcat(strJSON, "gpsTimeAutoInit == 0\n\r");
-						strcat(strJSON, "\",\"secsSinceGPSReading\":\"");
-						l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed));
-						strcat(strJSON, n);
-						strcat(strJSON, "\",\"secsPastDue\":\"");
-						l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed - secsCtToCkGpsTime));
-						strcat(strJSON, n);
-						strcat(strJSON, "\"}}\r\n");
-						stateFlags1.writeJSONMsg = 1;
-						(void)l; // avoid compiler warning
+						// if it's time to log data
+						if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags.isDark)) {
+							int l;
+							char n[16];
+							strcat(strJSON, "\r\n{\"GPStime\":{\"dueButNotSetup\":\"");
+							strcat(strJSON, "gpsTimeAutoInit == 0\n\r");
+							strcat(strJSON, "\",\"secsSinceGPSReading\":\"");
+							l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed));
+							strcat(strJSON, n);
+							strcat(strJSON, "\",\"secsPastDue\":\"");
+							l = sprintf(n, "%lu\n\r", (unsigned long)(gpsSecsElapsed - secsCtToCkGpsTime));
+							strcat(strJSON, n);
+							strcat(strJSON, "\"}}\r\n");
+							stateFlags1.writeJSONMsg = 1;
+							(void)l; // avoid compiler warning
+						}
 					}
 				} // end test whether to access GPS
 			} else { // not time to set up a request yet

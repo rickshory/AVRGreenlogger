@@ -251,12 +251,14 @@ uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
 			outputStringToBluetoothUART("\r\n could not get ADXL345 data\r\n");
 			return 100; // TODO fix this to make more sense
 		}
+/*
 		{
 			int l;
 			char s[32];
 			l = sprintf(s, "%i: X = %i, Y = %i, Z = %i\n\r", ct, d.xWholeWord, d.yWholeWord,  d.zWholeWord);
 			outputStringToBluetoothUART(s);
 		}
+*/
 		sumOfXReadings += d.xWholeWord;
 		sumOfYReadings += d.yWholeWord;
 		sumOfZReadings += d.zWholeWord;

@@ -57,7 +57,7 @@
 #define ADXL345_6HZ25       0x06
 
 // number of samples to average
-#define ACCEL_SAMPLES_TO_AVERAGE_PWR_2 6 // e.g. 3 means 2^3=8, 5 means 2^5=32
+#define ACCEL_SAMPLES_TO_AVERAGE_PWR_2 7 // e.g. 3 means 2^3=8, 5 means 2^5=32
 
 // union allows writing in Lo and Hi bytes of accelerometer axis value, and reading out whole word
 typedef struct {

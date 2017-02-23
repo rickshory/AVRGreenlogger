@@ -423,7 +423,7 @@ int main(void)
 			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
 
 			if ((minsCt <= (60 * 24)) && (initFlags.gpsTimeAutoInit == 0)) {
-#ifndef TEST_LEVELING
+#ifdef VERBOSE_DIAGNOSTICS
 				{ // temporary diagnostics
 					int l;
 					char s[64];
@@ -447,6 +447,7 @@ int main(void)
 					case (60 * 16): // 16 hours
 					case (60 * 20): // 20 hours
 					case (60 * 24): // 24 hours
+#ifdef VERBOSE_DIAGNOSTICS					
 						{ // temporary diagnostics
 							int l;
 							char s[64];
@@ -454,6 +455,7 @@ int main(void)
 							outputStringToBothUARTs(s);
 							(void)l; // avoid compiler warning
 						}
+#endif
 						// following requests should not collide or stack because
 						// fn below disallows until 3-minute timeout
 						GPS_initTimeRequest();
@@ -474,7 +476,7 @@ int main(void)
 				}
 			} // end of if (initFlags.gpsTimeAutoInit == 0)
 			
-#ifndef TEST_LEVELING
+#ifdef VERBOSE_DIAGNOSTICS
 			// temporary diagnostics
 			{
 				int l;
@@ -507,7 +509,7 @@ int main(void)
 			gpsSecsElapsed = (int32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
 			if (gpsSecsElapsed > secsCtToCkGpsTime) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
-#ifndef TEST_LEVELING
+#ifdef VERBOSE_DIAGNOSTICS
 					int l;
 					char s[64];
 					outputStringToBothUARTs("'checkGpsToday' flagged, and time passed\n\r");

@@ -12,7 +12,7 @@
 //#define RTC_CHIP_IS_DS1337
 #define RTC_CHIP_IS_DS1342
 
-#define TEST_LEVELING
+//#define VERBOSE_DIAGNOSTICS
 
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"

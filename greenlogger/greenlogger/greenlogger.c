@@ -423,6 +423,7 @@ int main(void)
 			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
 
 			if ((minsCt <= (60 * 24)) && (initFlags.gpsTimeAutoInit == 0)) {
+#ifndef TEST_LEVELING
 				{ // temporary diagnostics
 					int l;
 					char s[64];
@@ -430,6 +431,7 @@ int main(void)
 					outputStringToBothUARTs(s);
 					(void)l; // avoid compiler warning
 				}
+#endif
 				switch (minsCt) {
 					case (2): // 2 minutes
 					case (4): // 4 minutes
@@ -472,6 +474,7 @@ int main(void)
 				}
 			} // end of if (initFlags.gpsTimeAutoInit == 0)
 			
+#ifndef TEST_LEVELING
 			// temporary diagnostics
 			{
 				int l;
@@ -498,11 +501,13 @@ int main(void)
 				outputStringToBothUARTs(t);
 				outputStringToBothUARTs("\n\r");
 			}
+#endif
 			
 			// test whether to request time from the GPS
 			gpsSecsElapsed = (int32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
 			if (gpsSecsElapsed > secsCtToCkGpsTime) {
 				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
+#ifndef TEST_LEVELING
 					int l;
 					char s[64];
 					outputStringToBothUARTs("'checkGpsToday' flagged, and time passed\n\r");
@@ -525,6 +530,7 @@ int main(void)
 					strcat(strJSON, datetime_string);
 					strcat(strJSON, "\"}}\r\n");
 */
+#endif
 				} else { // gpsFlags.checkGpsToday not yet set, set up a GPS-time request
 					if (initFlags.gpsTimeAutoInit) { // wait till we have tried to auto-initialize
 						// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time

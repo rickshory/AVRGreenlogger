@@ -43,7 +43,9 @@ extern char strJSONloc[256];
  */
 void GPS_initTimeRequest(void) {
 	if (gpsFlags.gpsTimeRequested) {
+#ifndef TEST_LEVELING
 		outputStringToBothUARTs("\r\n 'gpsTimeRequested' already set, 'GPS_initTimeRequest' skipped \r\n");
+#endif
 		return; // don't duplicate request while one is pending
 	} 
 	// check if enough power to get time from GPS

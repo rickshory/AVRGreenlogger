@@ -246,8 +246,8 @@ uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
 	// 32 conversions = ms
 	// 16 conversions = ms
 	// 8 conversions = ms
-	uint8_t samplesToAverage = (1<<ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
-	for (uint8_t ct=0; ct<samplesToAverage; ct++) {	
+	uint16_t samplesToAverage = (1<<ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
+	for (uint16_t ct=0; ct<samplesToAverage; ct++) {	
 		if (readADXL345Axes (&d)) {
 			outputStringToBluetoothUART("\r\n could not get ADXL345 data\r\n");
 			return 100; // TODO fix this to make more sense

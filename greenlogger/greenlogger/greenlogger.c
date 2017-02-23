@@ -1216,9 +1216,11 @@ void checkForCommands (void) {
 				{ // experimenting with the accelerometer Leveling functions
 					char ls[32];			
 					if (getAvAccelReadings(&accelData)) break;
-					len = sprintf(ls, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
+					outputStringToBluetoothUART("\r\n test point 2\r\n");
+					len = sprintf(ls, "X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
 						accelData.yWholeWord,  accelData.zWholeWord);
 						outputStringToBothUARTs(str);
+					outputStringToBluetoothUART("\r\n test point 3\r\n");
                     break;
                 }
 

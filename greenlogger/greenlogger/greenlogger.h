@@ -208,6 +208,7 @@ void disableRTCInterrupt(void);
 void showCellReadings(void);
 void getCellReadingsIntoStrJSON(void);
 void getLatestGpsTimeIntoStrJSON(void);
+void getAxesIntoStrJSON(void);
 uint8_t makeLogString(void);
 void outputLevelingDiagnostics(void);
 

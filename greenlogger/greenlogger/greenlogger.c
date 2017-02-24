@@ -1081,6 +1081,35 @@ void getLatestGpsTimeIntoStrJSON(void) {
 	(void)l; // avoid compiler warning
 }
 
+/**
+ * \brief Get XYZ level data into strJSON
+ *
+ * Get the XYZ axis info from the accelerometer
+ * into strJSON.
+ * Intended to log in each new file, to verify
+ * instrument was level.
+ * Ideally, strJSON should have been written and
+ * cleared before calling this.
+ * \
+ *  
+ */
+void getAxesIntoStrJSON(void) {
+	accelAxisData d;
+	char s[64];
+	int l;
+	// e.g. {"axisInfo":[{"X":"-1", "Y":"2", "Z":"-160"}]}
+	strcat(strJSON,"\n\r{\"axisInfo\":{");
+	uint8_t rs = getAvAccelReadings(&d);
+	if (rs) {
+		l = sprintf(s, "\"errCode\":\"%i\"", rs);
+	} else {
+		l = sprintf(s, "\"X\":\"%i\", \"Y\":\"%i\", \"Z\":\"%i\"", d.xWholeWord, d.yWholeWord,  d.zWholeWord);
+	}
+	strcat(strJSON, s);
+	strcat(strJSON, "}]}\n\r");
+	(void)l; // avoid compiler warning
+}
+
 
 /**
  * \brief Check the UART0 for commands

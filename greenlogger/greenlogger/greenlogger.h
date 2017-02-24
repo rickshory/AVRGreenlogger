@@ -209,5 +209,6 @@ void showCellReadings(void);
 void getCellReadingsIntoStrJSON(void);
 void getLatestGpsTimeIntoStrJSON(void);
 uint8_t makeLogString(void);
+void outputLevelingDiagnostics(void);
 
 #endif /* GREENLOGGER_H_ */

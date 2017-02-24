@@ -264,7 +264,10 @@ void checkForBTCommands (void) {
 				}
 				
 				case 'L': case 'l': 
-				{ // experimenting with the accelerometer Leveling functions
+				{ 
+					outputLevelingDiagnostics(); // hang here till timeout
+/*
+					// experimenting with the accelerometer Leveling functions
 					char ls[32];
 					uint8_t rs = getAvAccelReadings(&accelData);
 					if (rs) {
@@ -275,7 +278,8 @@ void checkForBTCommands (void) {
 					len = sprintf(ls, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
 					accelData.yWholeWord,  accelData.zWholeWord);
 					outputStringToBothUARTs(ls);
-					break;
+
+*/					break;
 				}
 
 				case 'D': case 'd': 

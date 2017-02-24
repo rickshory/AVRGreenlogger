@@ -1339,6 +1339,71 @@ void checkForCommands (void) {
     } // while (1)
 } // end of checkForCommands
 
+void outputLevelingDiagnostics(void) {
+	BYTE errSD;
+	int16_t xPrev, yPrev, zPrev;
+//	showLeveling(12000); // show leveling diagnostics for 2 minutes (120 sec); continue as long as changing
+	showLeveling(300); // show leveling diagnostics for 30 sec; continue as long as changing
+	while (motionFlags.isLeveling) { // cleared by timeout
+		while (timeFlags.alarmDetected) { // continue logging during leveling diagnostics
+			// use 'while' loop to allow various tests to break out
+			timeFlags.alarmDetected = 0; // clear flag so 'while' loop will only happen once in any case
+			timeFlags.nextAlarmSet = 0; // flag that current alarm is no longer valid
+			// will use to trigger setting next alarm
+
+			// test if time to log; even number of minutes, and zero seconds
+			if (!(!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0))) {
+				break;
+			}
+				
+			// check cell voltage is high enough
+			int intTmp1 = readCellVoltage(&cellVoltageReading);
+			if (cellVoltageReading.adcWholeWord < CELL_VOLTAGE_THRESHOLD_SD_CARD) {
+				break;
+			}
+
+			stateFlags1.logSilently = 1; // don't show any diagnostics while gathering data
+			if (makeLogString()) break; // exit on error
+			errSD = writeLogStringToSDCard();
+			if (errSD) {
+				tellFileError (errSD);
+			} // end of silent logging, this latest data
+				
+		} // end of alarm detected
+			
+		// set next alarm
+		if (!(timeFlags.nextAlarmSet)) {
+			if (!rtc_setupNextAlarm(&dt_CurAlarm))
+			timeFlags.nextAlarmSet = 1;
+		}
+		// end of continue logging during data dump
+		
+		// try displaying leveling diagnostics as fast as possible, no particular pacing
+		{
+			accelAxisData d;
+			char ls[32];
+			int len;
+			uint8_t rs = getAvAccelReadings(&d);
+			if (rs) {
+				len = sprintf(ls, "\n\r error code %i\n\r", rs);
+				outputStringToBothUARTs(ls);
+			} else {
+				len = sprintf(ls, "\n\r X = %i, Y = %i, Z = %i\n\r", d.xWholeWord, d.yWholeWord,  d.zWholeWord);
+				outputStringToBothUARTs(ls);
+				if ((abs((int)(xPrev - (d.xWholeWord))) > 3) || 
+						(abs((int)(yPrev - (d.yWholeWord))) > 3) || 
+						(abs((int)(zPrev - (d.zWholeWord))) > 3)) { // still moving, sustain the timeout
+//					showLeveling(6000); // show leveling diagnostics another minute (60 secs)
+					showLeveling(100); // show leveling diagnostics another 10 secs
+				}
+			}
+		}		
+	} // timeout cleared motionFlags.isLeveling
+	stateFlags1.logSilently = 0; // go back to displaying logging
+	return;
+}
+
+
 /**
  * \brief internal system heartbeat
  *
@@ -1365,8 +1430,18 @@ void heartBeat (void)
 		rouseCountdown = btCountdown; // stay roused at least as long as trying to get a BT connection
 
 	if (gpsTimeReqCountdown > rouseCountdown)
-	rouseCountdown = gpsTimeReqCountdown; // stay roused at least as long as GPS time request is active		
-		// gpsTimeReqCountdown
+		rouseCountdown = gpsTimeReqCountdown; // stay roused at least as long as GPS time request is active		
+	
+	if (levelingCountdown > rouseCountdown)
+		rouseCountdown = levelingCountdown; // stay roused at least as long as showing leveling diagnostics
+		
+	t = levelingCountdown;
+	if (t) levelingCountdown = --t;
+	
+	if (!levelingCountdown) {
+		motionFlags.isLeveling = 0;
+		stateFlags1.logSilently = 0;
+	}
 		
 	t = gpsTimeReqCountdown;
 	if (t) gpsTimeReqCountdown = --t;

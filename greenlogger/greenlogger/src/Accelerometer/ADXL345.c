@@ -13,8 +13,7 @@
 
 extern volatile mFlags motionFlags;
 extern volatile sFlags1 stateFlags1;
-extern int len;
-extern char str[128];
+char str[64];
 extern volatile uint16_t levelingCountdown;
 
 /*****************************************
@@ -23,6 +22,8 @@ extern volatile uint16_t levelingCountdown;
 *****************************************/
 uint8_t findADXL345 (void) {
     uint8_t r;
+	int len;
+	
     outputStringToWiredUART("\n\r entered findADXL345 routine \n\r");
 	motionFlags.accelerometerIsThere = 0; // flag cleared, until accel found
 	r = I2C_Start();
@@ -206,6 +207,7 @@ uint8_t initializeADXL345 (void) {
 uint8_t clearAnyADXL345TapInterrupt (void) {
     char r;
 	uint8_t rs, val;
+	int len;
 	// clear the interrupt by reading the INT_SOURCE register until the flag bit is clear
 	do {
 		rs = readADXL345Register (ADXL345_REG_INT_SOURCE, &val);
@@ -232,6 +234,7 @@ uint8_t clearAnyADXL345TapInterrupt (void) {
 
 uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
 	uint8_t rs, val;
+	int len;
 	char str[64];
 	accelAxisData d;
 	int32_t sumOfXReadings = 0, sumOfYReadings = 0, sumOfZReadings = 0;
@@ -454,7 +457,5 @@ void endLeveling(void) {
 	sei();	
 	motionFlags.isLeveling = 0;
 	stateFlags1.logSilently = 0;
-
 }
-
 

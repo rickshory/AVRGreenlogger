@@ -307,7 +307,6 @@ int main(void)
 				}
 			} // end test CELL_VOLTAGE_GOOD_FOR_STARTUP
 		} // end test reachedFullPower flag
-		
 		// end of segment that runs only once, when Full Power first achieved
 		
 		// beginning of loop that runs repeatedly
@@ -326,8 +325,6 @@ int main(void)
 			if (stateFlags1.isRoused) { // if roused
 				irradFlags.isDark = 0; // clear the Dark flag
 				timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
-	//			if (irradFlagsisDark)
-	//				timeFlags.nextAlarmSet = 0; // flag that the next alarm might not be correctly set
 			}
 		
 			if (BT_connected()) {
@@ -347,8 +344,6 @@ int main(void)
 
 		while (machineState == Idle) { // RTC interrupt will break out of this
 			checkCriticalPower();
-		
-//			if (stateFlags1.reachedFullPower) { // another full-power-only segment
 			intTmp1 =  clearAnyADXL345TapInterrupt();
 			if (intTmp1) {
 				len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
@@ -357,10 +352,8 @@ int main(void)
 			enableAccelInterrupt();
 			checkForBTCommands();
 			checkForCommands();
-//			} // end of this full-power segment
 			
 			if (!(timeFlags.nextAlarmSet)) {
-	//			outputStringToWiredUART("\n\r about to call setupNextAlarm \n\r\n\r");
 				if (!rtc_setupNextAlarm(&dt_CurAlarm))
 					timeFlags.nextAlarmSet = 1;
 			}
@@ -413,6 +406,7 @@ int main(void)
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
+			// we do not yet use the 'cellIsCharging' flag
 			if ((int16_t)(cellVoltageReading.adcWholeWord) - (int16_t)(previousADCCellVoltageReading) > 2) {
 				stateFlags1.cellIsCharging = 1;
 			} else {
@@ -649,16 +643,7 @@ int main(void)
 //				irradFlags.isDark = 1; // act as if dark, to save power
 				break;
 			}
-			
-			if ((gpsFlags.checkGpsToday) // flag to check but has not been serviced
-					&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) { // alarm has passed GPS check time
-				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
-				// e.g. {"GPStime":{"requested":"2017-01-18 22:45:03 +00"}}
-				strcat(strJSON, "\r\n{\"GPStime\":{\"requested\":\"");
-				datetime_getstring(datetime_string, &dt_CurAlarm);
-				strcat(strJSON, "\"}}\r\n");
-				stateFlags1.writeJSONMsg = 1;
-			}
+
 			
 			// see if it's time to log data
 			if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags.isDark)) {
@@ -680,6 +665,17 @@ int main(void)
 				// won't do anything with results anyway, don't bother reading sensors, save power
 				stayRoused(5); // rouse for 0.05 second to flash the pilot light
 				break; 
+			}
+			
+			if ((gpsFlags.checkGpsToday) // flag to check but has not been serviced
+					&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) { // alarm has passed GPS check time
+				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
+				// e.g. {"GPStime":{"requested":"2017-01-18 22:45:03 +00"}}
+				strcat(strJSON, "\r\n{\"GPStime\":{\"requested\":\"");
+				datetime_getstring(datetime_string, &dt_CurAlarm);
+				strcat(strJSON, datetime_string);
+				strcat(strJSON, "\"}}\r\n");
+				stateFlags1.writeJSONMsg = 1;
 			}
 			
 			stateFlags1.logSilently = 0; // show diagnostics while gathering data

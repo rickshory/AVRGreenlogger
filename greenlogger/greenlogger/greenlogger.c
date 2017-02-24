@@ -1342,8 +1342,8 @@ void checkForCommands (void) {
 void outputLevelingDiagnostics(void) {
 	BYTE errSD;
 	int16_t xPrev, yPrev, zPrev;
-//	showLeveling(12000); // show leveling diagnostics for 2 minutes (120 sec); continue as long as changing
-	showLeveling(300); // show leveling diagnostics for 30 sec; continue as long as changing
+	showLeveling(12000); // show leveling diagnostics for 2 minutes (120 sec); continue as long as changing
+//	showLeveling(300); // show leveling diagnostics for 30 sec; continue as long as changing
 	while (motionFlags.isLeveling) { // cleared by timeout
 		while (timeFlags.alarmDetected) { // continue logging during leveling diagnostics
 			// use 'while' loop to allow various tests to break out
@@ -1376,7 +1376,7 @@ void outputLevelingDiagnostics(void) {
 			if (!rtc_setupNextAlarm(&dt_CurAlarm))
 			timeFlags.nextAlarmSet = 1;
 		}
-		// end of continue logging during data dump
+		// end of continue logging during leveling diagnostics
 		
 		// try displaying leveling diagnostics as fast as possible, no particular pacing
 		{
@@ -1388,21 +1388,24 @@ void outputLevelingDiagnostics(void) {
 				len = sprintf(ls, "\n\r error code %i\n\r", rs);
 				outputStringToBothUARTs(ls);
 			} else {
-				len = sprintf(ls, "\n\r X = %i, Y = %i, Z = %i\n\r", d.xWholeWord, d.yWholeWord,  d.zWholeWord);
+				len = sprintf(ls, " X = %i, Y = %i, Z = %i\n\r", d.xWholeWord, d.yWholeWord,  d.zWholeWord);
 				outputStringToBothUARTs(ls);
-				if ((abs((int)(xPrev - (d.xWholeWord))) > 3) || 
-						(abs((int)(yPrev - (d.yWholeWord))) > 3) || 
-						(abs((int)(zPrev - (d.zWholeWord))) > 3)) { // still moving, sustain the timeout
+				// first time, test below will always be true; but after that will really test for change
+				if ((abs((int)(xPrev - (d.xWholeWord))) > 1) || 
+						(abs((int)(yPrev - (d.yWholeWord))) > 1) || 
+						(abs((int)(zPrev - (d.zWholeWord))) > 1)) { // still moving, sustain the timeout
 //					showLeveling(6000); // show leveling diagnostics another minute (60 secs)
 					showLeveling(100); // show leveling diagnostics another 10 secs
 				}
+				xPrev = (d.xWholeWord);
+				yPrev = (d.yWholeWord);
+				zPrev = (d.zWholeWord);
 			}
 		}		
-	} // timeout cleared motionFlags.isLeveling
+	} // timeout will clear the isLeveling flag, and allow to pass beyond here
 	stateFlags1.logSilently = 0; // go back to displaying logging
 	return;
 }
-
 
 /**
  * \brief internal system heartbeat

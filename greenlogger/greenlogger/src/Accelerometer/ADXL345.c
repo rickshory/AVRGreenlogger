@@ -442,7 +442,7 @@ uint8_t readADXL345Register (uint8_t reg, uint8_t *valp) {
 void showLeveling(uint16_t dSec) {
 	cli(); // temporarily disable interrupts to prevent Timer3 from
 	// changing the count partway through
-	if ((dSec) > levelingCountdown) { // never trim the rouse interval, only extend it
+	if ((dSec) > levelingCountdown) { // never trim the interval, only extend it
 		levelingCountdown = dSec;
 	}
 	sei();

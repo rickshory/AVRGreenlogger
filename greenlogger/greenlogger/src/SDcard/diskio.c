@@ -1011,6 +1011,7 @@ BYTE outputContentsOfFileForDate (char* stDt) {
 
 void tellFileError (BYTE err)
 {
+if (stateFlags1.logSilently) return;
  switch (err) {
   //case IgnoreCard: {
    //outputStringToWiredUART("\r\n SD card ignored (\"O\" toggles)\r\n");

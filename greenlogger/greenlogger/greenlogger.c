@@ -413,6 +413,11 @@ int main(void)
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
+			if ((int16_t)(cellVoltageReading.adcWholeWord) - (int16_t)(previousADCCellVoltageReading) > 2) {
+				stateFlags1.cellIsCharging = 1;
+			} else {
+				stateFlags1.cellIsCharging = 0;
+			}
 			
 			// try to get GPS time soon after startup, but don't waste battery if not available
 			// - Try every 2 minutes for first 10 minutes

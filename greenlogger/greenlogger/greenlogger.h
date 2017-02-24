@@ -86,7 +86,7 @@ typedef volatile union sBF { // status bit flags
 	unsigned char sF1Val;
 	struct
 	{
-		unsigned char isReadingSensors:1; // has been awakened by RTCC interrupt and is reading data
+		unsigned char cellIsCharging:1; // cell charge is increasing
 		unsigned char isRoused:1; // triggered by external interrupt, and re-triggered by any activity while awake
 		unsigned char reRoused:1; // re-triggered while awake, used to reset timeout
 		unsigned char writeJSONMsg:1; // there is a JSON message to log

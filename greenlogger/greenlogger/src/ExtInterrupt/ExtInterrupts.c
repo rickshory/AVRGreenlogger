@@ -46,7 +46,6 @@ void endRouse(void) {
 	gpsFlags.gpsTimeRequestByBluetooth = 0; // any request by BT terminated
 	PORTA &= ~(0b00000100); // force pilot light off
 	sei();
-	
 }
 
 void keepBluetoothPowered(uint8_t sec)

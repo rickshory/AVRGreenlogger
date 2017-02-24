@@ -37,6 +37,7 @@ volatile uint8_t ToggleCountdown = TOGGLE_INTERVAL; // timer for diagnostic blin
 volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sleep
 volatile uint16_t btCountdown = 0; // timer for trying Bluetooth connection
 volatile uint16_t gpsTimeReqCountdown = 0; // timeout for GPS time request
+volatile uint16_t levelingCountdown = 0; // timeout for showing the diagnostics for XYZ leveling of the instrument
 volatile uint16_t timer3val;
 
 volatile

@@ -12,8 +12,10 @@
 
 
 extern volatile mFlags motionFlags;
+extern volatile sFlags1 stateFlags1;
 extern int len;
 extern char str[128];
+extern volatile uint16_t levelingCountdown;
 
 /*****************************************
 * try to detect whether the ADXL345 Accelerometer is there, and functioning
@@ -430,4 +432,29 @@ uint8_t readADXL345Register (uint8_t reg, uint8_t *valp) {
 		return errNoI2CStart;
 	}
 };
+
+/**/
+
+
+void showLeveling(uint16_t dSec) {
+	cli(); // temporarily disable interrupts to prevent Timer3 from
+	// changing the count partway through
+	if ((dSec) > levelingCountdown) { // never trim the rouse interval, only extend it
+		levelingCountdown = dSec;
+	}
+	sei();
+	motionFlags.isLeveling = 1;
+	stateFlags1.logSilently = 1;
+}
+
+void endLeveling(void) {
+	cli(); // temporarily disable interrupts to prevent Timer3 from
+	// changing the count partway through
+	levelingCountdown = 0;
+	sei();	
+	motionFlags.isLeveling = 0;
+	stateFlags1.logSilently = 0;
+
+}
+
 

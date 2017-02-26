@@ -1542,10 +1542,10 @@ void heartBeat (void)
 	
 	if (motionFlags.isLeveling) {
 		// try to set this flag every 0.5 second
-		if (levelingPacer-- == 0) {
-			motionFlags.isTimeToDisplayLeveling = 1;
-			levelingPacer = 50;
-		}
+//		if (levelingPacer-- == 0) {
+			motionFlags.isTimeToDisplayLeveling = 1; // set as quickly as possible
+//			levelingPacer = 50;
+//		}
 //		if ((rouseCountdown % 50) == 0) {
 //			motionFlags.isTimeToDisplayLeveling = 1;
 //		}

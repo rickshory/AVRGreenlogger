@@ -38,6 +38,7 @@ volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sl
 volatile uint16_t btCountdown = 0; // timer for trying Bluetooth connection
 volatile uint16_t gpsTimeReqCountdown = 0; // timeout for GPS time request
 volatile uint16_t levelingCountdown = 0; // timeout for showing the diagnostics for XYZ leveling of the instrument
+volatile int16_t xPrevious = 0, yPrevious = 0, zPrevious = 0;
 volatile uint16_t timer3val;
 
 volatile
@@ -396,6 +397,15 @@ int main(void)
 				stayRoused(300); // 3 seconds
 			}
 			motionFlags.tapDetected = 0; // clear the flag
+		}
+		
+		// check for and display XYZ leveling diagnostics
+		if (motionFlags.isLeveling) {
+			if (motionFlags.isTimeToDisplayLeveling) {
+				// can hang here one second or so
+				displayLeveling();
+				motionFlags.isTimeToDisplayLeveling = 0; // clear flag
+			}
 		}
 
 		timeFlags.nextAlarmSet = 0; // flag that current alarm is no longer valid
@@ -1254,13 +1264,7 @@ void checkForCommands (void) {
 				
                 case 'L': case 'l': 
 				{ // experimenting with the accelerometer Leveling functions
-					char ls[32];			
-					if (getAvAccelReadings(&accelData)) break;
-					outputStringToBluetoothUART("\r\n test point 2\r\n");
-					len = sprintf(ls, "X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
-						accelData.yWholeWord,  accelData.zWholeWord);
-						outputStringToBothUARTs(str);
-					outputStringToBluetoothUART("\r\n test point 3\r\n");
+					showLeveling(12000); // show leveling diagnostics for 2 minutes (120 sec)
                     break;
                 }
 
@@ -1378,6 +1382,47 @@ void checkForCommands (void) {
     } // while (1)
 } // end of checkForCommands
 
+
+/**
+ * \brief Displays XYZ from the accelerometer
+ *
+ *  Gets a series of XYZ readings from the
+ * accelerometer and averages them for stability.
+ *  Outputs them to the Bluetooth UART
+ *  Tracks previous XYZ, and if changing bumps the 
+ * countdown forward so this fn continues to be called.
+ *
+ * \note 
+ * 
+ */
+void displayLeveling(void) {
+	if (motionFlags.isLeveling) { // interlock, code currently will not call this fn unless
+		// (motionFlags.isLeveling), but check here in case code rearranged
+		accelAxisData d;
+		char ls[32];
+		int l;
+		uint8_t rs = getAvAccelReadings(&d);
+		if (rs) {
+			l = sprintf(ls, "\n\r error code %i\n\r", rs);
+			outputStringToBothUARTs(ls);
+		} else {
+			l = sprintf(ls, " X = %i, Y = %i, Z = %i\n\r", d.xWholeWord, d.yWholeWord,  d.zWholeWord);
+			outputStringToBluetoothUART(ls);
+			// first time, test below will always be true; but after that will really test for change
+			if ((abs((int)(xPrevious - (d.xWholeWord))) > 1) ||
+				(abs((int)(yPrevious - (d.yWholeWord))) > 1) ||
+				(abs((int)(zPrevious - (d.zWholeWord))) > 1)) { // still moving, sustain the timeout
+					showLeveling(6000); // show leveling diagnostics another minute (60 secs)
+				//	showLeveling(100); // show leveling diagnostics another 10 secs
+			}
+			xPrevious = (d.xWholeWord);
+			yPrevious = (d.yWholeWord);
+			zPrevious = (d.zWholeWord);
+		}		
+	} // end of if (motionFlags.isLeveling)
+	return;
+}
+
 void outputLevelingDiagnostics(void) {
 	BYTE errSD;
 	int16_t xPrev, yPrev, zPrev;
@@ -1482,7 +1527,15 @@ void heartBeat (void)
 	
 	if (!levelingCountdown) {
 		motionFlags.isLeveling = 0;
-		stateFlags1.logSilently = 0;
+	}
+	
+	if (motionFlags.isLeveling) {
+		// set this flag every 2 seconds
+		if ((levelingCountdown % 200) == 0) {
+			motionFlags.isTimeToDisplayLeveling = 1;
+		}
+	} else {
+		motionFlags.isTimeToDisplayLeveling = 0;
 	}
 		
 	t = gpsTimeReqCountdown;

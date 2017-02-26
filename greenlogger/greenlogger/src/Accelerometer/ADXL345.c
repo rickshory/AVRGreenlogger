@@ -447,7 +447,6 @@ void showLeveling(uint16_t dSec) {
 	}
 	sei();
 	motionFlags.isLeveling = 1;
-	stateFlags1.logSilently = 1;
 }
 
 void endLeveling(void) {
@@ -456,6 +455,5 @@ void endLeveling(void) {
 	levelingCountdown = 0;
 	sei();	
 	motionFlags.isLeveling = 0;
-	stateFlags1.logSilently = 0;
 }
 

@@ -264,8 +264,10 @@ void checkForBTCommands (void) {
 				}
 				
 				case 'L': case 'l': 
-				{ 
-					outputLevelingDiagnostics(); // hang here till timeout
+				{
+					showLeveling(12000); // show leveling diagnostics for 2 minutes (120 sec)
+					//	showLeveling(300); // show leveling diagnostics for 30 sec
+//					outputLevelingDiagnostics(); // hang here till timeout
 /*
 					// experimenting with the accelerometer Leveling functions
 					char ls[32];
@@ -278,8 +280,8 @@ void checkForBTCommands (void) {
 					len = sprintf(ls, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
 					accelData.yWholeWord,  accelData.zWholeWord);
 					outputStringToBothUARTs(ls);
-
-*/					break;
+*/
+					break;
 				}
 
 				case 'D': case 'd': 

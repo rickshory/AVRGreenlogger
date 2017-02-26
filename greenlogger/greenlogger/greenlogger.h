@@ -186,7 +186,7 @@ typedef volatile union mBF { // motion bit flags
 		unsigned char tapDetected:1; // accelerometer tap detected, used for diagnostics
 		unsigned char isLeveling:1; // we are getting accelerometer axis readings, used for leveling the system
 		unsigned char accelerometerIsThere:1; // set if system finds ADXL345 on I2C bus
-		unsigned char mfBit3:1; // unused
+		unsigned char isTimeToDisplayLeveling:1; // flag that it is time to run the fn that displays the XYZ numbers
 		unsigned char mfBit4:1; // unused
 		unsigned char mfBit5:1; // unused
 		unsigned char mfBit6:1; // unused
@@ -210,6 +210,7 @@ void getCellReadingsIntoStrJSON(void);
 void getLatestGpsTimeIntoStrJSON(void);
 void getAxesIntoStrJSON(void);
 uint8_t makeLogString(void);
+void displayLeveling(void);
 void outputLevelingDiagnostics(void);
 
 #endif /* GREENLOGGER_H_ */

@@ -352,6 +352,10 @@ int main(void)
 				len = sprintf(str, "\r\n could not clear ADXL345 Tap Interrupt: %d\r\n", intTmp1);
 				outputStringToWiredUART(str);
 			}
+					
+			// check for and display XYZ leveling diagnostics
+			if (motionFlags.isLeveling) displayLeveling();
+					
 			enableAccelInterrupt();
 			checkForBTCommands();
 			checkForCommands();
@@ -398,15 +402,6 @@ int main(void)
 				stayRoused(300); // 3 seconds
 			}
 			motionFlags.tapDetected = 0; // clear the flag
-		}
-		
-		// check for and display XYZ leveling diagnostics
-		if (motionFlags.isLeveling) {
-			if (motionFlags.isTimeToDisplayLeveling) {
-				// can hang here one second or so
-				displayLeveling();
-				motionFlags.isTimeToDisplayLeveling = 0; // clear flag
-			}
 		}
 
 		timeFlags.nextAlarmSet = 0; // flag that current alarm is no longer valid
@@ -1538,19 +1533,6 @@ void heartBeat (void)
 	
 	if (!levelingCountdown) {
 		motionFlags.isLeveling = 0;
-	}
-	
-	if (motionFlags.isLeveling) {
-		// try to set this flag every 0.5 second
-//		if (levelingPacer-- == 0) {
-			motionFlags.isTimeToDisplayLeveling = 1; // set as quickly as possible
-//			levelingPacer = 50;
-//		}
-//		if ((rouseCountdown % 50) == 0) {
-//			motionFlags.isTimeToDisplayLeveling = 1;
-//		}
-	} else {
-		motionFlags.isTimeToDisplayLeveling = 0;
 	}
 		
 	t = gpsTimeReqCountdown;

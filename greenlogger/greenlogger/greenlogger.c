@@ -335,6 +335,7 @@ int main(void)
 				if (btFlags.btWasConnected) { // connection lost
 					// action(s) when connection lost
 					btFlags.btSerialBeingInput = 0; // prevent hang on half-finished commands
+					motionFlags.isLeveling = 0; // if was in leveling mode, cancel
 				}
 				btFlags.btWasConnected = 0; // clear the flag
 			}		
@@ -406,8 +407,9 @@ int main(void)
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
-			// we do not yet use the 'cellIsCharging' flag
+			// check if cell charge has increased slightly, 2mv, since last time
 			if ((int16_t)(cellVoltageReading.adcWholeWord) - (int16_t)(previousADCCellVoltageReading) > 2) {
+				// we do not yet use the 'cellIsCharging' flag for anything
 				stateFlags1.cellIsCharging = 1;
 			} else {
 				stateFlags1.cellIsCharging = 0;
@@ -420,9 +422,9 @@ int main(void)
 			// - after that drop through to normal checking interval
 			dateTime dtCk;
 			datetime_getDefault(&dtCk);
-			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60) ;
-
-			if ((minsCt <= (60 * 24)) && (initFlags.gpsTimeAutoInit == 0)) {
+			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60);
+			if (minsCt > (60 * 24)) initFlags.gpsTimeAutoInit = 1; // we have tried long enough to auto-initialize
+			if (initFlags.gpsTimeAutoInit == 0) {
 #ifdef VERBOSE_DIAGNOSTICS
 				{ // temporary diagnostics
 					int l;
@@ -447,31 +449,29 @@ int main(void)
 					case (60 * 16): // 16 hours
 					case (60 * 20): // 20 hours
 					case (60 * 24): // 24 hours
+						if (motionFlags.isLeveling == 0) {
+							// skip GPS work if in Leveling mode
 #ifdef VERBOSE_DIAGNOSTICS					
-						{ // temporary diagnostics
-							int l;
-							char s[64];
-							l = sprintf(s, "About to call 'GPS_initTimeRequest' on minute %d\n\r", minsCt);
-							outputStringToBothUARTs(s);
-							(void)l; // avoid compiler warning
-						}
+							{ // temporary diagnostics
+								int l;
+								char s[64];
+								l = sprintf(s, "About to call 'GPS_initTimeRequest' on minute %d\n\r", minsCt);
+								outputStringToBothUARTs(s);
+								(void)l; // avoid compiler warning
+							}
 #endif
-						// following requests should not collide or stack because
-						// fn below disallows until 3-minute timeout
-						GPS_initTimeRequest();
-					/*
-					
-						if (gpsFlags.checkGpsToday) { // by present code structure, this would not be
-							// pending, but try to make fail-safe in case code is rearranged
-							
+							// following requests should not collide or stack because
+							// fn below disallows until 3-minute timeout
 							GPS_initTimeRequest();
-						}
-						*/
-						break;
+						/*
 					
-					default:
-						// we have tried long enough to auto-initialize
-						if (minsCt > (60 * 24)) initFlags.gpsTimeAutoInit = 1; // not presently reachable
+							if (gpsFlags.checkGpsToday) { // by present code structure, this would not be
+								// pending, but try to make fail-safe in case code is rearranged
+							
+								GPS_initTimeRequest();
+							}
+							*/
+						} // end of if isLeveling
 						break;
 				}
 			} // end of if (initFlags.gpsTimeAutoInit == 0)
@@ -534,49 +534,51 @@ int main(void)
 */
 #endif
 				} else { // gpsFlags.checkGpsToday not yet set, set up a GPS-time request
-					if (initFlags.gpsTimeAutoInit) { // wait till we have tried to auto-initialize
-						// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
-						datetime_copy(&dt_CkGPS, &dt_CurAlarm);
-						// get hour and minute from average
-						uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
-						dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
-						dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
-						dt_CkGPS.second = 0; // don't really matter much
-						dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
-						if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) {
-							// timezone adjust has made the GPS check time earlier than the current alarm
-							(dt_CkGPS.day)++; // move one day ahead
-							datetime_normalize(&dt_CkGPS);
-						}
-						gpsFlags.checkGpsToday = 1;
-						// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
-						strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
-						datetime_getstring(datetime_string, &dt_CkGPS);
-						strcat(strJSON, datetime_string);
-						strcat(strJSON, "\",\"now\":\"");
-						datetime_getstring(datetime_string, &dt_CurAlarm);
-						strcat(strJSON, datetime_string);
-						strcat(strJSON, "\"}}\r\n");
-						stateFlags1.writeJSONMsg = 1;
-					} else { // gpsTimeAutoInit == 0
-						// if it's time to log data
-						if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags.isDark)) {
-							int l;
-							char n[16];
-							strcat(strJSON, "\r\n{\"GPStime\":{\"dueButNotSetup\":\"");
-							strcat(strJSON, "gpsTimeAutoInit == 0\n\r");
-							strcat(strJSON, "\",\"secsSinceGPSReading\":\"");
-							l = sprintf(n, "%.0f\n\r", (double)(gpsSecsElapsed));
-							strcat(strJSON, n);
-							strcat(strJSON, "\",\"secsPastDue\":\"");
-							l = sprintf(n, "%.0f\n\r", (double)(gpsSecsElapsed - secsCtToCkGpsTime));
-							strcat(strJSON, n);
+					if (motionFlags.isLeveling == 0) { // skip GPS work while in Leveling mode
+						if (initFlags.gpsTimeAutoInit) { // wait till we have tried to auto-initialize
+							// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
+							datetime_copy(&dt_CkGPS, &dt_CurAlarm);
+							// get hour and minute from average
+							uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
+							dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
+							dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
+							dt_CkGPS.second = 0; // don't really matter much
+							dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
+							if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) {
+								// timezone adjust has made the GPS check time earlier than the current alarm
+								(dt_CkGPS.day)++; // move one day ahead
+								datetime_normalize(&dt_CkGPS);
+							}
+							gpsFlags.checkGpsToday = 1;
+							// e.g. {"GPStime":{"setupfor":"2017-01-19 22:10:24 -00","now":"2017-01-18 22:45:03 +00"}}
+							strcat(strJSON, "\r\n{\"GPStime\":{\"setupfor\":\"");
+							datetime_getstring(datetime_string, &dt_CkGPS);
+							strcat(strJSON, datetime_string);
+							strcat(strJSON, "\",\"now\":\"");
+							datetime_getstring(datetime_string, &dt_CurAlarm);
+							strcat(strJSON, datetime_string);
 							strcat(strJSON, "\"}}\r\n");
 							stateFlags1.writeJSONMsg = 1;
-							(void)l; // avoid compiler warning
-						}
-					}
-				} // end test whether to access GPS
+						} else { // gpsTimeAutoInit == 0
+							// if it's time to log data
+							if ((!((dt_CurAlarm.minute) & 0x01) && (dt_CurAlarm.second == 0)) || (irradFlags.isDark)) {
+								int l;
+								char n[16];
+								strcat(strJSON, "\r\n{\"GPStime\":{\"dueButNotSetup\":\"");
+								strcat(strJSON, "gpsTimeAutoInit == 0\n\r");
+								strcat(strJSON, "\",\"secsSinceGPSReading\":\"");
+								l = sprintf(n, "%.0f\n\r", (double)(gpsSecsElapsed));
+								strcat(strJSON, n);
+								strcat(strJSON, "\",\"secsPastDue\":\"");
+								l = sprintf(n, "%.0f\n\r", (double)(gpsSecsElapsed - secsCtToCkGpsTime));
+								strcat(strJSON, n);
+								strcat(strJSON, "\"}}\r\n");
+								stateFlags1.writeJSONMsg = 1;
+								(void)l; // avoid compiler warning
+							} // end of diagnostics, if it would be time to log data, but gpsTimeAutoInit == 0
+						} // end of gpsTimeAutoInit or not
+					} // end of skip GPS work while in Leveling mode
+				} // end of if (gpsFlags.checkGpsToday)
 			} else { // not time to set up a request yet
 /* don't do this; would run on every single alarm
 				// e.g {"GPStime":{"notsetup":"2017-01-19 22:45:03 +00","now":"2017-01-18 22:45:03 +00"}}
@@ -588,7 +590,7 @@ int main(void)
 				strcat(strJSON, datetime_string);
 				strcat(strJSON, "\"}}\r\n");
 */
-			}
+			} // end of if (gpsSecsElapsed > secsCtToCkGpsTime)
 			
 			// test if date has changed
 			if ((cellReadingsPtr->timeStamp.day != dt_CurAlarm.day) 
@@ -667,18 +669,25 @@ int main(void)
 				break; 
 			}
 			
-			if ((gpsFlags.checkGpsToday) // flag to check but has not been serviced
-					&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) { // alarm has passed GPS check time
-				GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
-				// e.g. {"GPStime":{"requested":"2017-01-18 22:45:03 +00"}}
-				strcat(strJSON, "\r\n{\"GPStime\":{\"requested\":\"");
-				datetime_getstring(datetime_string, &dt_CurAlarm);
-				strcat(strJSON, datetime_string);
-				strcat(strJSON, "\"}}\r\n");
-				stateFlags1.writeJSONMsg = 1;
+			if (motionFlags.isLeveling == 0) { // skip GPS work while in Leveling mode
+				if ((gpsFlags.checkGpsToday) // flag to check but has not been serviced
+						&& (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 1)) { // alarm has passed GPS check time
+					GPS_initTimeRequest(); // send a low-going reset pulse, to start subsystem uC
+					// e.g. {"GPStime":{"requested":"2017-01-18 22:45:03 +00"}}
+					strcat(strJSON, "\r\n{\"GPStime\":{\"requested\":\"");
+					datetime_getstring(datetime_string, &dt_CurAlarm);
+					strcat(strJSON, datetime_string);
+					strcat(strJSON, "\"}}\r\n");
+					stateFlags1.writeJSONMsg = 1;
+				}				
+			} // end of skip GPS work while in Leveling mode
+
+			if (motionFlags.isLeveling) {
+				stateFlags1.logSilently = 1; // hide diagnostics if in Leveling mode
+			} else {
+				stateFlags1.logSilently = 0; // show diagnostics while gathering data
 			}
 			
-			stateFlags1.logSilently = 0; // show diagnostics while gathering data
 			if (makeLogString()) break;
 			if (timeFlags.timeToLogData) {
 //				len = strlen(strLog); // 'makeLogString' internally creates log string

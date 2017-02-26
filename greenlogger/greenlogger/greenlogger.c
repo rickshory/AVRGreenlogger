@@ -38,6 +38,7 @@ volatile uint16_t rouseCountdown = 0; // timer for keeping system roused from sl
 volatile uint16_t btCountdown = 0; // timer for trying Bluetooth connection
 volatile uint16_t gpsTimeReqCountdown = 0; // timeout for GPS time request
 volatile uint16_t levelingCountdown = 0; // timeout for showing the diagnostics for XYZ leveling of the instrument
+volatile uint16_t levelingPacer = 0; // how quickly to repeat showing the leveling diagnostics
 volatile int16_t xPrevious = 0, yPrevious = 0, zPrevious = 0;
 volatile uint16_t timer3val;
 
@@ -698,7 +699,17 @@ int main(void)
 				stateFlags1.logSilently = 0; // show diagnostics while gathering data
 			}
 			
-			if (makeLogString()) break;
+			// if in Leveling mode, skip making the log string unless it is time to log data
+			if (motionFlags.isLeveling) {
+				if (timeFlags.timeToLogData) {
+					if (makeLogString()) break;
+				} else {
+					break;
+				}
+			} else {
+				if (makeLogString()) break;
+			}
+			
 			if (timeFlags.timeToLogData) {
 //				len = strlen(strLog); // 'makeLogString' internally creates log string
 //				errSD = writeCharsToSDCard(strLog, len);
@@ -1530,10 +1541,14 @@ void heartBeat (void)
 	}
 	
 	if (motionFlags.isLeveling) {
-		// set this flag every 2 seconds
-		if ((levelingCountdown % 200) == 0) {
+		// try to set this flag every 0.5 second
+		if (levelingPacer-- == 0) {
 			motionFlags.isTimeToDisplayLeveling = 1;
+			levelingPacer = 50;
 		}
+//		if ((rouseCountdown % 50) == 0) {
+//			motionFlags.isTimeToDisplayLeveling = 1;
+//		}
 	} else {
 		motionFlags.isTimeToDisplayLeveling = 0;
 	}

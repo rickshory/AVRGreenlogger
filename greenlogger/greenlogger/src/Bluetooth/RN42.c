@@ -126,6 +126,7 @@ void checkForBTCommands (void) {
 	}
 	
 	while (uart1_char_waiting_in()) {
+		motionFlags.isLeveling = 0; // go out of Leveling mode on any input
 		c = uart1_getchar();
 		if (c == 0x08) { // backspace
 			if (btCmdBufferPtr > btCmdBuffer) { // if there is anything to backspace

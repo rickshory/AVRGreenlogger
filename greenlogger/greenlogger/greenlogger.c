@@ -1148,6 +1148,7 @@ void getAxesIntoStrJSON(void) {
 void checkForCommands (void) {
     char c;
     while (uart0_char_waiting_in()) {
+		motionFlags.isLeveling = 0; // go out of Leveling mode on any input
 		c = uart0_getchar();
 		if (c == 0x08) { // backspace
 			if (commandBufferPtr > commandBuffer) { // if there is anything to backspace

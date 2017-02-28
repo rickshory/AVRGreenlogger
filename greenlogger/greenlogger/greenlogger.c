@@ -88,6 +88,7 @@ uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day sinc
 chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE]; // array to hold multiple days' max cell charge info, for 
 	// getting average. Initialization to zero flags that they are not valid items yet.
 chargeInfo *cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
+volatile uint8_t dailyTryAtAutoTimeSet = 0; // how many times in a row we tried to auto-set time from GPS
 
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
 unsigned long darkCutOffBB = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_BB;
@@ -514,7 +515,10 @@ int main(void)
 			// test whether to request time from the GPS
 			gpsSecsElapsed = (int32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
 			if (gpsSecsElapsed > secsCtToCkGpsTime) {
-				if (gpsFlags.checkGpsToday) { // don't flag another till this one serviced
+				
+				if (gpsFlags.checkGpsToday) {
+					// if (dailyTryAtAutoTimeSet > MAX_DAILY_TRIES_FOR_GPS_TIME) {}
+					// don't normally flag another till this one serviced
 #ifdef VERBOSE_DIAGNOSTICS
 					int l;
 					char s[64];

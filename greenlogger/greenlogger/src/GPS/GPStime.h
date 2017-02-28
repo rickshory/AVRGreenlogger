@@ -17,6 +17,7 @@
 
 //#define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
 #define DAYS_FOR_MOVING_AVERAGE 2 // special testing version
+#define MAX_DAILY_TRIES_FOR_GPS_TIME 3 // how many times in a row to try auto-setting GPS time
 
 typedef volatile struct { // location acquired from GPS
 	double latVal; // value of latitude as double

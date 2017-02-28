@@ -24,11 +24,13 @@
 
 extern volatile adcData cellVoltageReading;
 extern volatile gFlags gpsFlags;
+extern volatile iFlags initFlags;
 extern volatile gpsLocation curLocation, prevLocation;
 extern volatile dateTime dt_LatestGPS;
 extern volatile uint16_t gpsTimeReqCountdown;
 extern char commandBuffer[COMMAND_BUFFER_LENGTH];
 extern char strJSONloc[256];
+extern volatile uint8_t dailyTryAtAutoTimeSet;
 
 /**
  * \brief send GPS time-request signal
@@ -54,10 +56,27 @@ void GPS_initTimeRequest(void) {
 		outputStringToBothUARTs("\r\n power too low for GPS get-time request \r\n");
 		return;
 	}
+	// count how many tries
+	if ((gpsFlags.gpsReqTest == 0) // an automatically generated request, not manual
+			&& (initFlags.gpsTimeAutoInit) // past the auto-init tries, when device first powered up
+			&& (1)) { // other criteria here
+		if (++dailyTryAtAutoTimeSet > MAX_DAILY_TRIES_FOR_GPS_TIME) {
+#ifdef VERBOSE_DIAGNOSTICS
+			int l;
+			char s[64];
+			l = sprintf(s, "\n\r tried %d times in a row to get GPS time today, try %d ignored",
+				 MAX_DAILY_TRIES_FOR_GPS_TIME, dailyTryAtAutoTimeSet);
+			outputStringToBothUARTs(s);
+#endif
+			return;
+		}
+	}	
 	outputStringToBothUARTs("\r\n sending get-time request to GPS subsystem \r\n");
 	stayRoused(18000); // stay awake for up to 3 minutes to receive any reply
 	gpsFlags.gpsTimeRequested = 1; // for now, use this to distinguish any
 	// time-set command that comes back as being from the GPS
+
+	//dailyTryAtAutoTimeSet
 	cli(); // temporarily disable interrupts to prevent Timer3 from
 	// changing the count partway through
 	gpsTimeReqCountdown = 18000; // set a timeout of 3 minutes;

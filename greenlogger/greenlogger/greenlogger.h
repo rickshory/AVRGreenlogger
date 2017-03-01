@@ -12,14 +12,14 @@
 //#define RTC_CHIP_IS_DS1337
 #define RTC_CHIP_IS_DS1342
 
-//#define VERBOSE_DIAGNOSTICS
+#define VERBOSE_DIAGNOSTICS
 
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"
 
 #define COMMAND_BUFFER_LENGTH 64
 
-#define VERSION_STRING "\r\n Ver 4.04\t 2017-02-26\r\n "
+#define VERSION_STRING "\r\n Ver 4.04\t 2017-03-01\r\n "
 
 // ADC reading * 2.5 = mV
 #define CELL_VOLTAGE_GOOD_FOR_ALL_FUNCTIONS 520 // corresponds to 1300mV, sufficient for high drain functions like GPS

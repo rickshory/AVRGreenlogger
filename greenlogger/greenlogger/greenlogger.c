@@ -1502,6 +1502,7 @@ void outputLevelingDiagnostics(void) {
 				yPrev = (d.yWholeWord);
 				zPrev = (d.zWholeWord);
 			}
+			(void) len; // avoid compiler warnings
 		}		
 	} // timeout will clear the isLeveling flag, and allow to pass beyond here
 	stateFlags1.logSilently = 0; // go back to displaying logging

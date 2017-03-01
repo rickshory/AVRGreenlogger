@@ -511,14 +511,10 @@ int main(void)
 				outputStringToBothUARTs("\n\r");
 			}
 #endif
-			
 			// test whether to request time from the GPS
 			gpsSecsElapsed = (int32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
 			if (gpsSecsElapsed > secsCtToCkGpsTime) {
-				
 				if (gpsFlags.checkGpsToday) {
-					// if (dailyTryAtAutoTimeSet > MAX_DAILY_TRIES_FOR_GPS_TIME) {}
-					// don't normally flag another till this one serviced
 #ifdef VERBOSE_DIAGNOSTICS
 					int l;
 					char s[64];
@@ -529,6 +525,8 @@ int main(void)
 					outputStringToBothUARTs("\n\r");
 					l = sprintf(s, "%.0f seconds overdue\n\r", 
 						(double)(gpsSecsElapsed - secsCtToCkGpsTime));
+					outputStringToBothUARTs(s);
+					l = sprintf(s, "tried %d times to get GPS time\n\r", dailyTryAtAutoTimeSet);
 					outputStringToBothUARTs(s);
 					(void)l; // avoid compiler warning
 /* don't do this; would run on every single alarm
@@ -543,6 +541,14 @@ int main(void)
 					strcat(strJSON, "\"}}\r\n");
 */
 #endif
+					// don't normally flag another till this one serviced
+					// but if tried too many times today, skip till tomorrow
+					if (dailyTryAtAutoTimeSet > MAX_DAILY_TRIES_FOR_GPS_TIME) {
+						(dt_CkGPS.day)++; // move one day ahead
+						datetime_normalize(&dt_CkGPS);
+						dailyTryAtAutoTimeSet = 0; // reset the count of tries
+					}
+					
 				} else { // gpsFlags.checkGpsToday not yet set, set up a GPS-time request
 					if (motionFlags.isLeveling == 0) { // skip GPS work while in Leveling mode
 						if (initFlags.gpsTimeAutoInit) { // wait till we have tried to auto-initialize

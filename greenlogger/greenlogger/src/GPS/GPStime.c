@@ -116,9 +116,14 @@ uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
 		} // don't even need to count how many
 	}
 	// we have summed all the valid items and are now ready to calc the average
-	minuteRadians = atan2(sumSine, sumCosine); // fn output range is -pi to +pi
-	if (minuteRadians < 0) minuteRadians += (2 * M_PI); // should now range 0 to 2pi
-	return (uint16_t) (1440 * minuteRadians / (2 * M_PI)); // convert back to a positive minutes count
+	if ((sumSine == 0.0) && (sumCosine == 0.0)) { // did not get any valid readings
+		return 0; // return a usable default, time check will occur at Universal Time midnight
+	} else { // atan2 supposedly returns something for (0,0), but above is attempt to make fail safe
+		minuteRadians = atan2(sumSine, sumCosine); // fn output range is -pi to +pi
+		if (minuteRadians < 0) minuteRadians += (2 * M_PI); // should now range 0 to 2pi
+		return (uint16_t) (1440 * minuteRadians / (2 * M_PI)); // convert back to a positive minutes count
+	}
+	
 }
 
 void chargeInfo_getString(char* ciStr, chargeInfo *cip) {

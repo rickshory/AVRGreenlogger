@@ -1435,7 +1435,8 @@ void displayLeveling(void) {
 			xPrevious = (d.xWholeWord);
 			yPrevious = (d.yWholeWord);
 			zPrevious = (d.zWholeWord);
-		}		
+		}
+		(void) l; // avoid compiler warnings
 	} // end of if (motionFlags.isLeveling)
 	return;
 }

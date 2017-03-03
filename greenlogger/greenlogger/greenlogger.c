@@ -1195,7 +1195,7 @@ void checkForCommands (void) {
 					char jts[25];
 					strcpy(tmpStr, commandBuffer + 1);
 					if (!isValidDateTime(tmpStr)) {
-						if (gpsFlags.gpsTimeRequestByBluetooth) {
+						if (gpsFlags.gpsTimeRequested) {
 							outputStringToBluetoothUART("\r\n Invalid timestamp from GPS\r\n");
 						} else {
 							outputStringToWiredUART("\r\n Invalid timestamp\r\n");
@@ -1203,7 +1203,7 @@ void checkForCommands (void) {
 						break;
 					}
 					if (!isValidTimezone(tmpStr + 20)) {
-						if (gpsFlags.gpsTimeRequestByBluetooth) {
+						if (gpsFlags.gpsTimeRequested) {
 							outputStringToBluetoothUART("\r\n Invalid hour offset from GPS\r\n");
 						} else {
 							outputStringToWiredUART("\r\n Invalid hour offset\r\n");
@@ -1215,7 +1215,7 @@ void checkForCommands (void) {
 					datetime_getstring(jts, &dt_RTC);
 					strcat(strJSONtc, jts);
 
-					if (gpsFlags.gpsTimeRequestByBluetooth) {
+					if (gpsFlags.gpsTimeRequested) {
 						outputStringToBluetoothUART("\r\n Time changed, by GPS, from ");
 						outputStringToBluetoothUART(jts);
 					} else {
@@ -1227,7 +1227,7 @@ void checkForCommands (void) {
 					strcat(strJSONtc, "\",\"to\":\"");
 					datetime_getstring(jts, &dt_tmp);
 					strcat(strJSONtc, jts);
-					if (gpsFlags.gpsTimeRequestByBluetooth) {
+					if (gpsFlags.gpsTimeRequested) {
 						outputStringToBluetoothUART(" to ");
 						outputStringToBluetoothUART(jts);
 						outputStringToBluetoothUART("\r\n");					

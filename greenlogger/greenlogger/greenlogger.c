@@ -716,8 +716,6 @@ int main(void)
 			}
 			
 			if (timeFlags.timeToLogData) {
-//				len = strlen(strLog); // 'makeLogString' internally creates log string
-//				errSD = writeCharsToSDCard(strLog, len);
 				errSD = writeLogStringToSDCard();
 				if (errSD) {
 					tellFileError (errSD);

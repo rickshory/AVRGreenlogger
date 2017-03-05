@@ -1269,11 +1269,6 @@ void checkForCommands (void) {
 					timeZoneOffset = dt_tmp.houroffset;
 					timeFlags.timeZoneWritten = 0; // flag that time zone needs to be written
 					syncTimeZone(); // attempt to write the time zone; will retry later if e.g. power too low
-
-					// 
-/*
-                   startTimer1ToRunThisManySeconds(30); // keep system Roused
-*/
                     break;
                 }
 				
@@ -1283,92 +1278,6 @@ void checkForCommands (void) {
                     break;
                 }
 
-                case 'C': case 'c':
-					{
-						len = sprintf(str, "\n\r test write to SD card 0x%x\n\r", (disk_initialize(0)));
-						intTmp1 = writeCharsToSDCard(str, len);
-						 // sd card diagnostics
-						outputStringToWiredUART("\r\n test write to SD card\r\n");
-					//	len = sprintf(str, "\n\r PINB: 0x%x\n\r", (PINB));
-						// send_cmd(CMD0, 0)
-//					len = sprintf(str, "\n\r CMD0: 0x%x\n\r", (send_cmd(CMD0, 0)));
-						break;						
-					}
-
-                case 'P': case 'p': 
-				{ // force SD card power off
-                    outputStringToWiredUART("\r\n turning SD card power off\r\n");
-					turnSDCardPowerOff();
-					outputStringToWiredUART("\r\n SD card power turned off\r\n");
-                    break;
-                }
-/*
-                case '^':
-				{ // force B3 high
-                    outputStringToWiredUART("\r\n forcing B3 high\r\n");
-					DDRB |= 0b00001000;
-					PORTB |= 0b00001000;
-					outputStringToWiredUART("\r\n B3 forced high \r\n");
-                    break;
-                }
-
-                case 'v':
-				{ // force B3 low
-                    outputStringToWiredUART("\r\n forcing B3 low\r\n");
-					DDRB |= 0b00001000;
-					PORTB &= 0b11110111;
-					outputStringToWiredUART("\r\n B3 forced low \r\n");
-                    break;
-                }
-*/
-				case 'A': case 'a':
-					{
-						findADXL345();
-						break;
-					}
-
-                case 'F': case 'f':
-					{ // experimenting with temperature functions
-						if (!temperature_InitOneShotReading()) {
-							// temperature conversion time, typically 30ms
-							for (Timer2 = 4; Timer2; );	// Wait for 40ms to be sure
-							if (!temperature_GetReading(&temperatureReading)) {
-								len = sprintf(str, "\n\r Temperature: %d degrees C\n\r", (temperatureReading.tmprHiByte));
-								outputStringToWiredUART(str);
-
-							}
-						}
-
-						break;
-					}						
-
-                //case 'I': case 'i':
-					//{ // experimenting with irradiance functions
-						//uint8_t result;
-						//result = getIrrReading(TSL2561_UpLooking, TSL2561_CHANNEL_BROADBAND, &irrReadings[0]);
-						//if (!result) {
-							//len = sprintf(str, "\n\r Val: %lu; Mult: %lu; Irr: %lu \n\r", 
-							     //(unsigned long)irrReadings[0].irrWholeWord, (unsigned long)irrReadings[0].irrMultiplier, 
-								 //(unsigned long)((unsigned long)irrReadings[0].irrWholeWord * (unsigned long)irrReadings[0].irrMultiplier));
-						//} else {
-							//len = sprintf(str, "\n\r Could not get irradiance, err code: %d", result);
-						//}						
-						//outputStringToWiredUART(str);
-						//break;
-					//}						
-//
-                //case 'B': case 'b':
-					//{ // experimenting with reading the battery voltage using the Analog to Digital converter
-						//len = sprintf(str, "\n\r Hi byte: %d \n\r", readCellVoltage(&cellVoltageReading));
-						//outputStringToWiredUART(str);
-						//len = sprintf(str, "\n\r 16bit value: %d \n\r", cellVoltageReading.adcWholeWord);
-						//outputStringToWiredUART(str);
-						//
-//
-						//break;
-					//}						
-//				
-//
                 case 'D': case 'd': 
 				{ // output file 'D'ata (or 'D'ump)
                     outputStringToWiredUART("\r\n (data dump only works from Bluetooth)\r\n");

@@ -205,21 +205,8 @@ void checkForBTCommands (void) {
 				case 'L': case 'l': 
 				{
 					showLeveling(12000); // show leveling diagnostics for 2 minutes (120 sec)
+					// continues as long as XYZ are changing
 					//	showLeveling(300); // show leveling diagnostics for 30 sec
-//					outputLevelingDiagnostics(); // hang here till timeout
-/*
-					// experimenting with the accelerometer Leveling functions
-					char ls[32];
-					uint8_t rs = getAvAccelReadings(&accelData);
-					if (rs) {
-						len = sprintf(ls, "\n\r error code %i\n\r", rs);
-						outputStringToBothUARTs(ls);
-						break;
-					} 
-					len = sprintf(ls, "\n\r X = %i, Y = %i, Z = %i\n\r", accelData.xWholeWord,
-					accelData.yWholeWord,  accelData.zWholeWord);
-					outputStringToBothUARTs(ls);
-*/
 					break;
 				}
 

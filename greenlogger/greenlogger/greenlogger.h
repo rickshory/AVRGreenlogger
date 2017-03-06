@@ -211,6 +211,5 @@ void getLatestGpsTimeIntoStrJSON(void);
 void getAxesIntoStrJSON(void);
 uint8_t makeLogString(void);
 void displayLeveling(void);
-void outputLevelingDiagnostics(void);
 
 #endif /* GREENLOGGER_H_ */

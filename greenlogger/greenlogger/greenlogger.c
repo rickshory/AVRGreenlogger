@@ -75,7 +75,7 @@ volatile accelAxisData accelData;
 extern irrData irrReadings[4];
 volatile extern adcData cellVoltageReading;
 uint16_t previousADCCellVoltageReading = 0;
-uint16_t refDarkVoltage = 0;
+uint16_t refDarkVoltage = 0, refLogVoltage = 0;
 volatile gpsLocation curLocation, prevLocation;
 int32_t gpsSecsElapsed; // seconds elapsed since latest GPS reading
 // target, seconds since latest GPS check, to schedule GPS time again
@@ -414,13 +414,6 @@ int main(void)
 			// remember previous voltage; very first read on intialize, so should be meaningful
 			previousADCCellVoltageReading = cellVoltageReading.adcWholeWord;
 			intTmp1 = readCellVoltage(&cellVoltageReading);
-			// check if cell charge has increased slightly, 2mv, since last time
-			if ((int16_t)(cellVoltageReading.adcWholeWord) - (int16_t)(previousADCCellVoltageReading) > 2) {
-				// we do not yet use the 'cellIsCharging' flag for anything
-				stateFlags1.cellIsCharging = 1;
-			} else {
-				stateFlags1.cellIsCharging = 0;
-			}
 			
 			// try to get GPS time soon after startup, but don't waste battery if not available
 			// - Try every 2 minutes for first 10 minutes
@@ -721,6 +714,18 @@ int main(void)
 					tellFileError (errSD);
 				} else {
 					outputStringToBothUARTs(" Data written to SD card \n\r\n\r");
+					// flag if cell voltage at moment of logging has increased since last time
+					// to verify device is not in dark storage
+					intTmp1 = readCellVoltage(&cellVoltageReading);
+					if (refLogVoltage > 0) { // very first time this will = 0
+						if (cellVoltageReading.adcWholeWord > refLogVoltage) {
+							stateFlags1.cellIsCharging = 1;
+						} else {
+							stateFlags1.cellIsCharging = 0;
+						}
+					}
+					// remember this reading for next time
+					refLogVoltage = cellVoltageReading.adcWholeWord;
 				}
 			} // end of test if time to log data
 			

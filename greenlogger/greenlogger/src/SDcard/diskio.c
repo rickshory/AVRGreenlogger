@@ -390,6 +390,44 @@ BYTE writeLogStringToSDCard (void) {
 		}
 	}
 	
+#ifdef VERBOSE_DIAGNOSTICS
+	extern volatile dateTime dt_CkGPS;
+	extern volatile mFlags motionFlags;
+	// strJSON should be empty at this point, available for temporary diagnostics
+	if (gpsFlags.checkGpsToday) { // flag to check but has not been serviced
+		char s[32];
+		strcat(strJSON,"\n\r{\"gpsTimeCheckScheduled\":{");
+		strcat(strJSON,"\"targetTime\":\"");
+		datetime_getstring(s, &dt_CkGPS);
+		strcat(strJSON,s);
+		strcat(strJSON,"\"");
+		if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 0) { // still to do
+			strcat(strJSON,", \"dueIn\":\"");
+			sLen = sprintf(s, "%.0f seconds", (double)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_CkGPS))))),
+			strcat(strJSON, s);
+			strcat(strJSON,"\"");
+		} else { // overdue
+			strcat(strJSON,", \"overDueBy\":\"");
+			sLen = sprintf(s, "%.0f seconds", (double)((datetime_totalsecs(&dt_CkGPS) - (datetime_totalsecs(&dt_CurAlarm))))),
+			strcat(strJSON, s);
+			strcat(strJSON,"\"");			
+		}
+		if (motionFlags.isLeveling == 0) {
+			strcat(strJSON,", \"skippedBecause\":\"inLevelingMode\"");
+		}
+		if (stateFlags1.cellIsCharging == 0) {
+			strcat(strJSON,", \"skippedBecause\":\"cellNotCharging\"");
+		}
+		strcat(strJSON, "}}\n\r");		
+	}
+	sLen = strlen(strJSON);
+	if (f_write(&logFile, strJSON, sLen, &bytesWritten) != FR_OK) {
+		retVal = sdFileWriteFail;
+		goto closeFile;
+	}	
+	strJSON[0] = '\0'; // make sure strJSON is 'erased' here
+#endif
+
 	// write the data
 	sLen = strlen(strLog);
 	if (f_write(&logFile, strLog, sLen, &bytesWritten) != FR_OK) {

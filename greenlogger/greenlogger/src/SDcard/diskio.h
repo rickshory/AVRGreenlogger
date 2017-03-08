@@ -134,7 +134,6 @@ void dateToFullFilepath (char* stDt, char* stFile);
 BYTE fileExistsForDate (char* stDate);
 BYTE fileExists (char* stFileFullpath);
 BYTE writeLogStringToSDCard (void);
-BYTE writeCharsToSDCard (char* St, BYTE n);
 BYTE writeStringInFileToSDCard (char* stParam, char* stFile);
 BYTE readStringFromFileFromSDCard (char* stParam, char* stFile, BYTE stLen);
 

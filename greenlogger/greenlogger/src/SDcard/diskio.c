@@ -401,7 +401,7 @@ BYTE writeLogStringToSDCard (void) {
 		datetime_getstring(s, &dt_CkGPS);
 		strcat(strJSON,s);
 		strcat(strJSON,"\"");
-		if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) > 0) { // still to do
+		if (datetime_compare(&dt_CurAlarm, &dt_CkGPS) > 0) { // still to do
 			strcat(strJSON,", \"dueIn\":\"");
 			sLen = sprintf(s, "%.0f seconds", (double)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_CkGPS))))),
 			strcat(strJSON, s);
@@ -410,16 +410,16 @@ BYTE writeLogStringToSDCard (void) {
 			strcat(strJSON,", \"overDueBy\":\"");
 			sLen = sprintf(s, "%.0f seconds", (double)((datetime_totalsecs(&dt_CkGPS) - (datetime_totalsecs(&dt_CurAlarm))))),
 			strcat(strJSON, s);
-			strcat(strJSON,"\"");			
+			strcat(strJSON,"\"");
 		}
-		if (motionFlags.isLeveling == 0) {
+		if (motionFlags.isLeveling == 1) {
 			strcat(strJSON,", \"skippedBecause\":\"inLevelingMode\"");
 		}
 		if (stateFlags1.cellIsCharging == 0) {
 			strcat(strJSON,", \"skippedBecause\":\"cellNotCharging\"");
-		}
-		strcat(strJSON, "}}\n\r");		
+		}		strcat(strJSON, "}}\n\r");		
 	}
+	
 	sLen = strlen(strJSON);
 	if (f_write(&logFile, strJSON, sLen, &bytesWritten) != FR_OK) {
 		retVal = sdFileWriteFail;

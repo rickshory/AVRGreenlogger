@@ -273,6 +273,7 @@ uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
 	avD->xWholeWord = (int16_t)(sumOfXReadings / samplesToAverage);
 	avD->yWholeWord = (int16_t)(sumOfYReadings / samplesToAverage);
 	avD->zWholeWord = (int16_t)(sumOfZReadings / samplesToAverage);
+/*
 	// tie up
 	// set low power bit (4) and 25Hz sampling rate, for 40uA current
 	rs = setADXL345Register(ADXL345_REG_BW_RATE, 0x18);
@@ -281,6 +282,9 @@ uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
 		outputStringToBluetoothUART(str);
 		return rs;
 	}
+*/	
+	// restore to waiting-for-tap state
+	setADXL345ToSendTapInterrupts();
 	return 0;
 }
 

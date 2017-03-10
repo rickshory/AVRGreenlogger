@@ -72,12 +72,12 @@ uint8_t findADXL345 (void) {
 } // end of findAccelerometer
 
 /*****************************************
-* initialize ADXL345 Accelerometer, for system leveling and to detect taps
+* set up ADXL345 Accelerometer to send tap interrupts
 *****************************************/
 
-uint8_t initializeADXL345 (void) {
+uint8_t setADXL345ToSendTapInterrupts (void) {
     uint8_t r;
-	outputStringToWiredUART("\n\r entered initializeADXL345 routine \n\r");
+	outputStringToWiredUART("\n\r entered setADXL345ToSendTapInterrupts routine \n\r");
 //	findADXL345();
 //    if (!(motionFlags.accelerometerIsThere) {
 //        return;
@@ -196,7 +196,7 @@ uint8_t initializeADXL345 (void) {
 	} else { // could not START
 		return errNoI2CStart;
 	}
-} // end of initializeADXL345
+} // end of setADXL345ToSendTapInterrupts
 
 
 /*****************************************

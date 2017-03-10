@@ -94,7 +94,7 @@ typedef struct {
 uint8_t setADXL345Register (uint8_t reg, uint8_t val);
 uint8_t readADXL345Register (uint8_t reg, uint8_t *valp);
 uint8_t findADXL345 (void);
-uint8_t initializeADXL345 (void);
+uint8_t setADXL345ToSendTapInterrupts (void);
 uint8_t clearAnyADXL345TapInterrupt (void);
 uint8_t readADXL345Axes (volatile accelAxisData *d);
 uint8_t getAvAccelReadings (volatile accelAxisData *avD);

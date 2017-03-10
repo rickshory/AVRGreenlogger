@@ -212,7 +212,7 @@ int main(void)
 	if (initFlags.initUART1)
 		outputStringToBluetoothUART("\r\n  UART1 Initialized\r\n");
 				
-	r = initializeADXL345();
+	r = setADXL345ToSendTapInterrupts();
 	if (r) {
 		len = sprintf(str, "\n\r ADXL345 initialize failed: %d\n\r\n\r", r);
 		outputStringToWiredUART(str);

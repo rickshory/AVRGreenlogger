@@ -268,13 +268,8 @@ uint8_t getAvAccelReadings (volatile accelAxisData *avD) {
 		sumOfYReadings += d.yWholeWord;
 		sumOfZReadings += d.zWholeWord;
 	} // finished getting all the readings we are going to average
-	// shift right to divide by 2-to-the-power and create the average
-	// TODO check that this works for negative numbers
-//	avD->xWholeWord = (int16_t)(sumOfXReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
-//	avD->yWholeWord = (int16_t)(sumOfYReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
-//	avD->zWholeWord = (int16_t)(sumOfZReadings >> ACCEL_SAMPLES_TO_AVERAGE_PWR_2);
-	
-	// try regular division
+
+	// signed divide to get the average
 	avD->xWholeWord = (int16_t)(sumOfXReadings / samplesToAverage);
 	avD->yWholeWord = (int16_t)(sumOfYReadings / samplesToAverage);
 	avD->zWholeWord = (int16_t)(sumOfZReadings / samplesToAverage);

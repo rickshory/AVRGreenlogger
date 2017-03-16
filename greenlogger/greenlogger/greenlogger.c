@@ -576,6 +576,15 @@ int main(void)
 									} // end of gpsTimeAutoInit or not
 								} // end of skip GPS work while in Leveling mode
 							} // end of if (gpsFlags.checkGpsToday
+#ifdef VERBOSE_DIAGNOSTICS
+						} else { // day rollover, but not (daysWeHaveChargeInfoFor > DAYS_FOR_MOVING_AVERAGE)
+							int l;
+							char s[8];
+							strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
+							l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
+							strcat(strJSON, "\"}\r\n");
+							stateFlags1.writeJSONMsg = 1;
+#endif							
 						} // end of if (daysWeHaveChargeInfoFor > DAYS_FOR_MOVING_AVERAGE)
 						// point to the next position to fill in the readings array
 						cellReadingsPtr++;

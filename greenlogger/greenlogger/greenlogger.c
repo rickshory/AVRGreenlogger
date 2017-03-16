@@ -507,8 +507,9 @@ int main(void)
 #endif
 			// test whether to request time from the GPS
 			gpsSecsElapsed = (int32_t)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS))));
-			if (gpsSecsElapsed > secsCtToCkGpsTime) {
-				if (gpsFlags.checkGpsToday) {
+//			if (gpsSecsElapsed > secsCtToCkGpsTime) {
+			if (daysWeHaveChargeInfoFor > (DAYS_FOR_MOVING_AVERAGE + 1)) { // +1 assures day completed
+				if (gpsFlags.checkGpsToday) { // request is already set up
 #ifdef VERBOSE_DIAGNOSTICS
 					int l;
 					char s[64];
@@ -542,7 +543,6 @@ int main(void)
 						datetime_normalize(&dt_CkGPS);
 						dailyTryAtAutoTimeSet = 0; // reset the count of tries
 					}
-					
 				} else { // gpsFlags.checkGpsToday not yet set, set up a GPS-time request
 					if (motionFlags.isLeveling == 0) { // skip GPS work while in Leveling mode
 						if (initFlags.gpsTimeAutoInit) { // wait till we have tried to auto-initialize
@@ -627,8 +627,7 @@ int main(void)
 						// voltage has not increased since previous UT midnight, which usually means net discharge
 						// in storage, or dark weather; in either case not useful for tracking max charge.
 						// Very low probability max charge would truly fall at UT midnight in normal use
-						// so ignore this case
-						//  Don't track a new date but overwrite the current one
+						// so don't track a new date but overwrite the current one
 						cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
 						datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);		
 					} else { // move to a new date in the array, and start recording
@@ -1277,6 +1276,8 @@ void checkForCommands (void) {
 						gpsFlags.gpsTimeRequestByBluetooth = 0; // end of request by BT
 						gpsFlags.checkGpsToday = 0; // time is set by GPS, clear any pending request
 						initFlags.gpsTimeAutoInit = 1; // no longer try to auto-initialize
+						dailyTryAtAutoTimeSet = 0; // reset the count of tries
+						daysWeHaveChargeInfoFor = 0; // reset tracking the array of max-cell-voltage readings
 					} else { // time was set manually
 						strcat(strJSONtc, "\",\"by\":\"hand\"}}\r\n");
 						outputStringToWiredUART("\r\n");

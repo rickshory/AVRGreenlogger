@@ -485,8 +485,8 @@ int main(void)
 					(double)secsCtToCkGpsTime);
 				outputStringToBothUARTs(s);
 				l = sprintf(s, "elapsed seconds: %.0f\n\r",
-					(double)((int32_t)((datetime_totalsecs(&dt_CurAlarm)
-					- (datetime_totalsecs(&dt_LatestGPS))))));
+					((double)(datetime_totalsecs(&dt_CurAlarm)) -
+					(double)(datetime_totalsecs(&dt_LatestGPS))));
 				outputStringToBothUARTs(s);
 				outputStringToBothUARTs("latest GPS time: ");
 				datetime_getstring(t, &dt_LatestGPS);

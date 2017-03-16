@@ -403,12 +403,12 @@ BYTE writeLogStringToSDCard (void) {
 		strcat(strJSON,"\"");
 		if (datetime_compare(&dt_CurAlarm, &dt_CkGPS) > 0) { // still to do
 			strcat(strJSON,", \"dueIn\":\"");
-			sLen = sprintf(s, "%.0f seconds", (double)((datetime_totalsecs(&dt_CkGPS) - (datetime_totalsecs(&dt_CurAlarm))))),
+			sLen = sprintf(s, "%.0f seconds", (double)((double)((datetime_totalsecs(&dt_CkGPS)) - (double)(datetime_totalsecs(&dt_CurAlarm))))),
 			strcat(strJSON, s);
 			strcat(strJSON,"\"");
 		} else { // overdue
 			strcat(strJSON,", \"overDueBy\":\"");
-			sLen = sprintf(s, "%.0f seconds", (double)((datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_CkGPS))))),
+			sLen = sprintf(s, "%.0f seconds", (double)((double)((datetime_totalsecs(&dt_CurAlarm)) - (double)(datetime_totalsecs(&dt_CkGPS))))),
 			strcat(strJSON, s);
 			strcat(strJSON,"\"");
 		}

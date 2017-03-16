@@ -88,6 +88,7 @@ uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day sinc
 chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE]; // array to hold multiple days' max cell charge info, for 
 	// getting average. Initialization to zero flags that they are not valid items yet.
 chargeInfo *cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
+volatile uint8_t daysWeHaveChargeInfoFor = 0; // count the days accumulated max-cell-charge info
 volatile uint8_t dailyTryAtAutoTimeSet = 0; // how many times in a row we tried to auto-set time from GPS
 
 unsigned long darkCutoffIR = (unsigned long)DEFAULT_IRRADIANCE_THRESHOLD_DARK_IR;
@@ -620,12 +621,25 @@ int main(void)
 					cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
 					datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
 				} else { // only a regular new date
-					// point to the next position to fill in the readings array
-					cellReadingsPtr++;
-					if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
-								cellReadingsPtr = cellReadings;
-					datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
-					cellReadingsPtr->level = 0; // initialize
+					if ((cellReadingsPtr->timeStamp.hour == 0) 
+							&& (cellReadingsPtr->timeStamp.minute == 0) 
+							&& (cellReadingsPtr->timeStamp.second == 0)) {
+						// voltage has not increased since previous UT midnight, which usually means net discharge
+						// in storage, or dark weather; in either case not useful for tracking max charge.
+						// Very low probability max charge would truly fall at UT midnight in normal use
+						// so ignore this case
+						//  Don't track a new date but overwrite the current one
+						cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
+						datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);		
+					} else { // move to a new date in the array, and start recording
+						// point to the next position to fill in the readings array
+						cellReadingsPtr++;
+						if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)
+									cellReadingsPtr = cellReadings;
+						datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
+						cellReadingsPtr->level = 0; // initialize
+						daysWeHaveChargeInfoFor++; // count a day; will not really be valid count till the next day
+					}
 				}
 				strcat(strJSON, "\",\"now\":\"");
 				len = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));

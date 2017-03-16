@@ -725,7 +725,7 @@ uint32_t datetime_totalsecs (dateTime *t) {
 	for (uint8_t i=0; i<(t->month); i++) {
 		hrs += (m[i] * 24); // add on hours for the elapsed months
 	}
-	hrs += (t->day) * 24; // add hours for the days
+	hrs += ((t->day) * 24); // add hours for the days
 	hrs -= (t->houroffset); // adjust for time zone
 	return (hrs * 60 * 60) + (t->minute * 60) + (t->second);
 }

@@ -407,7 +407,7 @@ BYTE writeLogStringToSDCard (void) {
 			strcat(strJSON,", \"overDueBy\":\"");
 		}
 		// following will be negative if still due
-		sLen = sprintf(s, "%.0f seconds", (double)((double)((datetime_totalsecs(&dt_CurAlarm)) - (double)(datetime_totalsecs(&dt_CkGPS))))),
+		sLen = sprintf(s, "%.0f seconds", (double)((double)((datetime_compareval_secs(&dt_CurAlarm)) - (double)(datetime_compareval_secs(&dt_CkGPS))))),
 		strcat(strJSON, s);
 		strcat(strJSON,"\"");
 		

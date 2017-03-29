@@ -423,7 +423,7 @@ int main(void)
 			// - after that drop through to normal checking interval
 			dateTime dtCk;
 			datetime_getDefault(&dtCk);
-			uint16_t minsCt = (uint16_t)((datetime_totalsecs(&dt_CurAlarm) - datetime_totalsecs(&dtCk))/60);
+			uint16_t minsCt = (uint16_t)((datetime_compareval_secs(&dt_CurAlarm) - datetime_compareval_secs(&dtCk))/60);
 			if (minsCt > (60 * 24)) initFlags.gpsTimeAutoInit = 1; // we have tried long enough to auto-initialize
 			if (initFlags.gpsTimeAutoInit == 0) {
 #ifdef VERBOSE_DIAGNOSTICS
@@ -486,8 +486,8 @@ int main(void)
 					(double)secsCtToCkGpsTime);
 				outputStringToBothUARTs(s);
 				l = sprintf(s, "elapsed seconds: %.0f\n\r",
-					((double)(datetime_totalsecs(&dt_CurAlarm)) -
-					(double)(datetime_totalsecs(&dt_LatestGPS))));
+					((double)(datetime_compareval_secs(&dt_CurAlarm)) -
+					(double)(datetime_compareval_secs(&dt_LatestGPS))));
 				outputStringToBothUARTs(s);
 				outputStringToBothUARTs("latest GPS time: ");
 				datetime_getstring(t, &dt_LatestGPS);
@@ -1083,7 +1083,7 @@ void getLatestGpsTimeIntoStrJSON(void) {
 	datetime_getstring(s, &dt_LatestGPS);
 	strcat(strJSON, s);
 	strcat(strJSON, "\n\r");
-	d = (int32_t)(datetime_totalsecs(&dt_CurAlarm) - (datetime_totalsecs(&dt_LatestGPS)));
+	d = (int32_t)(datetime_compareval_secs(&dt_CurAlarm) - (datetime_compareval_secs(&dt_LatestGPS)));
 	l = sprintf(s, "%.0f elapsed\n\r", (double)d);
 	strcat(strJSON, s);
 	l = sprintf(s, "%.0f target\n\r", (double)secsCtToCkGpsTime);

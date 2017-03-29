@@ -703,7 +703,7 @@ void datetime_copy(dateTime *to, dateTime *from) {
 /**
  * \brief gets the total seconds in dateTime
  *
- * This function takes a pointer to a dateTime structs,
+ * This function takes a pointer to a dateTime struct,
  * It returns the total count of seconds, from Jan 1, 2000
  * Since this is for a data logger, there would never be earlier dates
  * It only works in the 100 years till Jan 1 2100
@@ -729,10 +729,10 @@ uint32_t datetime_truesecs (dateTime *t) {
 
 
 /**
- * \brief gets the total seconds in dateTime
+ * \brief gets a compare value of seconds in dateTime
  *
- * This function takes a pointer to a dateTime structs,
- * It returns the total count of seconds, from Jan 1, 2000
+ * This function takes a pointer to a dateTime struct,
+ * It returns the seconds, from Jan 1, 2000
  * Since this is for a data logger, there would never be earlier dates
  * It only works in the 100 years till Jan 1 2100
  * Return value is a 32 bit number, sufficient
@@ -743,7 +743,7 @@ uint32_t datetime_truesecs (dateTime *t) {
  * Fn is left this way so "null" date, 2000-00-00 00:00:00
  *  will return 0 and compare as less than any real date
  */
-uint32_t datetime_totalsecs (dateTime *t) {
+uint32_t datetime_compareval_secs (dateTime *t) {
 	// t->year is the number of completed years, e.g. 1 (meaning 2001) says 
 	// 1 year of the century has elapsed. Doesn't really matter as long as 
 	// it's consistent for comparisons
@@ -768,8 +768,8 @@ uint32_t datetime_totalsecs (dateTime *t) {
  * If they are equal, returns 0
  */
 int8_t datetime_compare(dateTime *t1, dateTime *t2) {
-	if (datetime_totalsecs(t1) < datetime_totalsecs(t2)) return 1;
-	if (datetime_totalsecs(t1) > datetime_totalsecs(t2)) return -1;
+	if (datetime_compareval_secs(t1) < datetime_compareval_secs(t2)) return 1;
+	if (datetime_compareval_secs(t1) > datetime_compareval_secs(t2)) return -1;
 	return 0;
 }
 

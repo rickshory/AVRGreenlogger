@@ -709,6 +709,34 @@ void datetime_copy(dateTime *to, dateTime *from) {
  * It only works in the 100 years till Jan 1 2100
  * Return value is a 32 bit number, sufficient
  *  to hold the max possible: 3155760000
+ */
+uint32_t datetime_truesecs (dateTime *t) {
+	// t->year is the number of completed years, e.g. 1 (meaning 2001) says 
+	// 1 year of the century has elapsed.
+	uint32_t hrs = t->year * 8766; // pre multiply 365.25 * 24 to use integers
+	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	uint8_t i;
+	if (((t->year) % 4) == 0) m[1] = 29; // deal with leap years
+	for (i=0; i<(t->month); i++) {
+		hrs += (m[i] * 24); // add on hours for the elapsed months
+	}
+	hrs -= (m[i] * 24); // take back the hours for the current month
+	hrs += ((t->day) * 24); // add hours for the days
+	hrs -= 24; // take back the hours for the current day
+	hrs -= (t->houroffset); // adjust for time zone
+	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
+}
+
+
+/**
+ * \brief gets the total seconds in dateTime
+ *
+ * This function takes a pointer to a dateTime structs,
+ * It returns the total count of seconds, from Jan 1, 2000
+ * Since this is for a data logger, there would never be earlier dates
+ * It only works in the 100 years till Jan 1 2100
+ * Return value is a 32 bit number, sufficient
+ *  to hold the max possible: 3155760000
  * Fn is actually inaccurate as written
  * Counts 1 more month and 1 more day than correct, but
  *  still gives consistent comparisons
@@ -727,7 +755,7 @@ uint32_t datetime_totalsecs (dateTime *t) {
 	}
 	hrs += ((t->day) * 24); // add hours for the days
 	hrs -= (t->houroffset); // adjust for time zone
-	return (hrs * 60 * 60) + (t->minute * 60) + (t->second);
+	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
 }
 
 /**

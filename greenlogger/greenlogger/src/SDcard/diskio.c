@@ -403,15 +403,14 @@ BYTE writeLogStringToSDCard (void) {
 		strcat(strJSON,"\"");
 		if (datetime_compare(&dt_CurAlarm, &dt_CkGPS) > 0) { // still to do
 			strcat(strJSON,", \"dueIn\":\"");
-			sLen = sprintf(s, "%.0f seconds", (double)((double)((datetime_totalsecs(&dt_CkGPS)) - (double)(datetime_totalsecs(&dt_CurAlarm))))),
-			strcat(strJSON, s);
-			strcat(strJSON,"\"");
 		} else { // overdue
 			strcat(strJSON,", \"overDueBy\":\"");
-			sLen = sprintf(s, "%.0f seconds", (double)((double)((datetime_totalsecs(&dt_CurAlarm)) - (double)(datetime_totalsecs(&dt_CkGPS))))),
-			strcat(strJSON, s);
-			strcat(strJSON,"\"");
 		}
+		// following will be negative if still due
+		sLen = sprintf(s, "%.0f seconds", (double)((double)((datetime_totalsecs(&dt_CurAlarm)) - (double)(datetime_totalsecs(&dt_CkGPS))))),
+		strcat(strJSON, s);
+		strcat(strJSON,"\"");
+		
 		if (motionFlags.isLeveling == 1) {
 			strcat(strJSON,", \"skippedBecause\":\"inLevelingMode\"");
 		}

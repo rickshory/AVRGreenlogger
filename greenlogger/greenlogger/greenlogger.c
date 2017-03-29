@@ -582,6 +582,7 @@ int main(void)
 							char s[8];
 							strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
 							l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
+							strcat(strJSON, s);
 							strcat(strJSON, "\"}\r\n");
 							stateFlags1.writeJSONMsg = 1;
 #endif							

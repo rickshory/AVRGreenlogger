@@ -103,7 +103,7 @@ uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
 	double minuteRadians, sumSine = 0, sumCosine = 0;
 	for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
 		curReading = startOfArrayOfReadings + i;
-		if (curReading->timeStamp.day > 0) { // day=0 flags that this is not a filled-in item
+		if ((curReading->timeStamp.day) > 0) { // day=0 flags that this is not a filled-in item
 			// get minutes
 			// adjust by hour offset to always treat as if Universal Time
 			// range zero to 1440, can be negative after offset by time zone

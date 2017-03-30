@@ -104,7 +104,7 @@ uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
 	double minuteRadians, sumSine = 0, sumCosine = 0;
 	for (i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		curReading = startOfArrayOfReadings + i;
-//		if ((curReading->timeStamp.day) > 0) { // day=0 flags that this is not a filled-in item
+		if ((curReading->timeStamp.day) > 0) { // day=0 flags that this is not a filled-in item
 			// get minutes
 			// adjust by hour offset to always treat as if Universal Time
 			// range zero to 1440, can be negative after offset by time zone
@@ -138,8 +138,7 @@ uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
 				outputStringToBothUARTs(s);
 			}
 #endif
-
-//		} // don't even need to count how many
+		} // don't even need to count how many
 	}
 	// we have summed all the valid items and are now ready to calc the average
 	if ((sumSine == 0.0) && (sumCosine == 0.0)) { // did not get any valid readings

@@ -100,20 +100,46 @@ void GPS_initTimeRequest(void) {
 uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
 	chargeInfo *curReading;
 	int16_t minutesFromTime;
+	uint8_t i;
 	double minuteRadians, sumSine = 0, sumCosine = 0;
-	for (uint8_t i=0; i++; i<DAYS_FOR_MOVING_AVERAGE) {
+	for (i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		curReading = startOfArrayOfReadings + i;
-		if ((curReading->timeStamp.day) > 0) { // day=0 flags that this is not a filled-in item
+//		if ((curReading->timeStamp.day) > 0) { // day=0 flags that this is not a filled-in item
 			// get minutes
 			// adjust by hour offset to always treat as if Universal Time
 			// range zero to 1440, can be negative after offset by time zone
 			minutesFromTime = (((curReading->timeStamp.hour) - (curReading->timeStamp.houroffset)) 
 					* 60) + (curReading->timeStamp.minute);
+#ifdef TEST_TIME_AVG
+			{
+				int l;
+				char s[32];
+				l = sprintf(s, "\r\nN=%d; minutes from time=%d\r\n", i, minutesFromTime);
+				outputStringToBothUARTs(s);
+			}
+#endif
 			// map to 2Pi radians
 			double minuteRadians = 2 * M_PI * minutesFromTime / 1440;
 			sumSine += sin(minuteRadians);
+#ifdef TEST_TIME_AVG
+			{
+				int l;
+				char s[32];
+				l = sprintf(s, "\r\nsumSine=%f\r\n", sumSine);
+				outputStringToBothUARTs(s);
+			}
+#endif
 			sumCosine += cos(minuteRadians);
-		} // don't even need to count how many
+#ifdef TEST_TIME_AVG
+			{
+				int l;
+				char s[32];
+				l = sprintf(s, "\r\nsumCosine=%f\r\n", sumCosine);
+				outputStringToBothUARTs(s);
+			}
+#endif
+
+//		} // don't even need to count how many
 	}
 	// we have summed all the valid items and are now ready to calc the average
 	if ((sumSine == 0.0) && (sumCosine == 0.0)) { // did not get any valid readings

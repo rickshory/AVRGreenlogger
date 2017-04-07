@@ -793,9 +793,12 @@ uint8_t makeLogString(void) {
 		uint32_t secsCk;
 		dateTime ckT;
 		secsCk = datetime_compareval_secs(&dt_CurAlarm);
+		int l;
+		char s[32];
+		l = sprintf(s, "\r\n\r\nsecs %d\r\n\r\n", secsCk);
+		outputStringToBothUARTs(s);
 		datetime_check_secs(secsCk, &ckT);
 		outputStringToBothUARTs("\r\n\r\nregenerated dateTime ");
-		char s[32];
 		datetime_getstring(s, &ckT);
 		outputStringToBothUARTs(s);
 		outputStringToBothUARTs("\r\n\r\n");

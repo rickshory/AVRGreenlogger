@@ -787,9 +787,10 @@ void datetime_check_secs (uint32_t secsTot, dateTime *t) {
 	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (((t->year) % 4) == 0) m[1] = 29; // deal with leap years
 	uint8_t i;
-	for (i=0; workingVal > 0; i++) {
+	for (i=0; i<12; i++) {
 		(t->month)++;
 		workingVal -= (m[i] * 24 * 60 * 60); // subtract months seconds till less than zero
+		if (workingVal < 0) break;
 	}
 	(t->month)--;
 	workingVal += (m[i] * 24 * 60 * 60); // add back the last partial months seconds

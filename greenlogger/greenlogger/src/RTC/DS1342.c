@@ -723,6 +723,7 @@ uint32_t datetime_truesecs (dateTime *t) {
 	hrs -= (m[i] * 24); // take back the hours for the current month
 	hrs += ((t->day) * 24); // add hours for the days
 	hrs -= 24; // take back the hours for the current day
+	hrs += (t->hour); // add explicit hours for the day
 	hrs -= (t->houroffset); // adjust for time zone
 	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
 }
@@ -754,6 +755,7 @@ uint32_t datetime_compareval_secs (dateTime *t) {
 		hrs += (m[i] * 24); // add on hours for the elapsed months
 	}
 	hrs += ((t->day) * 24); // add hours for the days
+	hrs += (t->hour); // add hours
 	hrs -= (t->houroffset); // adjust for time zone
 	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
 }

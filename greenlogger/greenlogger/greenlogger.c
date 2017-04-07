@@ -519,6 +519,17 @@ int main(void)
 				chargeInfo_getString(str, cellReadingsPtr);
 				strcat(strJSON, str);
 #endif
+#ifdef VERBOSE_DIAGNOSTICS
+						{ // show daysWeHaveChargeInfoFor 
+							int l;
+							char s[8];
+							strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
+							l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
+							strcat(strJSON, s);
+							strcat(strJSON, "\"}\r\n");
+							stateFlags1.writeJSONMsg = 1;
+						}
+#endif
 				if ((dt_CurAlarm.year - cellReadingsPtr->timeStamp.year) > 2) {
 					// if previous year is > 2 years different, either was previously 0 (initial
 					//  null value) or from default date (see fn 'datetime_getDefault'); in either case,
@@ -531,7 +542,7 @@ int main(void)
 							&& (cellReadingsPtr->timeStamp.second == 0)) {
 						// voltage has not increased since previous UT midnight, which usually means net discharge
 						// in storage, or dark weather; in either case not useful for tracking max charge.
-						// Very low probability max charge would truly fall at UT midnight in normal use
+						// Very low probability max charge would truly be at UT midnight in normal use
 						// so don't track a new date but overwrite the current one
 						cellReadingsPtr->level = cellVoltageReading.adcWholeWord;
 						datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);		
@@ -576,16 +587,6 @@ int main(void)
 									} // end of gpsTimeAutoInit or not
 								} // end of skip GPS work while in Leveling mode
 							} // end of if (gpsFlags.checkGpsToday
-#ifdef VERBOSE_DIAGNOSTICS
-						} else { // day rollover, but not (daysWeHaveChargeInfoFor > DAYS_FOR_MOVING_AVERAGE)
-							int l;
-							char s[8];
-							strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
-							l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
-							strcat(strJSON, s);
-							strcat(strJSON, "\"}\r\n");
-							stateFlags1.writeJSONMsg = 1;
-#endif							
 						} // end of if (daysWeHaveChargeInfoFor > DAYS_FOR_MOVING_AVERAGE)
 						// point to the next position to fill in the readings array
 						cellReadingsPtr++;
@@ -593,8 +594,18 @@ int main(void)
 									cellReadingsPtr = cellReadings;
 						datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
 						cellReadingsPtr->level = 0; // initialize
-						
-					}
+					} // move or not to new date in moving-average array
+#ifdef VERBOSE_DIAGNOSTICS
+{ // show daysWeHaveChargeInfoFor
+	int l;
+	char s[8];
+	strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
+		l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
+		strcat(strJSON, s);
+	strcat(strJSON, "\"}\r\n");
+	stateFlags1.writeJSONMsg = 1;
+}
+#endif
 				}
 #ifdef VERBOSE_DIAGNOSTICS
 				strcat(strJSON, "\",\"now\":\"");

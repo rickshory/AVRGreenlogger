@@ -110,34 +110,10 @@ uint16_t getAverageMinute (chargeInfo *startOfArrayOfReadings) {
 			// range zero to 1440, can be negative after offset by time zone
 			minutesFromTime = (((curReading->timeStamp.hour) - (curReading->timeStamp.houroffset)) 
 					* 60) + (curReading->timeStamp.minute);
-#ifdef TEST_TIME_AVG
-			{
-				int l;
-				char s[32];
-				l = sprintf(s, "\r\nN=%d; minutes from time=%d\r\n", i, minutesFromTime);
-				outputStringToBothUARTs(s);
-			}
-#endif
 			// map to 2Pi radians
 			double minuteRadians = 2 * M_PI * minutesFromTime / 1440;
 			sumSine += sin(minuteRadians);
-#ifdef TEST_TIME_AVG
-			{
-				int l;
-				char s[32];
-				l = sprintf(s, "\r\nsumSine=%f\r\n", sumSine);
-				outputStringToBothUARTs(s);
-			}
-#endif
 			sumCosine += cos(minuteRadians);
-#ifdef TEST_TIME_AVG
-			{
-				int l;
-				char s[32];
-				l = sprintf(s, "\r\nsumCosine=%f\r\n", sumCosine);
-				outputStringToBothUARTs(s);
-			}
-#endif
 		} // don't even need to count how many
 	}
 	// we have summed all the valid items and are now ready to calc the average

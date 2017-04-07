@@ -775,6 +775,7 @@ void datetime_check_secs (uint32_t secsTot, dateTime *t) {
 	t->year = 0;
 	t->month = 0;
 	t->day = 0;
+	t->houroffset = 0; // set, but don't use
 	t->hour = 0;
 	t->minute = 0;
 	t->second = 0;

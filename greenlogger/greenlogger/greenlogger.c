@@ -88,9 +88,6 @@ uint16_t dayPtMaxAvgCellCharge = 0; // moving modulo average, minute-of-day sinc
 chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE]; // array to hold multiple days' max cell charge info, for 
 	// getting average. Initialization to zero flags that they are not valid items yet.
 chargeInfo *cellReadingsPtr = cellReadings; // set up to track daily maximum cell voltage
-#ifdef TEST_TIME_AVG
-chargeInfo testReadings[DAYS_FOR_MOVING_AVERAGE];
-#endif
 volatile uint8_t daysWeHaveChargeInfoFor = 0; // count the days accumulated max-cell-charge info
 volatile uint8_t dailyTryAtAutoTimeSet = 0; // how many times in a row we tried to auto-set time from GPS
 
@@ -789,19 +786,19 @@ uint8_t makeLogString(void) {
 		}
 		return 1; // check this
 	} // end of testing if power too low
-#ifdef TEST_TIME_AVG
-	// very simple test, to see if 'getAverageMinute' fn ever gets something other than zero
-	// copy the same thing to both positions	
-	testReadings[0].level = cellVoltageReading.adcWholeWord;
-	datetime_copy(&(testReadings[0].timeStamp), &dt_CurAlarm);
-	testReadings[1].level = cellVoltageReading.adcWholeWord;
-	datetime_copy(&(testReadings[1].timeStamp), &dt_CurAlarm);
-	uint16_t avgMin = getAverageMinute(testReadings);
+#ifdef TEST_TIME_TOTAL_SECS
+	// test, try to recover dateTime with 'datetime_check_secs' from
+	// 32 bit number from 'datetime_compareval_secs'
 	{
-		int l;
+		uint32_t secsCk;
+		dateTime ckT;
+		secsCk = datetime_compareval_secs(&dt_CurAlarm);
+		datetime_check_secs(secsCk, &ckT);
+		outputStringToBothUARTs("\r\n\r\nregenerated dateTime ");
 		char s[32];
-		l = sprintf(s, "\r\n\r\nminute avg %d\r\n\r\n", avgMin);
+		datetime_getstring(s, &ckT);
 		outputStringToBothUARTs(s);
+		outputStringToBothUARTs("\r\n\r\n");
 	}
 #endif	
 	// attempt to assure time zone is synchronized

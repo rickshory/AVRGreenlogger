@@ -759,6 +759,47 @@ uint32_t datetime_compareval_secs (dateTime *t) {
 }
 
 /**
+ * \brief checker fn for dateTime-to-secs
+ *
+ * This function takes a 32 bit value of seconds-count
+ * generated from a dateTime, and regenerates the 
+ * dateTime, as a check on the first function.
+ * Returns the generated dateTime in the struct pointed to by
+ * the received pointer 't'.
+ * Will be trying different versions
+ */
+void datetime_check_secs (uint32_t secsTot, dateTime *t) {
+	// initialize
+	t->year = 0;
+	t->month = 0;
+	t->day = 0;
+	t->hour = 0;
+	t->minute = 0;
+	t->second = 0;
+	if (secsTot == 0) return;
+	int32_t workingVal;
+	t->year = (uint8_t) (secsTot / (8766 * 60 * 60)); // 8766 = 365.25 * 24 to use integer hours
+	workingVal = (secsTot % (8766 * 60 * 60)); 
+	if (workingVal == 0) return;
+	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	if (((t->year) % 4) == 0) m[1] = 29; // deal with leap years
+	uint8_t i;
+	for (i=0; workingVal > 0; i++) {
+		(t->month)++;
+		workingVal -= (m[i] * 24 * 60 * 60); // subtract months seconds till less than zero
+	}
+	(t->month)--;
+	workingVal += (m[i] * 24 * 60 * 60); // add back the last partial months seconds
+	t->day = (uint8_t) (workingVal / (24 * 60 * 60));
+	workingVal = (workingVal % (24 * 60 * 60));
+	t->hour = (uint8_t) (workingVal / (60 * 60));
+	workingVal = (workingVal % (60 * 60));
+	t->minute = (uint8_t) (workingVal / 60);
+	t->second = (workingVal % 60);
+	return;
+}
+
+/**
  * \brief compares two dateTime structs
  *
  * This function takes pointers to 2 dateTime structs,

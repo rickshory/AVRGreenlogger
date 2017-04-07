@@ -46,6 +46,7 @@ void rtc_init(void);
 void datetime_copy(dateTime *to, dateTime *from);
 uint32_t datetime_truesecs (dateTime *t);
 uint32_t datetime_compareval_secs (dateTime *t);
+void datetime_check_secs (uint32_t secsTot, dateTime *t);
 int8_t datetime_compare(dateTime *t1, dateTime *t2);
 void datetime_addSeconds(dateTime *t, uint8_t s);
 void datetime_advanceIntervalShort(dateTime *t);

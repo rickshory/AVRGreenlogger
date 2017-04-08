@@ -803,7 +803,7 @@ uint8_t makeLogString(void) {
 		outputStringToBothUARTs(s);
 		outputStringToBothUARTs("\r\n\r\n");
 	}
-#endif	
+#endif
 	// attempt to assure time zone is synchronized
 	syncTimeZone(); // internally tests if work is already done
 	

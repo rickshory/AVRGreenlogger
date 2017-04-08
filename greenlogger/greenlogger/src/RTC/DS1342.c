@@ -749,15 +749,54 @@ uint32_t datetime_compareval_secs (dateTime *t) {
 	// 1 year of the century has elapsed. Doesn't really matter as long as 
 	// it's consistent for comparisons
 	uint32_t hrs = t->year * 8766; // pre multiply 365.25 * 24 to use integers
+#ifdef TEST_TIME_TOTAL_SECS
+{
+int l;
+char s[32];
+l = sprintf(s, "\r\nYears hrs %lu\r\n", (unsigned long)hrs);
+outputStringToBothUARTs(s);
+}
+#endif
 	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (((t->year) % 4) == 0) m[1] = 29; // deal with leap years
 	for (uint8_t i=0; i<(t->month); i++) {
 		hrs += (m[i] * 24); // add on hours for the elapsed months
+#ifdef TEST_TIME_TOTAL_SECS
+{
+int l;
+char s[32];
+l = sprintf(s, "\r\nPlus month %d hrs %lu\r\n", i, (unsigned long)hrs);
+outputStringToBothUARTs(s);
+}
+#endif
 	}
 	hrs += ((t->day) * 24); // add hours for the days
+#ifdef TEST_TIME_TOTAL_SECS	
+{
+int l;
+char s[32];
+l = sprintf(s, "\r\nPlus days hrs %lu\r\n", (unsigned long)hrs);
+outputStringToBothUARTs(s);
+}
+#endif
 	hrs += (t->hour); // add hours
+#ifdef TEST_TIME_TOTAL_SECS
+{
+int l;
+char s[32];
+l = sprintf(s, "\r\nPlus hours %lu\r\n", (unsigned long)hrs);
+outputStringToBothUARTs(s);
+}
+#endif
 	hrs -= (t->houroffset); // adjust for time zone
-	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
+#ifdef TEST_TIME_TOTAL_SECS
+{
+int l;
+char s[32];
+l = sprintf(s, "\r\nSeconds %lu\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
+outputStringToBothUARTs(s);
+}
+#endif	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
 }
 
 /**
@@ -781,7 +820,8 @@ void datetime_check_secs (uint32_t secsTot, dateTime *t) {
 	t->second = 0;
 	if (secsTot == 0) return;
 	int32_t workingVal;
-	t->year = (uint8_t) (secsTot / (8766 * 60 * 60)); // 8766 = 365.25 * 24 to use integer hours
+	t->year = (uint8_t) (secsTot / (8766
+	 * 60 * 60)); // 8766 = 365.25 * 24 to use integer hours
 	workingVal = (secsTot % (8766 * 60 * 60)); 
 	if (workingVal == 0) return;
 	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};

@@ -795,7 +795,7 @@ uint8_t makeLogString(void) {
 		secsCk = datetime_compareval_secs(&dt_CurAlarm);
 		int l;
 		char s[32];
-		l = sprintf(s, "\r\n\r\nsecs %d\r\n\r\n", secsCk);
+		l = sprintf(s, "\r\n\r\nsecs %lu\r\n\r\n", (unsigned long)secsCk);
 		outputStringToBothUARTs(s);
 		datetime_check_secs(secsCk, &ckT);
 		outputStringToBothUARTs("\r\n\r\nregenerated dateTime ");

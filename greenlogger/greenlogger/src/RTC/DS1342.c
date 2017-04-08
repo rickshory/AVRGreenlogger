@@ -753,7 +753,7 @@ uint32_t datetime_compareval_secs (dateTime *t) {
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\nYears hrs %lu\r\n", (unsigned long)hrs);
+l = sprintf(s, "\r\n%lu years hrs\r\n", (unsigned long)hrs);
 outputStringToBothUARTs(s);
 }
 #endif
@@ -765,7 +765,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\nPlus month %d hrs %lu\r\n", i, (unsigned long)hrs);
+l = sprintf(s, "\r\n%lu plus month %d hrs\r\n", (unsigned long)hrs), i;
 outputStringToBothUARTs(s);
 }
 #endif
@@ -775,7 +775,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\nPlus days hrs %lu\r\n", (unsigned long)hrs);
+l = sprintf(s, "\r\n%lu plus days hrs\r\n", (unsigned long)hrs);
 outputStringToBothUARTs(s);
 }
 #endif
@@ -784,7 +784,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\nPlus hours %lu\r\n", (unsigned long)hrs);
+l = sprintf(s, "\r\n%lu plus hours\r\n", (unsigned long)hrs);
 outputStringToBothUARTs(s);
 }
 #endif
@@ -793,7 +793,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\nSeconds %lu\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
+l = sprintf(s, "\r\n%lu seconds\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
 outputStringToBothUARTs(s);
 }
 #endif	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);

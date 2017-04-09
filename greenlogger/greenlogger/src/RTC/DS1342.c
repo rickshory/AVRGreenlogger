@@ -725,7 +725,8 @@ uint32_t datetime_truesecs (dateTime *t) {
 	hrs -= 24; // take back the hours for the current day
 	hrs += (t->hour); // add explicit hours for the day
 	hrs -= (t->houroffset); // adjust for time zone
-	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
+	uint32_t totSecs = (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
+	return totSecs;
 }
 
 

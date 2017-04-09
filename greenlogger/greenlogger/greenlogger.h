@@ -14,7 +14,7 @@
 
 #define VERBOSE_DIAGNOSTICS
 
-#define TEST_TIME_TOTAL_SECS
+//#define TEST_TIME_TOTAL_SECS
 
 #include "interrupt.h"
 #include "mega_uart_interrupt.h"

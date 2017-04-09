@@ -872,8 +872,8 @@ void datetime_check_secs (uint32_t secsTot, dateTime *t) {
  * If they are equal, returns 0
  */
 int8_t datetime_compare(dateTime *t1, dateTime *t2) {
-	if (datetime_compareval_secs(t1) < datetime_compareval_secs(t2)) return 1;
-	if (datetime_compareval_secs(t1) > datetime_compareval_secs(t2)) return -1;
+	if ((uint32_t)datetime_compareval_secs(t1) < (uint32_t)datetime_compareval_secs(t2)) return 1;
+	if ((uint32_t)datetime_compareval_secs(t1) > (uint32_t)datetime_compareval_secs(t2)) return -1;
 	return 0;
 }
 

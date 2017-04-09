@@ -713,7 +713,7 @@ void datetime_copy(dateTime *to, dateTime *from) {
 uint32_t datetime_truesecs (dateTime *t) {
 	// t->year is the number of completed years, e.g. 1 (meaning 2001) says 
 	// 1 year of the century has elapsed.
-	uint32_t hrs = t->year * 8766; // pre multiply 365.25 * 24 to use integers
+	uint32_t hrs = (uint32_t)(t->year) * (uint32_t)8766; // pre multiply 365.25 * 24 to use integers
 	uint8_t m[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	uint8_t i;
 	if (((t->year) % 4) == 0) m[1] = 29; // deal with leap years

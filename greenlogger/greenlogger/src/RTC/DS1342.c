@@ -764,8 +764,8 @@ outputStringToBothUARTs(s);
 #ifdef TEST_TIME_TOTAL_SECS
 {
 int l;
-char s[32];
-l = sprintf(s, "\r\n%lu plus month %d hrs\r\n", (unsigned long)hrs), i;
+char s[64];
+l = sprintf(s, "\r\n%lu\tplus month\t%d\thrs\t%d\tdays\r\n", (unsigned long)hrs, (int)i, (int)m[i]);
 outputStringToBothUARTs(s);
 }
 #endif

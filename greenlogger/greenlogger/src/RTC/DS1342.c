@@ -753,7 +753,7 @@ uint32_t datetime_compareval_secs (dateTime *t) {
 {
 int l;
 char s[32];
-l = sprintf(s, "%lu\tyears hrs\r\n", (unsigned long)hrs);
+l = sprintf(s, "%lu\tyears hrs\t%d\tyears\t%d\tmultiplier\r\n", (unsigned long)hrs, (int)(t->year), (int)(8766));
 outputStringToBothUARTs(s);
 }
 #endif
@@ -784,7 +784,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "%lu\tplus\t%d\hours\r\n", (unsigned long)hrs, (int)(t->hour));
+l = sprintf(s, "%lu\tplus\t%d\thours\r\n", (unsigned long)hrs, (int)(t->hour));
 outputStringToBothUARTs(s);
 }
 #endif
@@ -793,7 +793,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "add%d\tminutes\t%d\tseconds\r\n", (int)(t->minute), (int)(t->second));
+l = sprintf(s, "add\t%d\tminutes\t%d\tseconds\r\n", (int)(t->minute), (int)(t->second));
 outputStringToBothUARTs(s);
 l = sprintf(s, "%lu\ttotal seconds\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
 outputStringToBothUARTs(s);

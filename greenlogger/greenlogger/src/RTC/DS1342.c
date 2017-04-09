@@ -765,7 +765,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[64];
-l = sprintf(s, "%lu\tplus month\t%d\thrs\t%d\tdays\r\n", (unsigned long)hrs, (int)i, (int)m[i]);
+l = sprintf(s, "%lu\tplus month\t%d\thrs\t%d\tdays\t%d\tmultiplier\r\n", (unsigned long)hrs, (int)i, (int)m[i], (int)(24));
 outputStringToBothUARTs(s);
 }
 #endif
@@ -775,7 +775,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "%lu\tplus\t%d\tdays hrs\r\n", (unsigned long)hrs, (int)(t->day));
+l = sprintf(s, "%lu\tplus\t%d\tdays hrs\t%d\tmultiplier\r\n", (unsigned long)hrs, (int)(t->day), (int)(24));
 outputStringToBothUARTs(s);
 }
 #endif
@@ -793,7 +793,11 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "add\t%d\tminutes\t%d\tseconds\r\n", (int)(t->minute), (int)(t->second));
+l = sprintf(s, "%lu\thours seconds\t%d\tmultiplier\r\n", (unsigned long)(hrs * 60 * 60), (int)(60 * 60));
+outputStringToBothUARTs(s);
+l = sprintf(s, "add\t%d\tminutes\t%d\tmultiplier\r\n", (int)(t->minute), (int)(60));
+outputStringToBothUARTs(s);
+l = sprintf(s, "add\t%d\tseconds\t%d\tmultiplier\r\n", (int)(t->second), (int)(1));
 outputStringToBothUARTs(s);
 l = sprintf(s, "%lu\ttotal seconds\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
 outputStringToBothUARTs(s);

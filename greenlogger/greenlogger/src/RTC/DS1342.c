@@ -748,12 +748,12 @@ uint32_t datetime_compareval_secs (dateTime *t) {
 	// t->year is the number of completed years, e.g. 1 (meaning 2001) says 
 	// 1 year of the century has elapsed. Doesn't really matter as long as 
 	// it's consistent for comparisons
-	uint32_t hrs = t->year * 8766; // pre multiply 365.25 * 24 to use integers
+	uint32_t hrs = (t->year) * 8766; // pre multiply 365.25 * 24 to use integers
 #ifdef TEST_TIME_TOTAL_SECS
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\n%lu\tyears hrs\r\n", (unsigned long)hrs);
+l = sprintf(s, "%lu\tyears hrs\r\n", (unsigned long)hrs);
 outputStringToBothUARTs(s);
 }
 #endif
@@ -765,7 +765,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[64];
-l = sprintf(s, "\r\n%lu\tplus month\t%d\thrs\t%d\tdays\r\n", (unsigned long)hrs, (int)i, (int)m[i]);
+l = sprintf(s, "%lu\tplus month\t%d\thrs\t%d\tdays\r\n", (unsigned long)hrs, (int)i, (int)m[i]);
 outputStringToBothUARTs(s);
 }
 #endif
@@ -775,7 +775,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\n%lu\tplus days hrs\r\n", (unsigned long)hrs);
+l = sprintf(s, "%lu\tplus\t%d\tdays hrs\r\n", (unsigned long)hrs, (int)(t->day));
 outputStringToBothUARTs(s);
 }
 #endif
@@ -784,7 +784,7 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\n%lu\tplus hours\r\n", (unsigned long)hrs);
+l = sprintf(s, "%lu\tplus\t%d\hours\r\n", (unsigned long)hrs, (int)(t->hour));
 outputStringToBothUARTs(s);
 }
 #endif
@@ -793,7 +793,9 @@ outputStringToBothUARTs(s);
 {
 int l;
 char s[32];
-l = sprintf(s, "\r\n%lu\tseconds\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
+l = sprintf(s, "add%d\tminutes\t%d\tseconds\r\n", (int)(t->minute), (int)(t->second));
+outputStringToBothUARTs(s);
+l = sprintf(s, "%lu\ttotal seconds\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
 outputStringToBothUARTs(s);
 }
 #endif	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);

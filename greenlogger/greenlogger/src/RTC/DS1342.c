@@ -748,7 +748,7 @@ uint32_t datetime_compareval_secs (dateTime *t) {
 	// t->year is the number of completed years, e.g. 1 (meaning 2001) says 
 	// 1 year of the century has elapsed. Doesn't really matter as long as 
 	// it's consistent for comparisons
-	uint32_t hrs = (t->year) * 8766; // pre multiply 365.25 * 24 to use integers
+	uint32_t hrs = (uint32_t)(t->year) * (uint32_t)8766; // pre multiply 365.25 * 24 to use integers
 #ifdef TEST_TIME_TOTAL_SECS
 {
 int l;

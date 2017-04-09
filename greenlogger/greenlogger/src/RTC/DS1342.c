@@ -802,7 +802,18 @@ outputStringToBothUARTs(s);
 l = sprintf(s, "%lu\ttotal seconds\r\n", (unsigned long)((hrs * 60 * 60) + ((t->minute) * 60) + (t->second)));
 outputStringToBothUARTs(s);
 }
-#endif	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
+#endif
+	uint32_t totSecs = (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
+#ifdef TEST_TIME_TOTAL_SECS
+{
+	int l;
+	char s[32];
+	l = sprintf(s, "%lu\ttotal seconds, final check\r\n", (unsigned long)(totSecs));
+	outputStringToBothUARTs(s);
+}
+#endif	
+//	return (hrs * 60 * 60) + ((t->minute) * 60) + (t->second);
+	return totSecs;
 }
 
 /**
@@ -813,7 +824,9 @@ outputStringToBothUARTs(s);
  * dateTime, as a check on the first function.
  * Returns the generated dateTime in the struct pointed to by
  * the received pointer 't'.
- * Will be trying different versions
+ * This fn is not working correctly yet, but since it
+ *  is only used to check another fn that has been
+ *  exhaustively diagnosed, fixing this one is low priority
  */
 void datetime_check_secs (uint32_t secsTot, dateTime *t) {
 	// initialize

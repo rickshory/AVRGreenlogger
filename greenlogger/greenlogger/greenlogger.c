@@ -79,7 +79,7 @@ uint16_t refDarkVoltage = 0, refLogVoltage = 0;
 volatile gpsLocation curLocation, prevLocation;
 int32_t gpsSecsElapsed; // seconds elapsed since latest GPS reading
 // target, seconds since latest GPS check, to schedule GPS time again
-int32_t secsCtToCkGpsTime = DAYS_FOR_MOVING_AVERAGE * 86400ul; 
+int32_t secsCtToCkGpsTime = DAYS_TILL_RETRY_GPS_TIME * 86400ul; // not used except for rough diagnostics, now count days
 // for heuristics on when to try getting time from GPS
 uint16_t maxCellVoltageToday = 0; // track maximum cell voltage of the current day
 uint16_t dayPtMaxChargeToday = 0; // track minute-of-day when cell has highest charge, in the current day
@@ -1103,7 +1103,7 @@ void getLatestGpsTimeIntoStrJSON(void) {
 	d = (long)((long)datetime_compareval_secs(&dt_CurAlarm) - (long)(datetime_compareval_secs(&dt_LatestGPS)));
 	l = sprintf(s, "%ld elapsed\n\r", (long)d);
 	strcat(strJSON, s);
-	l = sprintf(s, "%.0f target\n\r", (double)secsCtToCkGpsTime);
+	l = sprintf(s, "%ld target\n\r", (long)secsCtToCkGpsTime);
 	strcat(strJSON, s);
 	// not proper JSON, but good enough for diagnostics
 	strcat(strJSON,"\"}}\n\r");

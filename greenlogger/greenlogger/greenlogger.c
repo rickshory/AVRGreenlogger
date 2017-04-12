@@ -538,7 +538,7 @@ int main(void)
 					} else { // move to a new date in the array, and start recording
 						daysWeHaveChargeInfoFor++; // count a day; will not really be valid count till the next day
 						// test here whether to request time from the GPS, before starting a new date with 0 voltage
-						if (daysWeHaveChargeInfoFor > DAYS_FOR_MOVING_AVERAGE) {
+						if (daysWeHaveChargeInfoFor > DAYS_TILL_RETRY_GPS_TIME) {
 							if (gpsFlags.checkGpsToday) { // request is already set up
 								// don't normally flag another till this one serviced
 								// but if tried too many times today, skip till tomorrow
@@ -577,7 +577,7 @@ int main(void)
 								} // end of skip GPS work while in Leveling mode
 							} // end of if (gpsFlags.checkGpsToday
 #ifdef VERBOSE_DIAGNOSTICS
-						} else { // day rollover, but not (daysWeHaveChargeInfoFor > DAYS_FOR_MOVING_AVERAGE)
+						} else { // day rollover, but not (daysWeHaveChargeInfoFor > DAYS_TILL_RETRY_GPS_TIME)
 							int l;
 							char s[8];
 							strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
@@ -586,7 +586,7 @@ int main(void)
 							strcat(strJSON, "\"}\r\n");
 							stateFlags1.writeJSONMsg = 1;
 #endif							
-						} // end of if (daysWeHaveChargeInfoFor > DAYS_FOR_MOVING_AVERAGE)
+						} // end of if (daysWeHaveChargeInfoFor > DAYS_TILL_RETRY_GPS_TIME)
 						// point to the next position to fill in the readings array
 						cellReadingsPtr++;
 						if ((cellReadingsPtr - cellReadings) >= DAYS_FOR_MOVING_AVERAGE)

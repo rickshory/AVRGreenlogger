@@ -16,9 +16,8 @@
 // controls reset of the uC in the GPS subsystem
 
 //#define DAYS_FOR_MOVING_AVERAGE 16 // sets size of the array of chargeInfo's
-//#define DAYS_FOR_MOVING_AVERAGE 8 // attempt to set time from GPS every 8 days
-#define DAYS_FOR_MOVING_AVERAGE 2 // special testing version, short interval
-//#define DAYS_FOR_MOVING_AVERAGE 1 // special testing version, attempt to check on 1-day intervals
+#define DAYS_FOR_MOVING_AVERAGE 8 // accumulate 8 days max charge to estimate best GPS check time-of-day
+#define DAYS_TILL_RETRY_GPS_TIME 2 // try to get time from GPS every 2 days, keeps drift to < 10 seconds
 #define MAX_DAILY_TRIES_FOR_GPS_TIME 3 // how many times in a row to try auto-setting GPS time
 
 typedef volatile struct { // location acquired from GPS

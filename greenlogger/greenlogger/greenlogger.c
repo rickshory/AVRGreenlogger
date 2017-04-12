@@ -482,12 +482,12 @@ int main(void)
 			{
 				int l;
 				char s[64], t[32];
-				l = sprintf(s, " target seconds: %.0f\n\r",
-					(double)secsCtToCkGpsTime);
+				l = sprintf(s, " target seconds: %ld\n\r",
+					(long)secsCtToCkGpsTime);
 				outputStringToBothUARTs(s);
-				l = sprintf(s, "elapsed seconds: %.0f\n\r",
-					((double)(datetime_compareval_secs(&dt_CurAlarm)) -
-					(double)(datetime_compareval_secs(&dt_LatestGPS))));
+				l = sprintf(s, "elapsed seconds: %ld\n\r",
+					((long)(datetime_compareval_secs(&dt_CurAlarm)) -
+					(long)(datetime_compareval_secs(&dt_LatestGPS))));
 				outputStringToBothUARTs(s);
 				outputStringToBothUARTs("latest GPS time: ");
 				datetime_getstring(t, &dt_LatestGPS);
@@ -1100,8 +1100,8 @@ void getLatestGpsTimeIntoStrJSON(void) {
 	datetime_getstring(s, &dt_LatestGPS);
 	strcat(strJSON, s);
 	strcat(strJSON, "\n\r");
-	d = (int32_t)(datetime_compareval_secs(&dt_CurAlarm) - (datetime_compareval_secs(&dt_LatestGPS)));
-	l = sprintf(s, "%.0f elapsed\n\r", (double)d);
+	d = (long)((long)datetime_compareval_secs(&dt_CurAlarm) - (long)(datetime_compareval_secs(&dt_LatestGPS)));
+	l = sprintf(s, "%ld elapsed\n\r", (long)d);
 	strcat(strJSON, s);
 	l = sprintf(s, "%.0f target\n\r", (double)secsCtToCkGpsTime);
 	strcat(strJSON, s);

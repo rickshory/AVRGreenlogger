@@ -549,9 +549,15 @@ int main(void)
 										// get most fields (year, month, etc.) of timestamp for checking GPS from the current alarm time
 										datetime_copy(&dt_CkGPS, &dt_CurAlarm);
 										// get hour and minute from average
-										uint16_t avgMinuteOfDayWhenMaxCharge = getAverageMinute(cellReadings);
-										dt_CkGPS.hour = (uint8_t)(avgMinuteOfDayWhenMaxCharge / 60);
-										dt_CkGPS.minute = (uint8_t)(avgMinuteOfDayWhenMaxCharge % 60);
+										uint16_t optimalMinuteOfDayForSysPower = getAverageMinute(cellReadings);
+										// go one hour earlier, to be coming up on the peak
+										// add 23 hours, to assure positive, and then adjust to 24 hour range
+										optimalMinuteOfDayForSysPower += (uint16_t)(23 * 60); 
+										while (optimalMinuteOfDayForSysPower > (uint16_t)(24 * 60)) {
+											optimalMinuteOfDayForSysPower -= (uint16_t)(24 * 60);
+										}
+										dt_CkGPS.hour = (uint8_t)(optimalMinuteOfDayForSysPower / 60);
+										dt_CkGPS.minute = (uint8_t)(optimalMinuteOfDayForSysPower % 60);
 										dt_CkGPS.second = 0; // don't really matter much
 										dt_CkGPS.houroffset = 0; // average is derived as if Universal Time
 										if (datetime_compare(&dt_CkGPS, &dt_CurAlarm) >= 0) {

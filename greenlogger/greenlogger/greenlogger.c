@@ -1045,12 +1045,17 @@ void outputStringToBothUARTs (char* St) {
  */
 void showCellReadings(void) {
 	outputStringToBothUARTs("\r\nCell readings\r\n");
+	int l;
+	char s[10];
 	for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 		// give diagnostics on the readings being stored for the moving average
+		l = sprintf(s, "%d\t", i);
+		outputStringToBothUARTs(s);
 		chargeInfo_getString(stCellReading, &(cellReadings[i]));
 		outputStringToBothUARTs(stCellReading);
 	}
-	outputStringToBothUARTs("\r\nDone with cell readings\r\n");
+	(void)l; // avoid compiler warning
+	outputStringToBothUARTs("Done with cell readings\r\n");
 }
 
 /**

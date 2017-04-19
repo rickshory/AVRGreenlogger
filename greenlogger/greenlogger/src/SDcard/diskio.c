@@ -15,6 +15,7 @@
 #include "diskio.h"
 #include "RTC/DS1342.h"
 #include "BattMonitor/ADconvert.h"
+#include "GPS/GPStime.h"
 
 // 
 /*--------------------------------------------------------------------------
@@ -288,10 +289,25 @@ BYTE writeLogStringToSDCard (void) {
 			goto closeFile;
 		}
 	}
+#ifdef VERBOSE_DIAGNOSTICS
+	if (fileIsNew) {
+		// strJSON should be empty at this point, available for temporary diagnostics
+		extern chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE];
+		int l;
+		char s[128];
+		// get diagnostics on the readings being stored for the moving average
+		strcat(strJSON,"{\"cellreadings\":{\n\r");
+			// insert the list of cell readings
+			for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
+				l = sprintf(s, "%d\t", i);
+				strcat(strJSON, s);
+				chargeInfo_getString(s, &(cellReadings[i]));
+				strcat(strJSON, s); // returned string ends with newline
+			}
+			// not proper JSON, but good enough for diagnostics
+		strcat(strJSON,"\"}}\n\r");
+		(void)l; // avoid compiler warning
 
-	if (fileIsNew) { // temporary diagnostics
-		// insert the list of cell readings
-		getCellReadingsIntoStrJSON();
 		sLen = strlen(strJSON);
 		if (f_write(&logFile, strJSON, sLen, &bytesWritten) != FR_OK) {
 			retVal = sdFileWriteFail;
@@ -307,8 +323,11 @@ BYTE writeLogStringToSDCard (void) {
 		if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
 			retVal = sdFileSeekFail;
 			goto closeFile;
-		}
-		
+		}		
+	}
+#endif
+/* don't need this any more
+	if (fileIsNew) {
 		// insert the latest GPS time
 		getLatestGpsTimeIntoStrJSON();
 		sLen = strlen(strJSON);
@@ -328,7 +347,7 @@ BYTE writeLogStringToSDCard (void) {
 			goto closeFile;
 		}		
 	}
-	
+*/	
 	if ((fileIsNew & gpsFlags.gpsGotLocation) | gpsFlags.gpsNewLocation) {
 		sLen = strlen(strJSONloc);
 		if (f_write(&logFile, strJSONloc, sLen, &bytesWritten) != FR_OK) {

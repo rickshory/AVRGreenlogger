@@ -907,7 +907,7 @@ uint8_t makeLogString(void) {
 	strcat(strLog, "\t");
 	if (!(stateFlags1.logSilently)) outputStringToBothUARTs("\t");
 	if (!(temperature_GetReading(&temperatureReading))) { // got temperature
-		strLn = sprintf(str, "\t%d", (int8_t)(temperatureReading.tmprHiByte));
+		strLn = sprintf(str, "%d", (int8_t)(temperatureReading.tmprHiByte));
 		strcat(strLog, str);
 		if (!(stateFlags1.logSilently)) outputStringToBothUARTs(str);
 	}

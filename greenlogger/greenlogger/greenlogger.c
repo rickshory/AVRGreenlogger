@@ -1129,7 +1129,7 @@ void getAxesIntoStrJSON(void) {
 	accelAxisData d;
 	char s[64];
 	int l;
-	// e.g. {"axisInfo":[{"X":"-1", "Y":"2", "Z":"-160"}]}
+	// e.g. {"axisInfo":{"X":"-1", "Y":"2", "Z":"-160"}}
 	strcat(strJSON,"\n\r{\"axisInfo\":{");
 	uint8_t rs = getAvAccelReadings(&d);
 	if (rs) {
@@ -1138,7 +1138,7 @@ void getAxesIntoStrJSON(void) {
 		l = sprintf(s, "\"X\":\"%i\", \"Y\":\"%i\", \"Z\":\"%i\"", d.xWholeWord, d.yWholeWord,  d.zWholeWord);
 	}
 	strcat(strJSON, s);
-	strcat(strJSON, "}]}\n\r");
+	strcat(strJSON, "}}\n\r");
 	(void)l; // avoid compiler warning
 }
 

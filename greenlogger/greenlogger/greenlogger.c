@@ -577,17 +577,7 @@ int main(void)
 										stateFlags1.writeJSONMsg = 1;
 									} // end of gpsTimeAutoInit or not
 								} // end of skip GPS work while in Leveling mode
-							} // end of if (gpsFlags.checkGpsToday
-#ifdef VERBOSE_DIAGNOSTICS
-						} else { // day rollover, but not (daysWeHaveChargeInfoFor > DAYS_TILL_RETRY_GPS_TIME)
-							int l;
-							char s[8];
-							strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
-							l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
-							strcat(strJSON, s);
-							strcat(strJSON, "\"}\r\n");
-							stateFlags1.writeJSONMsg = 1;
-#endif							
+							} // end of if (gpsFlags.checkGpsToday						
 						} // end of if (daysWeHaveChargeInfoFor > DAYS_TILL_RETRY_GPS_TIME)
 						// point to the next position to fill in the readings array
 						cellReadingsPtr++;
@@ -595,9 +585,8 @@ int main(void)
 									cellReadingsPtr = cellReadings;
 						datetime_copy(&(cellReadingsPtr->timeStamp), &dt_CurAlarm);
 						cellReadingsPtr->level = 0; // initialize
-						
-					}
-				}
+					} // move, or don't, to next position in tracking array
+				} // end of skipped date, or regular new date
 #ifdef VERBOSE_DIAGNOSTICS
 				strcat(strJSON, "\",\"now\":\"");
 				len = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));
@@ -605,10 +594,17 @@ int main(void)
 				chargeInfo_getString(str, cellReadingsPtr);
 				strcat(strJSON, str);
 				strcat(strJSON, "\"}}\r\n");
+				{ //  give daysWeHaveChargeInfoFor diagnostics
+					int l;
+					char s[8];
+					strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
+					l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
+					strcat(strJSON, s);
+					strcat(strJSON, "\"}\r\n");
+				}					
 				stateFlags1.writeJSONMsg = 1;
 #endif
-			}
-			
+			} // end of date has changed, day rollover or time change
 			// track the maximum cell voltage for this date
 			if (cellVoltageReading.adcWholeWord > cellReadingsPtr->level) {
 				cellReadingsPtr->level = cellVoltageReading.adcWholeWord;

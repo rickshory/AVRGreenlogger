@@ -298,7 +298,7 @@ BYTE writeLogStringToSDCard (void) {
 		// insert the list of cell readings
 		for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
 			s[0] = '\0';
-			if (i == 0) strcat(s, "{\"cellreadings\":{[\n\r");
+			if (i == 0) strcat(s, "{\"cellreadings\":[\n\r");
 			if (i > 0) strcat(s, ", ");
 			l = sprintf(r, "{\"key\":%d", i);
 			strcat(s, r);

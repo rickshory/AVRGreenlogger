@@ -291,34 +291,30 @@ BYTE writeLogStringToSDCard (void) {
 	}
 #ifdef VERBOSE_DIAGNOSTICS
 	if (fileIsNew) {
-		// strJSON should be empty at this point, available for temporary diagnostics
 		extern chargeInfo cellReadings[DAYS_FOR_MOVING_AVERAGE];
 		int l;
-		char s[128];
+		char r[64], s[128];
 		// get diagnostics on the readings being stored for the moving average
-		strcat(strJSON,"{\"cellreadings\":{\n\r");
-			// insert the list of cell readings
-			for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
-				l = sprintf(s, "%d\t", i);
-				strcat(strJSON, s);
-				chargeInfo_getString(s, &(cellReadings[i]));
-				strcat(strJSON, s); // returned string ends with newline
+		// insert the list of cell readings
+		for (uint8_t i=0; i<DAYS_FOR_MOVING_AVERAGE; i++) {
+			s[0] = '\0';
+			if (i == 0) strcat(s, "{\"cellreadings\":{[\n\r");
+			if (i > 0) strcat(s, ", ");
+			l = sprintf(r, "{\"key\":%d", i);
+			strcat(s, r);
+			l = sprintf(r, ", \"mV\":%lu, \"time\":\"", (unsigned long)(2.5 * (unsigned long)(cellReadings[i].level)));
+			strcat(s, r);
+			datetime_getstring(r, &(cellReadings[i].timeStamp));
+			strcat(s, r);
+			strcat(s, "\"}\n\r");
+			if (i == (DAYS_FOR_MOVING_AVERAGE - 1)) strcat(s,"]}\n\r");
+			sLen = strlen(s);
+			if (f_write(&logFile, s, sLen, &bytesWritten) != FR_OK) {
+				retVal = sdFileWriteFail;
+				goto closeFile;
 			}
-			// not proper JSON, but good enough for diagnostics
-		strcat(strJSON,"\"}}\n\r");
-		(void)l; // avoid compiler warning
+		}
 
-		sLen = strlen(strJSON);
-		if (f_write(&logFile, strJSON, sLen, &bytesWritten) != FR_OK) {
-			retVal = sdFileWriteFail;
-			goto closeFile;
-		}
-		strJSON[0] = '\0'; // 'erase' strJSON
-		if (bytesWritten < sLen) { // probably strJSON was corrupted; proceed next
-			// time with string and flag cleared; at least allow normal logging to resume
-			retVal = sdFileWritePartial;
-			goto closeFile;
-		}
 		// Move to end of the file to append further data
 		if (f_lseek(&logFile, f_size(&logFile)) != FR_OK) {
 			retVal = sdFileSeekFail;

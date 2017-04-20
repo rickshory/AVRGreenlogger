@@ -509,11 +509,10 @@ int main(void)
 #ifdef VERBOSE_DIAGNOSTICS
 				// temporary diagnostics e.g.
 				// {"movAvgItem":{"was":"0\t1.335\t2017-01-17 22:10:24 -00","now":"1\t1.231\t2017-01-18 22:45:03 +00"}}
-				strcat(strJSON, "\r\n{\"movAvgItem\":{\"was\":\"");
-				len = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));
-				strcat(strJSON, str);
-				chargeInfo_getString(str, cellReadingsPtr);
-				strcat(strJSON, str);
+				// save some diagnostic values for later
+				int savedReadingsOffset = (cellReadingsPtr - cellReadings);
+				char savedReadingString[128];
+				chargeInfo_getString(savedReadingString, cellReadingsPtr);
 #endif
 				if ((dt_CurAlarm.year - cellReadingsPtr->timeStamp.year) > 2) {
 					// if previous year is > 2 years different, either was previously 0 (initial
@@ -588,20 +587,24 @@ int main(void)
 					} // move, or don't, to next position in tracking array
 				} // end of skipped date, or regular new date
 #ifdef VERBOSE_DIAGNOSTICS
+				// plug in the diagnostic values saved earlier
+				int l;
+				char b[16];
+				strcat(strJSON, "\r\n{\"movAvgItem\":{\"was\":\"");
+				l = sprintf(b, "%i\t", savedReadingsOffset);
+				strcat(strJSON, b);
+				strcat(strJSON, savedReadingString);
 				strcat(strJSON, "\",\"now\":\"");
-				len = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));
+				l = sprintf(str, "%i\t", (cellReadingsPtr - cellReadings));
 				strcat(strJSON, str);
 				chargeInfo_getString(str, cellReadingsPtr);
 				strcat(strJSON, str);
 				strcat(strJSON, "\"}}\r\n");
-				{ //  give daysWeHaveChargeInfoFor diagnostics
-					int l;
-					char s[8];
-					strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":\"");
-					l = sprintf(s, "%d", daysWeHaveChargeInfoFor);
-					strcat(strJSON, s);
-					strcat(strJSON, "\"}\r\n");
-				}					
+				//  give daysWeHaveChargeInfoFor diagnostics
+				strcat(strJSON, "\r\n{\"daysWeHaveChargeInfoFor\":");
+				l = sprintf(b, "%d", daysWeHaveChargeInfoFor);
+				strcat(strJSON, b);
+				strcat(strJSON, "}\r\n");
 				stateFlags1.writeJSONMsg = 1;
 #endif
 			} // end of date has changed, day rollover or time change

@@ -1,7 +1,8 @@
 AVRGreenlogger
 ======
 
- #### Greenlogger, implemented using AVR microcontroller.
+ #### Greenlogger, implemented using an AVR microcontroller
+ Supersedes repository **Greenlogger**
  
  #### Works on
 * AVR ATmega1284P
